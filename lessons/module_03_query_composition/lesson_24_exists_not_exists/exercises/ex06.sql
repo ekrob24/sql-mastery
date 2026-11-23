@@ -1,0 +1,18 @@
+-- Lesson 24 · Exercise 24.6 — First-time buyers in 2025
+--
+-- BUSINESS QUESTION
+--   Growth wants customers whose first valid purchase happened in 2025, i.e. they bought
+--   in 2025 but never in 2024.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name for customers who have at least one valid order (valid orders
+--   = order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) dated in 2025 and no valid order dated in 2024. Customer 16, whose only
+--   order was cancelled, must not appear.
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.6
+-- Grade it:              python3 sqlm.py submit 24.6
+--
+-- Write your query below (from memory!):
+

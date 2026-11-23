@@ -1,0 +1,18 @@
+-- Lesson 26 · Exercise 26.2 — Customer spend for every customer
+--
+-- BUSINESS QUESTION
+--   CRM wants every customer (buyers or not) with lifetime gross spend.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE
+--   customer_spend (one row per customer_id), then return customer_id, name, total_spend
+--   (rounded to 2 decimals, 0 when no valid orders) for all 20 customers.
+-- REQUIRED COLUMNS: customer_id, name, total_spend
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.2
+-- Grade it:              python3 sqlm.py submit 26.2
+--
+-- Write your query below (from memory!):
+

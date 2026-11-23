@@ -1,0 +1,24 @@
+-- Lesson 12 · Exercise 12.2 — All orders with customer names, orphan included
+--
+-- BUSINESS QUESTION
+--   Finance wants every order with its customer name — no order may go missing.
+-- TABLES: customers, orders
+-- TASK
+--   Write FROM customers ... RIGHT JOIN orders. Return order_id, order_date and
+--   customer_name (customers.name; NULL when the customer does not exist) for all 60
+--   orders.
+-- REQUIRED COLUMNS: order_id, order_date, customer_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.2
+-- Grade it:              python3 sqlm.py submit 12.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

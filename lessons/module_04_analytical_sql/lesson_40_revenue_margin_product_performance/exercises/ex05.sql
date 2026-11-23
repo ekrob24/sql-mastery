@@ -1,0 +1,20 @@
+-- Lesson 40 · Exercise 40.5 — Margin contribution (Pareto)
+--
+-- BUSINESS QUESTION
+--   How concentrated is our margin? Do 20% of products make 80% of the margin?
+-- TABLES: orders, order_items, products, product_costs
+-- TASK
+--   Gross margin per product = SUM(quantity * (unit_price - unit_cost)) over lines of
+--   valid orders (order_status IN ('completed','shipped','returned')). Return product_id,
+--   product_name, gross_margin (rounded 2), pct_of_total_margin (product margin as a 0–100
+--   percentage of total gross margin, rounded to 1) and cumulative_pct (running total of
+--   the percentage, products taken in order of gross_margin descending then product_id,
+--   computed from unrounded values and rounded to 1). Order by gross_margin descending,
+--   then product_id.
+-- REQUIRED COLUMNS: product_id, product_name, gross_margin, pct_of_total_margin, cumulative_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 40.5
+-- Grade it:              python3 sqlm.py submit 40.5
+--
+-- Write your query below (from memory!):
+

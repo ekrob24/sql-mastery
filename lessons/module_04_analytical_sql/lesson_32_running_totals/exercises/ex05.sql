@@ -1,0 +1,20 @@
+-- Lesson 32 · Exercise 32.5 — Line-level running revenue (tie-breakers!)
+--
+-- BUSINESS QUESTION
+--   Audit wants a line-by-line running revenue for Q4 2025 that matches the ledger
+--   exactly.
+-- TABLES: orders, order_items
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'). For each order
+--   line of valid orders with order_date from 2025-10-01 to 2025-12-31, return
+--   order_item_id, order_id, order_date, line_revenue (quantity * unit_price) and
+--   running_revenue (cumulative line_revenue in order of order_date, then order_item_id),
+--   both rounded to 2 decimals. Lines of the same order share a date, so each line must
+--   still get its own running value. Ordered by order_date, order_item_id.
+-- REQUIRED COLUMNS: order_item_id, order_id, order_date, line_revenue, running_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.5
+-- Grade it:              python3 sqlm.py submit 32.5
+--
+-- Write your query below (from memory!):
+

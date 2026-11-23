@@ -1,0 +1,18 @@
+-- Lesson 46 · Exercise 46.6 — Latest five valid orders, cheaply
+--
+-- BUSINESS QUESTION
+--   The homepage widget shows the five most recent valid orders with their line counts.
+--   The old query counted lines for all 60 orders, then sorted and limited.
+-- TABLES: orders, order_items
+-- TASK
+--   Return order_id, order_date and line_count (number of order_items lines) for the 5
+--   most recent valid orders (order_status IN ('completed','shipped','returned')), ordered
+--   by order_date descending then order_id descending. Pick the 5 orders first, then count
+--   their lines.
+-- REQUIRED COLUMNS: order_id, order_date, line_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 46.6
+-- Grade it:              python3 sqlm.py submit 46.6
+--
+-- Write your query below (from memory!):
+

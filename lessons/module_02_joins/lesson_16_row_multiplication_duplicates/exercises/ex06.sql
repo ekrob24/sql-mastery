@@ -1,0 +1,26 @@
+-- Lesson 16 · Exercise 16.6 — Fix it: pre-aggregate, then join
+--
+-- BUSINESS QUESTION
+--   Build the correct customer scorecard: revenue and web activity for every customer.
+-- TABLES: customers, orders, order_items, web_events
+-- TASK
+--   Return all 20 customers with columns customer_id, name, gross_revenue and web_events.
+--   gross_revenue = SUM(quantity * unit_price) over the customer's valid orders
+--   (order_status IN ('completed','shipped','returned')), rounded to 2 decimals, 0 if
+--   none. web_events = number of web_events rows for the customer, 0 if none. Pre-
+--   aggregate each side to one row per customer before joining.
+-- REQUIRED COLUMNS: customer_id, name, gross_revenue, web_events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.6
+-- Grade it:              python3 sqlm.py submit 16.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

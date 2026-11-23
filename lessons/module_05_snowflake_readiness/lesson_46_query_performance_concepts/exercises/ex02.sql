@@ -1,0 +1,16 @@
+-- Lesson 46 · Exercise 46.2 — Index inventory
+--
+-- BUSINESS QUESTION
+--   Before tuning, the DBA asks which tables have secondary indexes and on how many
+--   columns.
+-- TABLES: orders, order_items
+-- TASK
+--   Query sqlite_master (type = 'index') and return table_name (tbl_name) and index_count
+--   (number of indexes on that table).
+-- REQUIRED COLUMNS: table_name, index_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 46.2
+-- Grade it:              python3 sqlm.py submit 46.2
+--
+-- Write your query below (from memory!):
+

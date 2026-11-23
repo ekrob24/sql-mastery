@@ -1,0 +1,16 @@
+-- Lesson 23 · Exercise 23.2 — Pricier than its category average
+--
+-- BUSINESS QUESTION
+--   Pricing wants products whose list price is above the average of their own category.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, category, list_price for products whose list_price is
+--   greater than the average list_price of products in the same category. (Product 20,
+--   with a NULL category, has no category to compare against, so it drops out.)
+-- REQUIRED COLUMNS: product_id, product_name, category, list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.2
+-- Grade it:              python3 sqlm.py submit 23.2
+--
+-- Write your query below (from memory!):
+

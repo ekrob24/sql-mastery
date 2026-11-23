@@ -1,0 +1,16 @@
+-- Lesson 7 · Exercise 7.3 — Times sold versus orders per product
+--
+-- BUSINESS QUESTION
+--   For each product that has sold, how many units, lines and distinct orders?
+-- TABLES: order_items
+-- TASK
+--   Over all rows of order_items, return product_id, units_sold (SUM of quantity),
+--   line_count (number of order lines) and order_count (number of distinct order_id
+--   values), one row per product_id.
+-- REQUIRED COLUMNS: product_id, units_sold, line_count, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 7.3
+-- Grade it:              python3 sqlm.py submit 7.3
+--
+-- Write your query below (from memory!):
+

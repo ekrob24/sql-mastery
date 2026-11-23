@@ -1,0 +1,14 @@
+-- Lesson 1 · Exercise 1.1 — Supplier directory
+--
+-- BUSINESS QUESTION
+--   Procurement wants the full supplier directory.
+-- TABLES: suppliers
+-- TASK
+--   Return every supplier with columns supplier_id, supplier_name, country.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, country
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.1
+-- Grade it:              python3 sqlm.py submit 1.1
+--
+-- Write your query below (from memory!):
+

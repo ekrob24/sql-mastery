@@ -1,0 +1,25 @@
+-- Lesson 17 · Exercise 17.4 — Broken supplier references
+--
+-- BUSINESS QUESTION
+--   Data quality wants products whose supplier_id is filled in but points at a supplier
+--   that doesn't exist.
+-- TABLES: products, suppliers
+-- TASK
+--   Return product_id, product_name and supplier_id for products whose supplier_id is NOT
+--   NULL and has no matching row in suppliers. Products with a NULL supplier_id are a
+--   different issue and must be excluded.
+-- REQUIRED COLUMNS: product_id, product_name, supplier_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.4
+-- Grade it:              python3 sqlm.py submit 17.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

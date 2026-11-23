@@ -1,0 +1,17 @@
+-- Lesson 3 · Exercise 3.4 — Product data-quality audit
+--
+-- BUSINESS QUESTION
+--   Before the catalog migration, how many products are missing a category, a price or a
+--   supplier?
+-- TABLES: products
+-- TASK
+--   Return one row with columns total_products, missing_category, missing_price and
+--   missing_supplier, where each missing_* column is the number of products whose category
+--   / list_price / supplier_id is NULL.
+-- REQUIRED COLUMNS: total_products, missing_category, missing_price, missing_supplier
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.4
+-- Grade it:              python3 sqlm.py submit 3.4
+--
+-- Write your query below (from memory!):
+

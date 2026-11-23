@@ -1,0 +1,17 @@
+-- Lesson 21 · Exercise 21.2 — Customers with at least one valid order
+--
+-- BUSINESS QUESTION
+--   Marketing wants the list of customers who have actually bought something.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name of customers whose customer_id is IN the set of customer_ids
+--   having at least one valid order (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded). Each customer
+--   appears once.
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.2
+-- Grade it:              python3 sqlm.py submit 21.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 34 · Exercise 34.5 — Find duplicate order lines
+--
+-- BUSINESS QUESTION
+--   Data engineering found duplicate-looking order lines. Which rows should be deleted
+--   (keep the earliest of each set)?
+-- TABLES: order_items
+-- TASK
+--   Treat order lines with the same order_id, product_id, quantity and unit_price as
+--   duplicates. Within each duplicate set, keep the row with the lowest order_item_id.
+--   Return order_item_id, order_id, product_id, quantity, unit_price and
+--   kept_order_item_id (the lowest order_item_id of that set) for every row that would be
+--   removed.
+-- REQUIRED COLUMNS: order_item_id, order_id, product_id, quantity, unit_price, kept_order_item_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.5
+-- Grade it:              python3 sqlm.py submit 34.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,315 @@
+{
+  "number": 12,
+  "slug": "right_join",
+  "title": "RIGHT JOIN",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Read and write RIGHT JOIN as a mirrored LEFT JOIN: keep every row of the table written SECOND, and be able to rewrite any RIGHT JOIN as a LEFT JOIN by swapping table order.",
+  "context": "You will meet RIGHT JOINs in inherited queries and generated SQL. Most teams standardise on LEFT JOIN, but you must read RIGHT JOIN fluently \u2014 and know which table it protects.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Every supplier and its products (RIGHT JOIN)",
+      "question": "Procurement wants every supplier with each of its products, including suppliers with none.",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Write FROM products ... RIGHT JOIN suppliers. Return supplier_id (from suppliers), supplier_name and product_name \u2014 one row per supplier\u2013product pair, plus one row with NULL product_name for any supplier without products.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "products is written first \u2192 it's the left table; suppliers is the right table and must all survive.",
+        "Take supplier_id from s, not p \u2014 p.supplier_id is NULL for the unmatched supplier.",
+        "SELECT s.supplier_id, s.supplier_name, p.product_name FROM products p RIGHT JOIN suppliers s ON s.supplier_id = p.supplier_id;"
+      ],
+      "why": "Knowing which side a RIGHT JOIN protects lets you read legacy SQL correctly.",
+      "recall": {
+        "q": "In `FROM a RIGHT JOIN b`, which table keeps all its rows?",
+        "a": "b \u2014 the right table (written second)."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "RIGHT JOIN"
+      },
+      "join_notes": "products 25, suppliers 5. Result: 24 rows = 23 matched product rows (suppliers repeat: 6, 6, 6 and 5 times \u2014 one-to-many) + 1 row for supplier 5 'Andes Trading' with product_name NULL. Products 21 (supplier 9) and 22 (NULL supplier) are dropped: they are on the LEFT side, which a RIGHT JOIN does not protect.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name",
+        "product_name"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 2,
+      "title": "All orders with customer names, orphan included",
+      "question": "Finance wants every order with its customer name \u2014 no order may go missing.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Write FROM customers ... RIGHT JOIN orders. Return order_id, order_date and customer_name (customers.name; NULL when the customer does not exist) for all 60 orders.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Which table must survive completely? It is written second, so use RIGHT JOIN.",
+        "This equals FROM orders LEFT JOIN customers.",
+        "FROM customers c RIGHT JOIN orders o ON o.customer_id = c.customer_id"
+      ],
+      "why": "Revenue reconciliation demands every fact row survive the dimension lookup \u2014 orphans must be visible, not lost.",
+      "recall": {
+        "q": "Rewrite `FROM customers c RIGHT JOIN orders o ON ...` as a LEFT JOIN.",
+        "a": "FROM orders o LEFT JOIN customers c ON ... (swap the tables)."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "RIGHT JOIN"
+      },
+      "join_notes": "customers 20, orders 60. Result: 60 rows \u2014 every order survives and each matches at most one customer, so no multiplication. Order 31 (customer_id 99) gets customer_name NULL. Customers 18, 19, 20 (no orders) do not appear: they are in the left table, which RIGHT JOIN does not protect. An INNER JOIN would give 59 rows.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "customer_name"
+      ],
+      "expected_row_count": 60
+    },
+    {
+      "number": 3,
+      "title": "Units sold per product, zero included",
+      "question": "Inventory wants units sold for EVERY product in the catalogue (all statuses), 0 for never-sold items.",
+      "tables": [
+        "order_items",
+        "products"
+      ],
+      "prompt": "Write FROM order_items ... RIGHT JOIN products. Return product_id (from products), product_name and units_sold (SUM of quantity; 0 when never sold) for all 25 products.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "products is the protected table \u2192 it goes second with RIGHT JOIN.",
+        "Group by the products columns (p.product_id), and COALESCE the SUM.",
+        "SELECT p.product_id, p.product_name, COALESCE(SUM(oi.quantity), 0) AS units_sold FROM order_items oi RIGHT JOIN products p ON ... GROUP BY p.product_id, p.product_name"
+      ],
+      "why": "Grouping by the protected table's key is essential: grouping by oi.product_id would merge all unmatched products into one NULL group.",
+      "recall": {
+        "q": "Why GROUP BY p.product_id and not oi.product_id here?",
+        "a": "oi.product_id is NULL for never-sold products; grouping by it would collapse them into one NULL row."
+      },
+      "join_plan": {
+        "left_table": "order_items",
+        "right_table": "products",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "RIGHT JOIN"
+      },
+      "join_notes": "order_items 150, products 25. Before grouping: 153 rows = 150 matched lines (products repeat once per line \u2014 product 9 fifteen times) + 3 NULL-padded rows for never-sold products 23, 24, 25. After GROUP BY: 25 rows; those three show units_sold 0 thanks to COALESCE (SUM of NULLs is NULL).",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "units_sold"
+      ],
+      "expected_row_count": 25
+    },
+    {
+      "number": 4,
+      "title": "Customers who never ordered (RIGHT anti-join)",
+      "question": "Marketing wants the sign-ups who have never placed any order.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Write FROM orders ... RIGHT JOIN customers. Return customer_id, name and signup_date of customers with no orders at all.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Mirror of the LEFT anti-join: now the NULL-padded side is the LEFT table (orders).",
+        "Test the left table's primary key for NULL.",
+        "FROM orders o RIGHT JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_id IS NULL"
+      ],
+      "why": "Never-converted sign-ups are the cheapest audience to re-engage \u2014 you already have their details.",
+      "recall": {
+        "q": "In a RIGHT anti-join, which table's key do you test for NULL?",
+        "a": "The LEFT table's (the one written first, which gets NULL-padded)."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "customers",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "RIGHT JOIN",
+          "NOT EXISTS"
+        ]
+      },
+      "join_notes": "orders 60, customers 20. The RIGHT JOIN produces 62 rows: 59 order rows matched to customers (one-to-many) + 3 NULL-padded rows for customers 18 'Mia Lewis', 19 'alice johnson' and 20 'Zoe Turner'. Order 31 (customer 99) is dropped because it is on the unprotected left side. WHERE o.order_id IS NULL keeps the 3 never-ordered customers.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "signup_date"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 5,
+      "title": "Electronics products per supplier \u2014 filter on the left side",
+      "question": "Category management wants, for EVERY supplier, how many Electronics products they supply (0 if none).",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Write FROM products ... RIGHT JOIN suppliers. Return supplier_id, supplier_name and electronics_count (number of products with category = 'Electronics'; 0 when none) for all 5 suppliers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The category filter is on products \u2014 the NULL-padded (left) side of this RIGHT JOIN.",
+        "In WHERE it would remove suppliers with no Electronics; put it in ON.",
+        "RIGHT JOIN suppliers s ON s.supplier_id = p.supplier_id AND p.category = 'Electronics' ... COUNT(p.product_id)"
+      ],
+      "why": "Same trap as LEFT JOIN, mirrored: a WHERE on the unprotected table quietly turns an outer join into an inner join.",
+      "recall": {
+        "q": "In `a RIGHT JOIN b`, where does a filter on table a belong if all rows of b must survive?",
+        "a": "In the ON clause."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "RIGHT JOIN"
+      },
+      "join_notes": "Only products with category 'Electronics' are allowed to match. Before grouping: 9 rows = 6 matched Electronics products (supplier 1: 2, supplier 4: 4 \u2014 product 22 is Electronics but has no supplier) + 3 NULL-padded rows for suppliers 2, 3 and 5. Result: 5 rows, three with electronics_count 0. Moving p.category = 'Electronics' to WHERE would return only 2 rows (suppliers 1 and 4).",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name",
+        "electronics_count"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 6,
+      "title": "Lines sold vs. lines returned per product",
+      "question": "Quality wants, per sold product, how many order lines were sold, how many were returned and the total refunded.",
+      "tables": [
+        "returns",
+        "order_items"
+      ],
+      "prompt": "Write FROM returns ... RIGHT JOIN order_items. Return product_id, lines_sold (number of order lines, any status), lines_returned (number of those lines with a return) and total_refunded (SUM of refund_amount rounded to 2 decimals; 0 when none), one row per product that appears in order_items.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Every order line must survive; returns is optional \u2192 returns first, order_items second, RIGHT JOIN.",
+        "COUNT(r.return_id) counts only lines that matched a return.",
+        "FROM returns r RIGHT JOIN order_items oi ON oi.order_item_id = r.order_item_id GROUP BY oi.product_id"
+      ],
+      "why": "Return rates need both numerator and denominator in one pass; an INNER JOIN would leave only returned lines and a 100% return rate.",
+      "recall": {
+        "q": "What would an INNER JOIN between returns and order_items do to lines_sold?",
+        "a": "It would only keep the 10 returned lines, so lines_sold would equal lines_returned."
+      },
+      "join_plan": {
+        "left_table": "returns",
+        "right_table": "order_items",
+        "shared_key": "order_item_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "RIGHT JOIN"
+      },
+      "join_notes": "returns 10, order_items 150. The RIGHT JOIN keeps all 150 lines: 10 match a return, 140 are NULL-padded on the returns side. No multiplication, because each line has at most one return. Grouped: 22 rows (the 22 products ever sold; 23\u201325 never appear in order_items). lines_returned totals 10 and total_refunded totals 690.80; most products show 0 returned and 0.00 refunded \u2014 those zeros come from NULL-padded rows.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "lines_sold",
+        "lines_returned",
+        "total_refunded"
+      ],
+      "expected_row_count": 22
+    }
+  ],
+  "worked_example": {
+    "question": "List every supplier with each of its products, written with RIGHT JOIN.",
+    "sql": "SELECT s.supplier_id,\n       s.supplier_name,\n       p.product_name\nFROM products AS p\nRIGHT JOIN suppliers AS s ON s.supplier_id = p.supplier_id\nORDER BY s.supplier_id DESC, p.product_name\nLIMIT 5;",
+    "explanation": "suppliers is written second, so it is the right table and every supplier survives. Andes Trading (supplier 5) has no products: its product_name is NULL. Swap the tables and use LEFT JOIN for the same result.",
+    "columns": [
+      "supplier_id",
+      "supplier_name",
+      "product_name"
+    ],
+    "rows": [
+      [
+        5,
+        "Andes Trading",
+        null
+      ],
+      [
+        4,
+        "Sakura Imports",
+        "27in Monitor"
+      ],
+      [
+        4,
+        "Sakura Imports",
+        "Adjustable Dumbbells"
+      ],
+      [
+        4,
+        "Sakura Imports",
+        "Noise-Cancelling Headphones"
+      ],
+      [
+        4,
+        "Sakura Imports",
+        "Smart Watch"
+      ]
+    ]
+  },
+  "recipe": "**The join recipe \u2014 do it in this order, every time, before typing SQL**\n\n1. **Pick the driving table.** Which table's rows is the answer *about*? (\"every customer\u2026\", \"each order line\u2026\")\n   That table goes first, after `FROM` \u2014 it is the **left table**.\n2. **Name the right table(s) and the shared key.** What column links them? Is it PK \u2192 FK (one-to-many) or\n   one-to-one? Which side is the \"many\" side?\n3. **Ask: \"must every row of the left table survive, even with no match?\"**\n   - no \u2192 `INNER JOIN` (unmatched rows silently disappear)\n   - yes \u2192 `LEFT JOIN` (unmatched rows stay, right-side columns become NULL)\n   - rows from *both* sides must survive \u2192 `FULL OUTER JOIN`\n4. **Predict the row count before you run it.** Count the inputs (`SELECT COUNT(*) \u2026`), think about\n   matches per row (0, 1 or many), write your guess down \u2014 then run and compare. A surprise means\n   you misunderstood the grain, the key or the data.\n\n**RIGHT JOIN = LEFT JOIN with the tables written the other way round.**\nThe **left table is always the one written first** (after FROM); the right table is the one after JOIN.\nRIGHT JOIN keeps **every row of the right table** and NULL-pads the left table's columns.\n\n```sql\n-- these two return the same rows:\nSELECT s.supplier_name, p.product_name\nFROM   products AS p                -- left table (written first)\nRIGHT JOIN suppliers AS s           -- right table: every supplier survives\n        ON s.supplier_id = p.supplier_id;\n\nSELECT s.supplier_name, p.product_name\nFROM   suppliers AS s\nLEFT JOIN products AS p ON p.supplier_id = s.supplier_id;\n```\n\nFor RIGHT JOIN, ask the recipe question about the **right** table: \"must every row of the right table survive?\"\n- Filters on the protected (right) table \u2192 WHERE. Filters on the left (NULL-padded) table \u2192 ON.\n- Anti-join: `FROM a RIGHT JOIN b ON \u2026 WHERE a.key IS NULL` \u2192 rows of b with no match in a.\n- Style tip: in your own code prefer LEFT JOIN with the driving table first; read RIGHT JOIN by mentally swapping.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Thinking 'left table' means the table on the left of the = sign. It is the table written first in FROM.",
+    "Grouping or selecting the key from the NULL-padded side (p.supplier_id instead of s.supplier_id).",
+    "Filtering the NULL-padded (left) table in WHERE, turning the RIGHT JOIN into an INNER JOIN.",
+    "Mixing LEFT and RIGHT JOINs in one query \u2014 hard to reason about; rewrite as all LEFT JOINs."
+  ],
+  "recall": [
+    [
+      "Which table does `FROM a RIGHT JOIN b` protect?",
+      "b, the right table (written second)."
+    ],
+    [
+      "Rewrite `FROM a RIGHT JOIN b ON \u2026` as a LEFT JOIN.",
+      "FROM b LEFT JOIN a ON \u2026"
+    ],
+    [
+      "In a RIGHT JOIN, which table's columns become NULL for unmatched rows?",
+      "The left table's (written first)."
+    ]
+  ],
+  "review_next": "Lesson 13 combines both directions: FULL OUTER JOIN keeps unmatched rows from both sides \u2014 perfect for reconciliations like 'customers without orders AND orders without customers'."
+}

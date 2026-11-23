@@ -1,0 +1,16 @@
+-- Lesson 1 · Exercise 1.2 — Customer contact sheet with clean column names
+--
+-- BUSINESS QUESTION
+--   Customer success wants a contact sheet whose headers read customer_name and
+--   email_address.
+-- TABLES: customers
+-- TASK
+--   Return all customers with columns customer_id, customer_name (from name) and
+--   email_address (from email). Keep NULL emails as they are.
+-- REQUIRED COLUMNS: customer_id, customer_name, email_address
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.2
+-- Grade it:              python3 sqlm.py submit 1.2
+--
+-- Write your query below (from memory!):
+

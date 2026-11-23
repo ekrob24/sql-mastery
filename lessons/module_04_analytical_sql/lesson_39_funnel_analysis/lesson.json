@@ -1,0 +1,318 @@
+{
+  "number": 39,
+  "slug": "funnel_analysis",
+  "title": "Funnel analysis",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Measure how many sessions reach each step of the purchase funnel, compute step-to-step and overall conversion, and slice the funnel by month and visitor type.",
+  "context": "The e-commerce team instrumented the website in 2025: every session logs visit \u2192 product_view \u2192 add_to_cart \u2192 checkout \u2192 purchase events in web_events. They want to know where shoppers drop off, whether it is getting better over the year, and whether logged-in customers convert better than anonymous visitors.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Sessions reaching each stage",
+      "question": "How many sessions reached each step of the funnel?",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Return stage_number (visit=1, product_view=2, add_to_cart=3, checkout=4, purchase=5), stage (the event_type text) and sessions (number of distinct sessions with that event). Order by stage_number.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "GROUP BY event_type and count distinct sessions.",
+        "Alphabetical order is wrong for a funnel \u2014 map each stage to a number with CASE.",
+        "SELECT CASE event_type WHEN 'visit' THEN 1 ... END AS stage_number, event_type AS stage, COUNT(DISTINCT session_id) AS sessions FROM web_events GROUP BY event_type ORDER BY stage_number;"
+      ],
+      "why": "A funnel is only readable in stage order. A stage-number column (or a small stage dimension table) is the standard fix.",
+      "recall": {
+        "q": "Why COUNT(DISTINCT session_id) and not COUNT(*) for funnel reach?",
+        "a": "Event logs contain repeats (refreshes, double-clicks); a funnel measures sessions, not clicks."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "stage_number",
+        "stage",
+        "sessions"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 2,
+      "title": "Furthest stage per session",
+      "question": "For session-level analysis, tag every session with the furthest funnel stage it reached.",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Return one row per session: session_id, session_month ('YYYY-MM' of the session's earliest event_time), visitor_type ('anonymous' if customer_id is NULL, else 'known') and furthest_stage (highest stage reached, as a number: visit=1, product_view=2, add_to_cart=3, checkout=4, purchase=5).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "GROUP BY session_id collapses events into sessions.",
+        "MAX over the stage number gives the furthest stage; MAX(customer_id) IS NULL means no event had a customer.",
+        "SELECT session_id, strftime('%Y-%m', MIN(event_time)), CASE WHEN MAX(customer_id) IS NULL THEN 'anonymous' ELSE 'known' END, MAX(CASE event_type WHEN 'visit' THEN 1 ... END) FROM web_events GROUP BY session_id;"
+      ],
+      "why": "The session-level table is the reusable building block: every funnel cut (by month, by visitor type, by device) starts from it.",
+      "recall": {
+        "q": "What grain should funnel analysis be built on?",
+        "a": "One row per session (or per user), with the stage flags/furthest stage as columns."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('month', MIN(event_time)) AS session_month; IFF(MAX(customer_id) IS NULL, 'anonymous', 'known').",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "session_id",
+        "session_month",
+        "visitor_type",
+        "furthest_stage"
+      ],
+      "expected_row_count": 80
+    },
+    {
+      "number": 3,
+      "title": "One-row funnel summary",
+      "question": "The weekly email needs the whole funnel in one line.",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Return a single row with visits, product_views, add_to_carts, checkouts, purchases (number of distinct sessions reaching each stage) and visit_to_purchase_pct (100.0 * purchases / visits, rounded to 1 decimal).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Pivot event types into session-level 0/1 flags, then sum the flags.",
+        "MAX(CASE WHEN event_type = 'checkout' THEN 1 ELSE 0 END) per session is 1 if the session ever checked out.",
+        "WITH s AS (SELECT session_id, MAX(CASE ...) AS visited, ... GROUP BY session_id) SELECT SUM(visited) AS visits, ..., ROUND(100.0*SUM(purchased)/SUM(visited),1) FROM s;"
+      ],
+      "why": "Flag-then-sum is a pivot (Lesson 37) applied to events; it makes every ratio a simple division of two columns.",
+      "recall": {
+        "q": "How do you turn many event rows into one 0/1 flag per session?",
+        "a": "GROUP BY session_id with MAX(CASE WHEN event_type = 'x' THEN 1 ELSE 0 END)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "COUNT(DISTINCT IFF(event_type = 'purchase', session_id, NULL)) AS purchases, or COUNT_IF on a session-level flag.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "visits",
+        "product_views",
+        "add_to_carts",
+        "checkouts",
+        "purchases",
+        "visit_to_purchase_pct"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "Step conversion and drop-off",
+      "question": "Where is the biggest leak in the funnel?",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Return stage_number (visit=1 \u2026 purchase=5), stage, sessions (distinct sessions reaching the stage), pct_of_previous (100.0 * sessions / sessions of the previous stage, rounded to 1 decimal; NULL for visit) and pct_of_visits (100.0 * sessions / visit sessions, rounded to 1 decimal). Order by stage_number.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Start from the stage counts of 39.1 (as a CTE).",
+        "Previous stage = LAG(sessions) OVER (ORDER BY stage_number); visits = FIRST_VALUE(sessions) OVER (ORDER BY stage_number).",
+        "ROUND(100.0 * sessions / LAG(sessions) OVER (ORDER BY stage_number), 1) AS pct_of_previous, ROUND(100.0 * sessions / FIRST_VALUE(sessions) OVER (ORDER BY stage_number), 1) AS pct_of_visits"
+      ],
+      "why": "Step conversion pinpoints the leak (here: product page \u2192 cart); overall conversion tells you the size of the prize.",
+      "recall": {
+        "q": "What's the difference between step conversion and overall conversion?",
+        "a": "Step: stage \u00f7 previous stage (where people drop). Overall: stage \u00f7 first stage (cumulative yield)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical windows work in Snowflake; DIV0(sessions, LAG(sessions) OVER (ORDER BY stage_number)) avoids zero-division errors.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "stage_number",
+        "stage",
+        "sessions",
+        "pct_of_previous",
+        "pct_of_visits"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Monthly funnel trend",
+      "question": "Is conversion improving over the year?",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Session month = 'YYYY-MM' of the session's earliest event_time. For each month with sessions, return session_month, visits (sessions with a visit), add_to_carts, purchases (sessions reaching those stages), cart_rate_pct (100.0 * add_to_carts / visits) and purchase_rate_pct (100.0 * purchases / visits), both rounded to 1 decimal. Order by session_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Add session_month to the session-level CTE, then GROUP BY it.",
+        "Assign the month per session (MIN(event_time)), not per event \u2014 otherwise a session crossing midnight on the last day of a month could be split.",
+        "WITH s AS (SELECT session_id, strftime('%Y-%m', MIN(event_time)) AS session_month, MAX(CASE ...) AS visited, ... GROUP BY session_id) SELECT session_month, SUM(...), ... GROUP BY session_month ORDER BY session_month;"
+      ],
+      "why": "Trend lines of conversion rates are how teams judge site changes. Note September has no sessions at all \u2014 a dashboard would need a month spine to show it as a gap rather than skip it.",
+      "recall": {
+        "q": "Why attribute a session to a month using the session's first event instead of each event's own month?",
+        "a": "So each session lands in exactly one month; events of one session can straddle a month boundary."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('month', MIN(event_time)) AS session_month ... GROUP BY session_month.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "session_month",
+        "visits",
+        "add_to_carts",
+        "purchases",
+        "cart_rate_pct",
+        "purchase_rate_pct"
+      ],
+      "expected_row_count": 11
+    },
+    {
+      "number": 6,
+      "title": "Known vs anonymous visitors",
+      "question": "Do logged-in customers convert better than anonymous visitors?",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "A session is 'anonymous' if none of its events has a customer_id, else 'known'. Return visitor_type, sessions (distinct sessions), product_view_sessions, add_to_cart_sessions, purchase_sessions (sessions reaching those stages) and purchase_rate_pct (100.0 * purchase_sessions / sessions, rounded to 1 decimal). Order by visitor_type.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Decide visitor_type per session in the session CTE (MAX(customer_id) IS NULL).",
+        "Then GROUP BY visitor_type and sum the flags.",
+        "WITH s AS (SELECT session_id, CASE WHEN MAX(customer_id) IS NULL THEN 'anonymous' ELSE 'known' END AS visitor_type, MAX(CASE ...) ... GROUP BY session_id) SELECT visitor_type, COUNT(*), SUM(viewed), SUM(carted), SUM(purchased), ROUND(...) FROM s GROUP BY visitor_type ORDER BY visitor_type;"
+      ],
+      "why": "Segmenting a funnel often explains a conversion change (e.g. a traffic mix shift toward anonymous visitors). Watch sample sizes: 4 anonymous sessions is not a trend.",
+      "recall": {
+        "q": "Why classify visitor type at session level rather than event level?",
+        "a": "A session could log in midway; classifying per event would split one session across both groups."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "IFF(MAX(customer_id) IS NULL, 'anonymous', 'known') AS visitor_type; COUNT_IF(purchased = 1).",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "visitor_type",
+        "sessions",
+        "product_view_sessions",
+        "add_to_cart_sessions",
+        "purchase_sessions",
+        "purchase_rate_pct"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 7,
+      "title": "Abandoned carts to retarget",
+      "question": "CRM wants a list of known customers who added to cart but never purchased in that session, to send a reminder.",
+      "tables": [
+        "web_events",
+        "customers"
+      ],
+      "prompt": "Find sessions with an add_to_cart event but no purchase event, where the session has a known customer. Return session_id, customer_id, customer_name (customers.name), product_id (the product on the add_to_cart event) and cart_time (event_time of the add_to_cart event). Order by cart_time, session_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Start from add_to_cart events; exclude sessions that have a purchase.",
+        "NOT EXISTS (SELECT 1 FROM web_events p WHERE p.session_id = e.session_id AND p.event_type = 'purchase')",
+        "SELECT e.session_id, e.customer_id, c.name AS customer_name, e.product_id, e.event_time AS cart_time FROM web_events e JOIN customers c ON ... WHERE e.event_type = 'add_to_cart' AND NOT EXISTS (...) ORDER BY cart_time, e.session_id;"
+      ],
+      "why": "Funnel analysis becomes action when the drop-off stage turns into a target list. The INNER JOIN to customers keeps only contactable, known customers.",
+      "recall": {
+        "q": "Which pattern finds 'did A but not B' within the same session?",
+        "a": "An anti-join: NOT EXISTS (or LEFT JOIN ... WHERE b.key IS NULL) on the session key."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same NOT EXISTS; or GROUP BY session_id HAVING COUNT_IF(event_type = 'add_to_cart') > 0 AND COUNT_IF(event_type = 'purchase') = 0.",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "session_id",
+        "customer_id",
+        "customer_name",
+        "product_id",
+        "cart_time"
+      ],
+      "expected_row_count": 13
+    }
+  ],
+  "worked_example": {
+    "question": "How many events of each type were logged, and in how many distinct sessions?",
+    "sql": "SELECT event_type,\n       COUNT(*) AS events,\n       COUNT(DISTINCT session_id) AS sessions\nFROM web_events\nGROUP BY event_type\nORDER BY sessions DESC;",
+    "explanation": "events = sessions for every type, confirming one event per stage per session in this data. Still, funnel queries should count DISTINCT sessions \u2014 a double-click on 'add to cart' must not count as two carts.",
+    "columns": [
+      "event_type",
+      "events",
+      "sessions"
+    ],
+    "rows": [
+      [
+        "visit",
+        80,
+        80
+      ],
+      [
+        "product_view",
+        68,
+        68
+      ],
+      [
+        "add_to_cart",
+        33,
+        33
+      ],
+      [
+        "checkout",
+        24,
+        24
+      ],
+      [
+        "purchase",
+        20,
+        20
+      ]
+    ]
+  },
+  "recipe": "**Recipe: session funnel in 4 moves**\n\n1. **Grain = session.** Collapse events to one row per session with a 0/1 flag per stage:\n   `MAX(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) AS carted`.\n2. **Reach per stage** = `SUM(flag)` (or `COUNT(DISTINCT CASE WHEN event_type = ... THEN session_id END)`).\n3. **Conversion:** step conversion = stage / previous stage; overall = stage / visits.\n   Use a stage-number column so you can `ORDER BY` stages and use `LAG` to get the previous stage.\n4. **Slice:** add a dimension (session month, anonymous vs known) to the session-level CTE and GROUP BY it.\n\n```sql\nWITH sessions AS (\n    SELECT session_id,\n           MAX(customer_id) IS NULL AS is_anonymous,\n           MAX(CASE WHEN event_type = 'visit'    THEN 1 ELSE 0 END) AS visited,\n           MAX(CASE WHEN event_type = 'purchase' THEN 1 ELSE 0 END) AS purchased\n    FROM web_events\n    GROUP BY session_id\n)\nSELECT SUM(visited) AS visits, SUM(purchased) AS purchases,\n       ROUND(100.0 * SUM(purchased) / SUM(visited), 1) AS conversion_pct\nFROM sessions;\n```\n\n**Data facts:** 80 sessions, all in 2025; each stage appears at most once per session and stages are never\nskipped here \u2014 but real event data has duplicates and skipped steps, so always collapse with MAX/COUNT DISTINCT.\nSession month = month of the session's `visit` event (`MIN(event_time)`); anonymous = `customer_id IS NULL`.",
+  "snowflake_notes": "Snowflake extras for funnels:\n\n- `COUNT_IF(event_type = 'purchase')`, `MAX(IFF(event_type = 'purchase', 1, 0))`, `BOOLOR_AGG(event_type = 'purchase')`.\n- `DATE_TRUNC('month', MIN(event_time))` for the session month; `DATEDIFF('minute', visit_time, purchase_time)` for time-to-convert.\n- Ordered funnels (step B must happen *after* step A) are elegantly expressed with `MATCH_RECOGNIZE`:\n\n```sql\nSELECT * FROM web_events\nMATCH_RECOGNIZE (\n    PARTITION BY session_id ORDER BY event_time\n    MEASURES MATCH_NUMBER() AS m\n    PATTERN (v pv+ c)\n    DEFINE v AS event_type = 'visit', pv AS event_type = 'product_view', c AS event_type = 'add_to_cart'\n);\n```\n\n- Unpivot the one-row funnel into stage rows with `UNPIVOT (sessions FOR stage IN (visits, product_views, ...))`.\n- `RATIO_TO_REPORT` doesn't help for step conversion \u2014 use `LAG(sessions) OVER (ORDER BY stage_number)` as in SQLite.",
+  "common_mistakes": [
+    "Counting events instead of distinct sessions, so repeats inflate a stage.",
+    "Ordering stages alphabetically (add_to_cart, checkout, product_view, purchase, visit).",
+    "Dividing by the wrong base: step conversion uses the previous stage, overall conversion uses visits.",
+    "Classifying sessions (month, visitor type) at event level, splitting one session across groups.",
+    "Integer division: 100 * 20 / 80 is fine, but 20 / 80 * 100 is 0 in SQLite \u2014 always start with 100.0."
+  ],
+  "recall": [
+    [
+      "What's the standard grain for a funnel, and how do you get to it from an event log?",
+      "One row per session: GROUP BY session_id with MAX(CASE WHEN event_type = ... THEN 1 ELSE 0 END) flags."
+    ],
+    [
+      "How do you get the previous stage's count for step conversion?",
+      "LAG(sessions) OVER (ORDER BY stage_number) on a stage-level result."
+    ],
+    [
+      "How do you list sessions that carted but didn't purchase?",
+      "An anti-join: add_to_cart events WHERE NOT EXISTS a purchase event with the same session_id."
+    ]
+  ],
+  "review_next": "Next, Lesson 40 closes the module with revenue and margin analysis. Re-run 39.4 and say in one sentence which step loses the most sessions."
+}

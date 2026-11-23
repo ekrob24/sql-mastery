@@ -1,0 +1,16 @@
+-- Lesson 6 · Exercise 6.1 — Electronics price spread
+--
+-- BUSINESS QUESTION
+--   How wide is the price range in Electronics?
+-- TABLES: products
+-- TASK
+--   For products with category = 'Electronics', return one row with columns product_count,
+--   cheapest (MIN list_price), most_expensive (MAX list_price) and price_spread (most
+--   expensive minus cheapest).
+-- REQUIRED COLUMNS: product_count, cheapest, most_expensive, price_spread
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.1
+-- Grade it:              python3 sqlm.py submit 6.1
+--
+-- Write your query below (from memory!):
+

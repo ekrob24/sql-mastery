@@ -1,0 +1,3 @@
+relationship,child_id,missing_parent_id
+orders.customer_id,31,99
+products.supplier_id,21,9

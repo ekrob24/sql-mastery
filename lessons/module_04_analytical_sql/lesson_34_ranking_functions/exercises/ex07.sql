@@ -1,0 +1,19 @@
+-- Lesson 34 · Exercise 34.7 — Days between first and second order
+--
+-- BUSINESS QUESTION
+--   Retention team: for customers who came back, how many days passed between their first
+--   and second valid order?
+-- TABLES: orders
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'). Number each
+--   customer's valid orders with ROW_NUMBER by order_date, then order_id. For customer_ids
+--   (from orders, including 99 if applicable) with at least 2 valid orders, return
+--   customer_id, first_order_date, second_order_date and days_between (integer days from
+--   first to second order).
+-- REQUIRED COLUMNS: customer_id, first_order_date, second_order_date, days_between
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.7
+-- Grade it:              python3 sqlm.py submit 34.7
+--
+-- Write your query below (from memory!):
+

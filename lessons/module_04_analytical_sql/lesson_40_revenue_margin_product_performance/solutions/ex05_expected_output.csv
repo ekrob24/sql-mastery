@@ -1,0 +1,23 @@
+product_id,product_name,gross_margin,pct_of_total_margin,cumulative_pct
+4,Noise-Cancelling Headphones,849.31,19.3,19.3
+19,Adjustable Dumbbells,835.24,19.0,38.3
+9,Throw Blanket,396.58,9.0,47.3
+5,27in Monitor,313.32,7.1,54.4
+17,The Pragmatic Warehouse,271.52,6.2,60.6
+15,SQL for Analysts,216.23,4.9,65.5
+2,Mechanical Keyboard,181.36,4.1,69.6
+6,Chef Knife,156.45,3.6,73.2
+20,Mystery Gift Box,138.35,3.1,76.3
+11,Running Shoes,130.92,3.0,79.3
+10,Desk Lamp,120.5,2.7,82.0
+7,Cast Iron Skillet,113.36,2.6,84.6
+12,Rain Jacket,112.93,2.6,87.2
+16,Data Storytelling,98.91,2.2,89.4
+1,Wireless Mouse,87.07,2.0,91.4
+3,USB-C Hub,85.13,1.9,93.3
+18,Yoga Mat,76.52,1.7,95.1
+8,French Press,71.7,1.6,96.7
+22,Phone Stand,50.49,1.1,97.8
+21,Water Bottle,40.14,0.9,98.8
+14,Baseball Cap,36.74,0.8,99.6
+13,Wool Socks (3-pack),17.84,0.4,100.0

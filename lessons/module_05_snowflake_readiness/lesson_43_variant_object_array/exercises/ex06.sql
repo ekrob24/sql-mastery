@@ -1,0 +1,18 @@
+-- Lesson 43 · Exercise 43.6 — Nest an array inside an object
+--
+-- BUSINESS QUESTION
+--   Rebuild compact order documents for customer 1 from the clean tables, so they can be
+--   diffed against the raw feed.
+-- TABLES: orders, order_items
+-- TASK
+--   For each order of customer_id 1 that has at least one line, return order_id and
+--   order_doc = json_object('order_id', order_id, 'status', order_status, 'product_ids',
+--   <JSON array of the order's product_id values ordered by order_item_id>) — keys exactly
+--   in that order.
+-- REQUIRED COLUMNS: order_id, order_doc
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.6
+-- Grade it:              python3 sqlm.py submit 43.6
+--
+-- Write your query below (from memory!):
+

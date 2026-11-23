@@ -1,0 +1,19 @@
+-- Lesson 25 · Exercise 25.4 — Sales and refunds ledger by year
+--
+-- BUSINESS QUESTION
+--   Accounting wants sales and refunds as separate ledger lines per calendar year.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Return activity_year, activity_type and amount. Stack (UNION ALL) two summaries:
+--   activity_type 'sale' with amount = gross revenue = SUM(order_items.quantity *
+--   order_items.unit_price) over the lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), by year of
+--   order_date; and activity_type 'refund' with amount = -SUM(refund_amount) (negative),
+--   by year of return_date. Round amount to 2 decimals.
+-- REQUIRED COLUMNS: activity_year, activity_type, amount
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.4
+-- Grade it:              python3 sqlm.py submit 25.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,9 @@
+check_name,failing_rows,status
+orders_customer_fk,1,FAIL
+products_supplier_fk,1,FAIL
+customers_email_not_null,3,FAIL
+order_items_no_duplicates,2,FAIL
+orders_valid_status,0,PASS
+orders_have_items,1,FAIL
+refund_not_above_line,0,PASS
+order_date_in_range,0,PASS

@@ -1,0 +1,21 @@
+-- Lesson 33 · Exercise 33.6 — Centered average and deviation from trend
+--
+-- BUSINESS QUESTION
+--   Analysts want to spot unusual months: compare each month to the average of itself and
+--   its two neighbours.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Compute centered_avg_3m = average gross_revenue of the previous, current and
+--   next month rows. Return order_month ('YYYY-MM'), gross_revenue, centered_avg_3m and
+--   deviation (gross_revenue − centered_avg_3m), all rounded to 2 decimals, only for
+--   months whose centered window has all 3 months (i.e. exclude the first and last month).
+--   Ordered by order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, centered_avg_3m, deviation
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.6
+-- Grade it:              python3 sqlm.py submit 33.6
+--
+-- Write your query below (from memory!):
+

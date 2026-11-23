@@ -1,0 +1,416 @@
+{
+  "number": 19,
+  "slug": "lateral_join",
+  "title": "LATERAL JOIN: correlated row-level subqueries",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Use LATERAL-style joins \u2014 a subquery or table function evaluated once per left row \u2014 for 'latest X per row', top-N per row, and exploding JSON arrays; write them in SQLite as correlated subqueries and json_each, and in Snowflake/Postgres with LATERAL.",
+  "context": "Account managers want, for each customer, their latest order and their most expensive purchase; the data team needs the raw JSON order feed exploded into one row per item. Each of these is 'for every row on the left, run a small query that depends on that row'.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Each customer's latest order date",
+      "question": "Account managers want every customer with the date of their most recent order.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return all 20 customers with columns customer_id, name and latest_order_date (the latest order_date of any of their orders, any status; NULL if none). Use a correlated subquery in the SELECT list.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The subquery must reference the outer row: WHERE o.customer_id = c.customer_id.",
+        "A scalar subquery returns one value per customer; MAX(order_date) makes it one value.",
+        "SELECT c.customer_id, c.name, (SELECT MAX(o.order_date) FROM orders o WHERE o.customer_id = c.customer_id) AS latest_order_date FROM customers c;"
+      ],
+      "why": "Correlated scalar subqueries are the most portable 'lateral' \u2014 they work in every database and can never fan out.",
+      "recall": {
+        "q": "What does a correlated scalar subquery return for a customer with no orders?",
+        "a": "NULL (or 0 for COUNT) \u2014 the outer row is always kept."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN LATERAL",
+          "LATERAL JOIN",
+          "CROSS JOIN LATERAL",
+          "LEFT JOIN"
+        ]
+      },
+      "join_notes": "The subquery runs once per customer (20 times) and always returns exactly one value, so the output is exactly 20 rows \u2014 customer 1's 9 orders collapse to one MAX. Customers 18, 19 and 20 have no orders \u2192 latest_order_date NULL. Orphan order 31 (customer 99) is never looked at, because the driving table is customers.",
+      "snowflake": "Snowflake runs the correlated scalar subquery as written. Lateral form: SELECT c.customer_id, c.name, lo.latest_order_date FROM customers c, LATERAL (SELECT MAX(order_date) AS latest_order_date FROM orders o WHERE o.customer_id = c.customer_id) lo; \u2014 an aggregate without GROUP BY always returns one row, so no customer is lost (Postgres: LEFT JOIN LATERAL (...) lo ON TRUE).",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "latest_order_date"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 2,
+      "title": "Latest order details (top-1 row per customer)",
+      "question": "For each customer, show their latest order's id, date and status.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return all 20 customers with columns customer_id, name, latest_order_id, latest_order_date and latest_order_status, taken from the customer's order with the latest order_date (ties broken by the higher order_id). NULLs for customers without orders.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "You need several columns from ONE row per customer. First find that row's order_id with a correlated subquery (ORDER BY \u2026 LIMIT 1).",
+        "Then join orders on order_id = (that subquery). Keep customers without orders.",
+        "LEFT JOIN orders o ON o.order_id = (SELECT o2.order_id FROM orders o2 WHERE o2.customer_id = c.customer_id ORDER BY o2.order_date DESC, o2.order_id DESC LIMIT 1)"
+      ],
+      "why": "'Pick one row per parent, then show several of its columns' is the bread-and-butter LATERAL use case. In SQLite, the 'find the id, then join on it' trick is the equivalent.",
+      "recall": {
+        "q": "Why join on the id returned by the subquery instead of writing three scalar subqueries?",
+        "a": "One subquery picks the row once, guaranteeing all columns come from the same order (and it's less code)."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN LATERAL",
+          "LATERAL JOIN",
+          "LEFT JOIN"
+        ]
+      },
+      "join_notes": "Because the ON condition compares order_id to a single id, each customer matches at most one order: 20 rows in, 20 out, despite 59 orders belonging to customers. Customers 18, 19, 20: subquery returns NULL, order_id = NULL matches nothing, the LEFT JOIN keeps them with three NULL columns. A plain inner join here would return 17 rows; joining on customer_id alone would return 62.",
+      "snowflake": "Postgres: LEFT JOIN LATERAL (SELECT order_id, order_date, order_status FROM orders o WHERE o.customer_id = c.customer_id ORDER BY order_date DESC, order_id DESC LIMIT 1) lo ON TRUE. Idiomatic Snowflake: LEFT JOIN (SELECT *, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) AS rn FROM orders QUALIFY rn = 1) lo ON lo.customer_id = c.customer_id.",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "latest_order_id",
+        "latest_order_date",
+        "latest_order_status"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 3,
+      "title": "Most expensive product each customer bought",
+      "question": "Sales wants each paying customer's single most expensive purchase.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "For customers with at least one valid order (order_status IN ('completed','shipped','returned')), return customer_id, name, product_name and unit_price of the order line with the highest unit_price among their valid orders (ties broken by the lower order_item_id).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Per customer, pick ONE order line: a correlated subquery over order_items JOIN orders, ordered by unit_price DESC, LIMIT 1.",
+        "Join order_items on order_item_id = (that subquery), then products for the name. Customers whose subquery finds nothing should disappear (inner).",
+        "FROM customers c JOIN order_items i ON i.order_item_id = (SELECT i2.order_item_id FROM order_items i2 JOIN orders o2 ON ... WHERE o2.customer_id = c.customer_id AND <valid> ORDER BY i2.unit_price DESC, i2.order_item_id LIMIT 1) JOIN products p ON ..."
+      ],
+      "why": "Top-1-per-group with a join inside the per-row query is where LATERAL shines: the subquery can be as complex as needed and still returns one row per customer.",
+      "recall": {
+        "q": "CROSS JOIN LATERAL vs LEFT JOIN LATERAL \u2014 which drops customers with no valid order?",
+        "a": "CROSS (inner) LATERAL drops them; LEFT JOIN LATERAL \u2026 ON TRUE keeps them with NULLs."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "order_items, orders, products",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "CROSS JOIN LATERAL",
+          "LATERAL JOIN",
+          "INNER JOIN LATERAL",
+          "INNER JOIN"
+        ]
+      },
+      "join_notes": "16 customers have a valid order; each gets exactly one line from the subquery, so the result is 16 rows even though they own 132 valid lines. Customers 16 (only a cancelled order), 18, 19 and 20 get NULL from the subquery and drop out of the inner join. Order 31's lines (customer 99) are never considered. Note several customers' top line is product 5 or 19 \u2014 and product 19 has a NULL list_price, which doesn't matter because we use the actual unit_price.",
+      "snowflake": "FROM customers c CROSS JOIN LATERAL (SELECT i.unit_price, i.product_id FROM order_items i JOIN orders o ON o.order_id = i.order_id WHERE o.customer_id = c.customer_id AND o.order_status IN ('completed','shipped','returned') ORDER BY i.unit_price DESC, i.order_item_id LIMIT 1) top JOIN products p ON p.product_id = top.product_id",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "product_name",
+        "unit_price"
+      ],
+      "expected_row_count": 16
+    },
+    {
+      "number": 4,
+      "title": "Two most recent valid orders per customer (top-N)",
+      "question": "The CRM card should show each customer's two most recent valid orders.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name, order_id and order_date for each customer's (up to) 2 most recent valid orders (order_status IN ('completed','shipped','returned')); ties on order_date broken by the higher order_id. Customers without a valid order don't appear.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A scalar subquery can't return 2 rows \u2014 but `IN (subquery \u2026 LIMIT 2)` can.",
+        "Correlate the subquery on the customer and filter it to valid orders.",
+        "JOIN orders o ON o.customer_id = c.customer_id AND o.order_id IN (SELECT o2.order_id FROM orders o2 WHERE o2.customer_id = c.customer_id AND <valid> ORDER BY o2.order_date DESC, o2.order_id DESC LIMIT 2)"
+      ],
+      "why": "Top-N per group ('last 3 tickets', 'top 5 products per store') is LATERAL's signature move. Window functions (Lesson 30) are the other standard solution.",
+      "recall": {
+        "q": "Why can't a scalar subquery in SELECT give you the top 2 orders?",
+        "a": "A scalar subquery must return a single value; top-N needs multiple rows per left row."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "CROSS JOIN LATERAL",
+          "LATERAL JOIN",
+          "INNER JOIN LATERAL",
+          "INNER JOIN"
+        ]
+      },
+      "join_notes": "Here the lateral side returns up to 2 rows per customer, so this join DOES multiply \u2014 but in a controlled way: 16 customers with valid orders \u2192 30 rows (14 customers contribute 2 rows, 2 customers have only one valid order). Customers 16, 18, 19, 20 have no valid order and drop out; cancelled and pending orders never appear.",
+      "snowflake": "FROM customers c CROSS JOIN LATERAL (SELECT order_id, order_date FROM orders o WHERE o.customer_id = c.customer_id AND o.order_status IN (...) ORDER BY order_date DESC, order_id DESC LIMIT 2) t",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "order_id",
+        "order_date"
+      ],
+      "expected_row_count": 30
+    },
+    {
+      "number": 5,
+      "title": "Explode the JSON order feed",
+      "question": "The data team needs the raw order event feed flattened to one row per ordered item.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Using json_each on payload's '$.items' array, return one row per item with columns event_id, order_id (payload $.order_id), product_id, qty and price (fields of each item).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_each(json_text, '$.path') is a table-valued function: one row per array element, with the element in its `value` column.",
+        "Put it in FROM after the table, comma-separated, referencing r.payload \u2014 that's a lateral join.",
+        "FROM raw_order_events r, json_each(r.payload, '$.items') j, and select j.value ->> '$.product_id' etc."
+      ],
+      "why": "Every event pipeline lands nested arrays. LATERAL FLATTEN (Snowflake) / json_each (SQLite) / UNNEST (Postgres, BigQuery) is how you turn them into relational rows.",
+      "recall": {
+        "q": "Why is json_each a lateral join?",
+        "a": "Its argument (r.payload) comes from the table to its left, so it's evaluated once per left row."
+      },
+      "join_plan": {
+        "left_table": "raw_order_events",
+        "right_table": [
+          "json_each items",
+          "items"
+        ],
+        "shared_key": [
+          "payload",
+          "items"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "CROSS JOIN LATERAL",
+          "LATERAL JOIN",
+          "INNER JOIN LATERAL"
+        ]
+      },
+      "join_notes": "60 events fan out to 150 item rows \u2014 one per array element, matching the 150 order_items rows (order 9's payload even contains the duplicated product 5 item twice). Event 60 has an empty items array, so json_each yields no rows for it and the implicit (inner) lateral join drops it: only 59 events appear. There is no ON condition \u2014 the 'key' is that each json_each call reads its own row's payload.",
+      "snowflake": "SELECT r.event_id, PARSE_JSON(r.payload):order_id::int AS order_id, f.value:product_id::int AS product_id, f.value:qty::int AS qty, f.value:price::number(10,2) AS price FROM raw_order_events r, LATERAL FLATTEN(input => PARSE_JSON(r.payload):items) f;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "product_id",
+        "qty",
+        "price"
+      ],
+      "expected_row_count": 150
+    },
+    {
+      "number": 6,
+      "title": "Item count per event, keeping empty orders",
+      "question": "Data quality wants every event with its item count and payload value \u2014 including events whose items array is empty.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return all 60 events with columns event_id, order_id (payload $.order_id), item_count (number of elements in $.items, 0 if empty) and payload_gross (SUM(qty * price) over the items, rounded to 2 decimals, 0 if no items). Use LEFT JOIN json_each(...) ON 1.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The comma (inner) form drops event 60. Use LEFT JOIN json_each(r.payload, '$.items') j ON 1.",
+        "GROUP BY r.event_id; count a json_each column (COUNT(j.key)) so empty arrays give 0.",
+        "SELECT r.event_id, r.payload ->> '$.order_id' AS order_id, COUNT(j.key) AS item_count, ROUND(COALESCE(SUM((j.value->>'$.qty') * (j.value->>'$.price')), 0), 2) AS payload_gross FROM raw_order_events r LEFT JOIN json_each(r.payload, '$.items') j ON 1 GROUP BY r.event_id;"
+      ],
+      "why": "Inner FLATTEN silently drops parents with empty arrays \u2014 in Snowflake you add OUTER => TRUE. Counting parents before and after flattening catches it.",
+      "recall": {
+        "q": "How do you keep rows with an empty array when flattening in Snowflake?",
+        "a": "LATERAL FLATTEN(input => \u2026, OUTER => TRUE) \u2014 the equivalent of LEFT JOIN LATERAL."
+      },
+      "join_plan": {
+        "left_table": "raw_order_events",
+        "right_table": [
+          "json_each items",
+          "items"
+        ],
+        "shared_key": [
+          "payload",
+          "items"
+        ],
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN LATERAL",
+          "LATERAL JOIN",
+          "LEFT JOIN"
+        ]
+      },
+      "join_notes": "LEFT JOIN json_each produces 151 rows: 150 item rows for 59 events plus 1 NULL-extended row for event 60 (order 60, empty items). GROUP BY brings it back to 60 rows. COUNT(j.key) ignores that NULL row \u2192 item_count 0; SUM over only NULLs is NULL \u2192 COALESCE to 0. COUNT(*) would have reported 1 item for order 60.",
+      "snowflake": "FROM raw_order_events r, LATERAL FLATTEN(input => PARSE_JSON(r.payload):items, OUTER => TRUE) f GROUP BY r.event_id",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "item_count",
+        "payload_gross"
+      ],
+      "expected_row_count": 60
+    },
+    {
+      "number": 7,
+      "title": "Count orders per tag",
+      "question": "Marketing tags some orders ('promo', 'gift', 'first_order') in the feed. How many orders carry each tag?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Explode payload's '$.tags' array with json_each and return tag and order_count (number of events carrying that tag), ordered by order_count descending, then tag.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Same lateral pattern as before, on '$.tags'. Each tag element is a plain string in t.value.",
+        "Events without a tags key yield no json_each rows \u2014 fine here.",
+        "SELECT t.value AS tag, COUNT(*) AS order_count FROM raw_order_events r, json_each(r.payload, '$.tags') t GROUP BY t.value ORDER BY order_count DESC, tag;"
+      ],
+      "why": "Optional arrays are common in event payloads. Knowing that an absent key simply produces zero lateral rows (not an error) tells you when you need the OUTER/LEFT form.",
+      "recall": {
+        "q": "What does json_each return when the path doesn't exist in the JSON?",
+        "a": "No rows \u2014 so that event disappears from an inner lateral join."
+      },
+      "join_plan": {
+        "left_table": "raw_order_events",
+        "right_table": [
+          "json_each tags",
+          "tags"
+        ],
+        "shared_key": [
+          "payload",
+          "tags"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "CROSS JOIN LATERAL",
+          "LATERAL JOIN",
+          "INNER JOIN LATERAL"
+        ]
+      },
+      "join_notes": "45 of the 60 events have no tags key at all; json_each returns zero rows for them, so they drop out. The 15 tagged events explode into 17 tag rows (events 20 and 44 carry two tags each, so they contribute two rows), grouped into 3 tags: promo 8, gift 6, first_order 3.",
+      "snowflake": "SELECT f.value::string AS tag, COUNT(*) AS order_count FROM raw_order_events r, LATERAL FLATTEN(input => PARSE_JSON(r.payload):tags) f GROUP BY 1 ORDER BY 2 DESC, 1;",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "tag",
+        "order_count"
+      ],
+      "expected_row_count": 3
+    }
+  ],
+  "worked_example": {
+    "question": "For each customer, how many orders and when was the first one?",
+    "sql": "SELECT c.customer_id,\n       c.name,\n       (SELECT COUNT(*)          FROM orders o WHERE o.customer_id = c.customer_id) AS order_count,\n       (SELECT MIN(o.order_date) FROM orders o WHERE o.customer_id = c.customer_id) AS first_order_date\nFROM customers AS c\nLIMIT 5;",
+    "explanation": "Each scalar subquery runs once per customer row and can see `c.customer_id` \u2014 that's the lateral idea. It returns exactly one value per customer, so no fan-out and no lost customers: customers without orders get 0 and NULL. In Postgres/Snowflake you could put both in one `LATERAL (SELECT COUNT(*), MIN(order_date) \u2026)` \u2014 an aggregate always returns one row.",
+    "columns": [
+      "customer_id",
+      "name",
+      "order_count",
+      "first_order_date"
+    ],
+    "rows": [
+      [
+        1,
+        "Alice Johnson",
+        9,
+        "2024-01-05"
+      ],
+      [
+        2,
+        "Brian Lee",
+        5,
+        "2024-01-29"
+      ],
+      [
+        3,
+        "John Smith",
+        5,
+        "2024-02-11"
+      ],
+      [
+        4,
+        "John Smith",
+        3,
+        "2024-03-31"
+      ],
+      [
+        5,
+        "Jon Smith",
+        2,
+        "2024-06-20"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: think LATERAL in 4 moves**\n\n1. Left table = the rows you're reporting on (customers, raw events).\n2. Write the **per-row question** as a subquery that references the left row\n   (`WHERE o.customer_id = c.customer_id ORDER BY o.order_date DESC LIMIT 1`).\n3. Decide **one value, one row, or many rows** per left row:\n   - one value \u2192 correlated scalar subquery in SELECT;\n   - one row with several columns \u2192 find its id with a correlated subquery, then join on that id;\n   - many rows (top-N, array elements) \u2192 correlated `IN (\u2026 LIMIT n)` or a table-valued function.\n4. Unmatched rows: CROSS/inner LATERAL drops left rows whose subquery returns nothing;\n   LEFT JOIN LATERAL \u2026 ON TRUE keeps them with NULLs. A scalar subquery always keeps them (NULL).\n\n**Postgres / Snowflake syntax** (not available in SQLite). Postgres supports both `CROSS JOIN LATERAL` and\n`LEFT JOIN LATERAL \u2026 ON TRUE`; Snowflake supports `LATERAL` inline views in the comma/inner form, and keeps\nunmatched rows with `FLATTEN(\u2026 OUTER => TRUE)` or a correlated scalar subquery:\n```sql\nSELECT c.customer_id, lo.order_id, lo.order_date\nFROM customers c\nLEFT JOIN LATERAL (\n    SELECT o.order_id, o.order_date\n    FROM orders o\n    WHERE o.customer_id = c.customer_id        -- refers to the left row!\n    ORDER BY o.order_date DESC\n    LIMIT 1\n) lo ON TRUE;\n\n-- Snowflake JSON: FLATTEN is a lateral table function\nSELECT r.event_id, f.value:product_id::int AS product_id\nFROM raw_order_events r,\n     LATERAL FLATTEN(input => PARSE_JSON(r.payload):items) f;\n```\n\n**SQLite equivalents:**\n```sql\n-- one value per row\nSELECT c.customer_id,\n       (SELECT MAX(o.order_date) FROM orders o WHERE o.customer_id = c.customer_id) AS latest\nFROM customers c;\n\n-- json_each IS lateral: it can reference r.payload from the table to its left\nSELECT r.event_id, j.value ->> '$.product_id' AS product_id\nFROM raw_order_events r, json_each(r.payload, '$.items') j;          -- inner (drops empty arrays)\n-- LEFT JOIN json_each(r.payload, '$.items') j ON 1                  -- keeps them\n```\n\nEach json_each row exposes `key` (array index), `value` (the element) and `type`.\n`j.value ->> '$.qty'` (or `json_extract(j.value, '$.qty')`) pulls a field out of the element.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Writing `LATERAL` in SQLite \u2014 it's not supported; use a correlated subquery or json_each.",
+    "Using a scalar subquery that can return more than one row (no aggregate / no LIMIT 1).",
+    "Pulling several columns with separate correlated subqueries that may pick different 'latest' rows on ties.",
+    "Forgetting that inner LATERAL / FLATTEN drops left rows with no result (empty arrays, customers without orders).",
+    "Using COUNT(*) after LEFT JOIN json_each \u2014 the NULL row counts as 1 item."
+  ],
+  "recall": [
+    [
+      "What makes a join 'lateral'?",
+      "The right side (subquery or table function) can reference columns of the left row and is evaluated per left row."
+    ],
+    [
+      "SQLite equivalent of LEFT JOIN LATERAL (\u2026 LIMIT 1) ON TRUE?",
+      "LEFT JOIN t ON t.id = (correlated subquery \u2026 ORDER BY \u2026 LIMIT 1), or a correlated scalar subquery in SELECT."
+    ],
+    [
+      "Snowflake's lateral function for JSON arrays?",
+      "LATERAL FLATTEN(input => \u2026), with OUTER => TRUE to keep empty arrays."
+    ],
+    [
+      "Does a correlated scalar subquery ever drop or multiply left rows?",
+      "No \u2014 it returns exactly one value (possibly NULL) per left row."
+    ]
+  ],
+  "review_next": "That completes Module 2. Before the join-mastery checkpoint (`python3 sqlm.py checkpoint`), re-do one exercise from each of Lessons 15-19 from memory, and for each say aloud which rows multiply, which go NULL and which disappear."
+}

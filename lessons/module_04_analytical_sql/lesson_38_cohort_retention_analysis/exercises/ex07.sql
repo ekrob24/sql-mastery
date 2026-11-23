@@ -1,0 +1,20 @@
+-- Lesson 38 · Exercise 38.7 — Signup cohorts: converted within 90 days
+--
+-- BUSINESS QUESTION
+--   Marketing measures acquisition by signup date. Of each quarter's signups, how many
+--   placed a valid order within 90 days?
+-- TABLES: customers, orders
+-- TASK
+--   Cohort = quarter of customers.signup_date (signup_quarter, 'YYYY-Qn'); include ALL
+--   customers, even those who never ordered. A customer converted if their first valid
+--   order (order_status IN ('completed','shipped','returned')) is on or before signup_date
+--   + 90 days (julianday(first_order) - julianday(signup_date) <= 90). Return
+--   signup_quarter, signups, converted_90d and conversion_pct (100.0 * converted_90d /
+--   signups, rounded to 1 decimal). Order by signup_quarter.
+-- REQUIRED COLUMNS: signup_quarter, signups, converted_90d, conversion_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 38.7
+-- Grade it:              python3 sqlm.py submit 38.7
+--
+-- Write your query below (from memory!):
+

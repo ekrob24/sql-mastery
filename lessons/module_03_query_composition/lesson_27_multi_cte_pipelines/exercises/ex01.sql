@@ -1,0 +1,19 @@
+-- Lesson 27 · Exercise 27.1 — Net revenue per customer
+--
+-- BUSINESS QUESTION
+--   Finance wants gross, refunds and net revenue for every customer who bought.
+-- TABLES: orders, order_items, returns, customers
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over lines of valid orders (valid orders =
+--   order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded); refunds = SUM(returns.refund_amount) for those same lines; net revenue =
+--   gross − refunds. Return customer_id, name, gross_revenue, refunds, net_revenue (all
+--   rounded to 2 decimals) for customers in the customers table that have valid order
+--   lines.
+-- REQUIRED COLUMNS: customer_id, name, gross_revenue, refunds, net_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.1
+-- Grade it:              python3 sqlm.py submit 27.1
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,8 @@
+order_id,order_date,order_status
+9,2024-04-10,cancelled
+22,2024-09-15,cancelled
+37,2025-03-18,cancelled
+48,2025-07-29,cancelled
+55,2025-10-23,cancelled
+59,2025-12-19,pending
+60,2025-12-27,pending

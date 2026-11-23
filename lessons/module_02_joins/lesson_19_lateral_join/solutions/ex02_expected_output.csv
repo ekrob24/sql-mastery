@@ -1,0 +1,21 @@
+customer_id,name,latest_order_id,latest_order_date,latest_order_status
+1,Alice Johnson,36,2025-03-04,returned
+2,Brian Lee,56,2025-11-08,completed
+3,John Smith,52,2025-09-21,completed
+4,John Smith,47,2025-07-24,completed
+5,Jon Smith,30,2024-12-21,completed
+6,Maria Garcia,42,2025-05-19,completed
+7,Chen Wei,57,2025-11-21,shipped
+8,Priya Patel,20,2024-08-28,completed
+9,David Kim,60,2025-12-27,pending
+10,Emma Brown,33,2025-02-04,completed
+11,Lucas Martin,43,2025-06-06,completed
+12,Sofia Rossi,58,2025-12-06,shipped
+13,Noah Wilson,59,2025-12-19,pending
+14,Olivia Davis,55,2025-10-23,cancelled
+15,Liam O'Brien,50,2025-08-25,completed
+16,Ava Thompson,48,2025-07-29,cancelled
+17,Ethan Clark,46,2025-07-10,completed
+18,Mia Lewis,,,
+19,alice johnson,,,
+20,Zoe Turner,,,

@@ -1,0 +1,17 @@
+-- Lesson 30 · Exercise 30.4 — Quarterly revenue
+--
+-- BUSINESS QUESTION
+--   The board pack reports revenue by quarter.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_quarter (text like '2025-Q1': year, '-Q', quarter number 1–4)
+--   and gross_revenue (rounded to 2 decimals), ordered by order_quarter.
+-- REQUIRED COLUMNS: order_quarter, gross_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.4
+-- Grade it:              python3 sqlm.py submit 30.4
+--
+-- Write your query below (from memory!):
+

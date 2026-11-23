@@ -1,0 +1,315 @@
+{
+  "number": 21,
+  "slug": "subqueries_in_where",
+  "title": "Subqueries in WHERE",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Filter rows using the result of another query: membership with IN / NOT IN and comparisons against a single computed value such as an average. Avoid the NOT IN + NULL trap.",
+  "context": "Many questions are really two questions: 'which products cost more than *the average*?', 'which customers are *among those who bought books*?'. A subquery lets you answer the inner question first and filter on it, without building a join.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Products priced above the catalog average",
+      "question": "Pricing wants the products whose list price is above the average list price.",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name, list_price for products whose list_price is greater than the average list_price of all products (AVG ignores the NULL price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "First run SELECT AVG(list_price) FROM products on its own.",
+        "Put that query in parentheses on the right side of >.",
+        "WHERE list_price > (SELECT AVG(list_price) FROM products)"
+      ],
+      "why": "'Above average' is a very common filter. A scalar subquery keeps the threshold live: when prices change, the cut-off moves with them.",
+      "recall": {
+        "q": "Why can't you write WHERE list_price > AVG(list_price)?",
+        "a": "WHERE is evaluated before aggregation; aggregates aren't allowed there. Compute the average in a subquery."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "list_price"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 2,
+      "title": "Customers with at least one valid order",
+      "question": "Marketing wants the list of customers who have actually bought something.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name of customers whose customer_id is IN the set of customer_ids having at least one valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded). Each customer appears once.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The inner question: which customer_ids have a valid order?",
+        "WHERE customer_id IN (SELECT customer_id FROM orders WHERE ...)",
+        "SELECT customer_id, name FROM customers WHERE customer_id IN (SELECT customer_id FROM orders WHERE order_status IN ('completed','shipped','returned'));"
+      ],
+      "why": "Unlike a join, IN never duplicates the outer row. Customer 1 has 8 valid orders but appears once. Customer 16 (only a cancelled order) is correctly excluded.",
+      "recall": {
+        "q": "Can a customer appear twice in the result of WHERE customer_id IN (subquery)?",
+        "a": "No. IN is a yes/no test per outer row, so duplicates in the subquery don't multiply rows."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name"
+      ],
+      "expected_row_count": 16
+    },
+    {
+      "number": 3,
+      "title": "Products that have never been sold",
+      "question": "Inventory wants to know which catalog items have never appeared on any order.",
+      "tables": [
+        "products",
+        "order_items"
+      ],
+      "prompt": "Return product_id, product_name for products whose product_id does NOT appear in order_items at all (any order status).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "NOT IN (subquery) keeps rows whose value is absent from the list.",
+        "order_items.product_id has no NULLs, so NOT IN is safe here (still, check it!).",
+        "WHERE product_id NOT IN (SELECT product_id FROM order_items)"
+      ],
+      "why": "Dead stock ties up cash. Before trusting NOT IN, always check whether the subquery column can be NULL. Here it can't, but the next exercise shows what happens when it can.",
+      "recall": {
+        "q": "What must you check before using NOT IN (subquery)?",
+        "a": "That the subquery column cannot return NULL. Otherwise the result is empty."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 4,
+      "title": "The NOT IN NULL trap: suppliers with no products",
+      "question": "Procurement asks: which suppliers currently supply none of our products?",
+      "tables": [
+        "suppliers",
+        "products"
+      ],
+      "prompt": "Return supplier_id, supplier_name for suppliers that have no product in products. Note: products.supplier_id is NULL for one product. Make sure your NOT IN still works (the correct answer is not empty).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Try the naive NOT IN first. It returns zero rows. Why?",
+        "x NOT IN (1, 2, NULL) evaluates to NULL (never TRUE) because x <> NULL is unknown.",
+        "Filter NULLs out inside the subquery: (SELECT supplier_id FROM products WHERE supplier_id IS NOT NULL)."
+      ],
+      "why": "This is one of the most common silent bugs in SQL: the query runs, returns nothing, and everyone concludes 'no such suppliers'. Supplier 5 (Andes Trading) is the real answer.",
+      "recall": {
+        "q": "Why does NOT IN return nothing when the subquery contains a NULL?",
+        "a": "NOT IN expands to a chain of <> comparisons ANDed together; the comparison with NULL is unknown, so the whole condition is never TRUE."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical behaviour in Snowflake. NOT EXISTS (Lesson 24) avoids the trap by construction.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Unusually large order lines",
+      "question": "Finance wants to review order lines worth more than the average line in valid orders.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Consider only lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded). Return order_item_id, order_id and line_total (quantity * unit_price) for lines whose line_total is greater than the average line_total over all lines of valid orders.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two conditions: the line belongs to a valid order, and its value beats the average.",
+        "Both the outer rows and the average must use the same population (valid orders only).",
+        "WHERE i.order_id IN (SELECT order_id FROM orders WHERE <valid>) AND i.quantity * i.unit_price > (SELECT AVG(i2.quantity * i2.unit_price) FROM order_items i2 JOIN orders o2 ... WHERE <valid>)"
+      ],
+      "why": "A benchmark is only fair if it's computed over the same population you compare against. Including cancelled orders in the average would move the threshold.",
+      "recall": {
+        "q": "How many rows and columns must a scalar subquery return?",
+        "a": "Exactly one row and one column (zero rows \u2192 NULL)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "line_total"
+      ],
+      "expected_row_count": 34
+    },
+    {
+      "number": 6,
+      "title": "Orders that contain a returned item",
+      "question": "Customer service wants every order that had at least one item returned, whatever its status.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Return order_id, order_date, order_status for orders that contain at least one order_item_id present in returns. Use nested IN subqueries.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Work outward: returned order_item_ids \u2192 their order_ids \u2192 those orders.",
+        "SELECT order_id FROM order_items WHERE order_item_id IN (SELECT order_item_id FROM returns)",
+        "SELECT order_id, order_date, order_status FROM orders WHERE order_id IN (<the query above>);"
+      ],
+      "why": "Only 3 orders have status 'returned', but 10 orders had items refunded. order_status is not a reliable source for return analysis; the returns table is.",
+      "recall": {
+        "q": "Why might nested IN be preferable to joining orders \u2192 order_items \u2192 returns here?",
+        "a": "IN never duplicates outer rows, so an order with two returned lines still appears once."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 7,
+      "title": "Who buys books?",
+      "question": "The Books category manager wants to email customers who bought a book in a valid order.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return customer_id, name, email of customers who have at least one valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) containing a product whose category is 'Books'. Use subqueries in WHERE (no joins in the outer query). Each customer once.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Chain of questions: Book product_ids \u2192 order_ids containing them \u2192 valid orders' customer_ids.",
+        "Innermost: SELECT product_id FROM products WHERE category = 'Books'.",
+        "customer_id IN (SELECT customer_id FROM orders WHERE <valid> AND order_id IN (SELECT order_id FROM order_items WHERE product_id IN (<Books products>)))"
+      ],
+      "why": "Building audience lists is a daily task for analysts in marketing. Nested IN reads like the business sentence and cannot create duplicate emails.",
+      "recall": {
+        "q": "In a nested IN chain, which subquery should you write and test first?",
+        "a": "The innermost one. Then wrap each layer and re-run."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "email"
+      ],
+      "expected_row_count": 12
+    }
+  ],
+  "worked_example": {
+    "question": "Which order lines were sold for more than the average unit price across all lines?",
+    "sql": "SELECT order_item_id, order_id, product_id, unit_price\nFROM order_items\nWHERE unit_price > (SELECT AVG(unit_price) FROM order_items)\nORDER BY unit_price DESC, order_item_id\nLIMIT 5;",
+    "explanation": "The inner query runs once and produces one number (\u2248 60.15). The outer query compares every line to it. You can't write `WHERE unit_price > AVG(unit_price)` because WHERE runs before aggregation. The subquery gets around that.",
+    "columns": [
+      "order_item_id",
+      "order_id",
+      "product_id",
+      "unit_price"
+    ],
+    "rows": [
+      [
+        21,
+        9,
+        5,
+        279.99
+      ],
+      [
+        123,
+        50,
+        5,
+        279.99
+      ],
+      [
+        149,
+        9,
+        5,
+        279.99
+      ],
+      [
+        138,
+        56,
+        5,
+        251.99
+      ],
+      [
+        32,
+        13,
+        5,
+        237.99
+      ]
+    ]
+  },
+  "recipe": "**Recipe: answer the inner question, then filter on it**\n\n1. Write the inner question as its own query and run it alone. Check it returns what you think.\n2. **One value (scalar subquery)** \u2192 compare with `=`, `>`, `<`:\n   ```sql\n   WHERE list_price > (SELECT AVG(list_price) FROM products)\n   ```\n   It must return exactly one row and one column (zero rows becomes NULL).\n3. **A list of values** \u2192 `IN (subquery)` / `NOT IN (subquery)`; the subquery returns one column:\n   ```sql\n   WHERE customer_id IN (SELECT customer_id FROM orders\n                         WHERE order_status IN ('completed','shipped','returned'))\n   ```\n4. **The NOT IN trap.** `x NOT IN (1, 2, NULL)` is never TRUE (it is `x<>1 AND x<>2 AND x<>NULL` \u2192 NULL).\n   If the subquery column can contain NULL, add `WHERE col IS NOT NULL` inside it, or use NOT EXISTS (Lesson 24).\n5. Subqueries can nest: IN inside IN walks a chain of tables without joining them (and without fan-out duplicates).",
+  "snowflake_notes": "- Subqueries in WHERE work the same way in Snowflake, including the NOT IN + NULL behaviour.\n- Snowflake raises an error if a scalar subquery returns more than one row (\"Single-row subquery returns\n  more than one row\"). SQLite quietly takes the first row, which hides the bug, so make sure your scalar subqueries really are scalar.",
+  "common_mistakes": [
+    "Using NOT IN against a column that can be NULL. The result is silently empty.",
+    "A 'scalar' subquery that returns several rows: SQLite picks one arbitrarily, Snowflake errors.",
+    "Comparing against a benchmark computed over a different population (e.g. average including cancelled orders).",
+    "Trying `WHERE x > AVG(x)`. Aggregates aren't allowed in WHERE; use a subquery.",
+    "Returning more than one column from an IN subquery (`IN (SELECT id, name ...)`) is an error."
+  ],
+  "recall": [
+    [
+      "What are the two main shapes of subquery in WHERE?",
+      "Scalar (one value, used with =, >, <) and list (one column, used with IN / NOT IN)."
+    ],
+    [
+      "Why is `x NOT IN (SELECT col ...)` dangerous?",
+      "If col contains any NULL, the predicate is never TRUE and you get no rows."
+    ],
+    [
+      "Does an IN subquery cause row duplication like a join can?",
+      "No. It's a membership test; each outer row is kept or dropped once."
+    ]
+  ],
+  "review_next": "Lesson 22 moves subqueries into FROM so you can aggregate first and filter afterwards. Re-do exercise 21.4 until the NULL trap is a reflex. You'll see the NOT EXISTS fix in Lesson 24."
+}

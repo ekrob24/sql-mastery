@@ -1,0 +1,18 @@
+-- Lesson 29 · Exercise 29.3 — Orders in the last 90 days
+--
+-- BUSINESS QUESTION
+--   Ops wants the recent order list: everything placed in the 90 days up to the reporting
+--   date, with how old each order is.
+-- TABLES: orders
+-- TASK
+--   As-of date is '2025-12-31'. Return order_id, order_date, order_status and days_ago
+--   (whole days between order_date and '2025-12-31', as an integer) for all orders (any
+--   status) with order_date >= date('2025-12-31', '-90 days') (i.e. on or after
+--   2025-10-02).
+-- REQUIRED COLUMNS: order_id, order_date, order_status, days_ago
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.3
+-- Grade it:              python3 sqlm.py submit 29.3
+--
+-- Write your query below (from memory!):
+

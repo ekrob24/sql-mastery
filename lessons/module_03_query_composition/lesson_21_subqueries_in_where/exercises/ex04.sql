@@ -1,0 +1,16 @@
+-- Lesson 21 · Exercise 21.4 — The NOT IN NULL trap: suppliers with no products
+--
+-- BUSINESS QUESTION
+--   Procurement asks: which suppliers currently supply none of our products?
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id, supplier_name for suppliers that have no product in products.
+--   Note: products.supplier_id is NULL for one product. Make sure your NOT IN still works
+--   (the correct answer is not empty).
+-- REQUIRED COLUMNS: supplier_id, supplier_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.4
+-- Grade it:              python3 sqlm.py submit 21.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 8 · Exercise 8.6 — Bulk-buy favourites
+--
+-- BUSINESS QUESTION
+--   Which products are regularly bought in bulk (3 or more units on a line)?
+-- TABLES: order_items
+-- TASK
+--   Consider only order lines with quantity of at least 3. Return product_id, bulk_lines
+--   (number of such lines) and bulk_units (SUM of quantity on those lines) for products
+--   with at least 3 bulk lines, sorted by bulk_lines descending, then product_id
+--   ascending.
+-- REQUIRED COLUMNS: product_id, bulk_lines, bulk_units
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 8.6
+-- Grade it:              python3 sqlm.py submit 8.6
+--
+-- Write your query below (from memory!):
+

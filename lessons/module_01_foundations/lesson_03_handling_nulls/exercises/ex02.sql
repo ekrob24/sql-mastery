@@ -1,0 +1,16 @@
+-- Lesson 3 · Exercise 3.2 — Mailing list with fallbacks
+--
+-- BUSINESS QUESTION
+--   Marketing wants a full customer list where blanks are replaced by readable labels.
+-- TABLES: customers
+-- TASK
+--   Return every customer with columns customer_id, name, contact_email (email, or the
+--   text 'no email on file' when email is NULL) and region_label (region, or 'Unassigned'
+--   when region is NULL).
+-- REQUIRED COLUMNS: customer_id, name, contact_email, region_label
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.2
+-- Grade it:              python3 sqlm.py submit 3.2
+--
+-- Write your query below (from memory!):
+

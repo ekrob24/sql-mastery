@@ -1,0 +1,18 @@
+customer_id,name,joined_rows,order_count
+1,Alice Johnson,22,9
+2,Brian Lee,11,5
+3,John Smith,15,5
+4,John Smith,7,3
+5,Jon Smith,4,2
+6,Maria Garcia,8,3
+7,Chen Wei,19,8
+8,Priya Patel,5,2
+9,David Kim,6,3
+10,Emma Brown,7,3
+11,Lucas Martin,10,4
+12,Sofia Rossi,9,2
+13,Noah Wilson,6,2
+14,Olivia Davis,12,4
+15,Liam O'Brien,4,2
+16,Ava Thompson,2,1
+17,Ethan Clark,2,1

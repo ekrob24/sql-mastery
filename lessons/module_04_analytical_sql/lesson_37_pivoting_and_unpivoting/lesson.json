@@ -1,0 +1,280 @@
+{
+  "number": 37,
+  "slug": "pivoting_and_unpivoting",
+  "title": "Pivoting and unpivoting",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Turn rows into columns with conditional aggregation (pivot) and columns back into rows with UNION ALL (unpivot) \u2014 and know Snowflake's PIVOT/UNPIVOT equivalents.",
+  "context": "Stakeholders think in spreadsheets: categories down the side, years or quarters across the top. Meanwhile BI tools and joins want long, tidy data. An analyst spends a surprising amount of time going back and forth between the two shapes.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Category \u00d7 year revenue grid",
+      "question": "Finance wants a simple grid: categories down the side, 2024 and 2025 revenue across the top.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Return category ('Uncategorized' when NULL), revenue_2024, revenue_2025 (revenue of orders dated in that year; 0 when none) and total_revenue (both years), all rounded to 2 decimals. One row per category.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Row key = category, column key = year, value = line revenue.",
+        "SUM(CASE WHEN strftime('%Y', o.order_date) = '2024' THEN oi.quantity*oi.unit_price ELSE 0 END)",
+        "Two CASE columns + a plain SUM for the total, GROUP BY COALESCE(p.category,'Uncategorized')."
+      ],
+      "why": "The 'crosstab' is the most requested report shape in business. Conditional aggregation works in every SQL dialect.",
+      "recall": {
+        "q": "In a pivot by conditional aggregation, what goes in GROUP BY?",
+        "a": "Only the row key(s); the column key lives inside the CASE expressions."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "PIVOT (SUM(revenue) FOR yr IN (2024, 2025)) \u2014 but total_revenue still needs a separate expression, e.g. revenue_2024 + revenue_2025 in the outer SELECT.",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "revenue_2024",
+        "revenue_2025",
+        "total_revenue"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 2,
+      "title": "Order status mix by year",
+      "question": "Ops wants to see how the order status mix changed between years.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Using ALL orders (every status), return order_year ('YYYY' text from order_date), completed, shipped, returned, cancelled, pending (number of orders with that status in that year; 0 when none) and total_orders. Order by order_year.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Counting is summing 1s: SUM(CASE WHEN status = 'x' THEN 1 ELSE 0 END).",
+        "Or in SQLite: COUNT(*) FILTER (WHERE order_status = 'completed').",
+        "Five CASE columns plus COUNT(*) AS total_orders, GROUP BY strftime('%Y', order_date) ORDER BY order_year."
+      ],
+      "why": "A status-by-period matrix makes operational shifts (more cancellations, stuck pending orders) visible at a glance.",
+      "recall": {
+        "q": "Why does SUM(CASE WHEN ... THEN 1 ELSE 0 END) give 0 rather than NULL for an empty cell?",
+        "a": "Because every row contributes a 0 when it doesn't match, so the sum over the group is 0 (not NULL)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "COUNT_IF(order_status = 'completed') AS completed, ... GROUP BY YEAR(order_date)",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "completed",
+        "shipped",
+        "returned",
+        "cancelled",
+        "pending",
+        "total_orders"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 3,
+      "title": "2025 quarterly revenue by category",
+      "question": "The category review needs 2025 revenue per quarter for each category.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Restrict to orders dated in 2025. Return category ('Uncategorized' when NULL), q1_revenue, q2_revenue, q3_revenue, q4_revenue (revenue of that calendar quarter, 0 when none, rounded to 2) \u2014 one row per category that had 2025 revenue. Order by category.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Filter the year in WHERE; split quarters inside CASE.",
+        "Quarter from month: strftime('%m', d) BETWEEN '01' AND '03' (or (month+2)/3 = 1).",
+        "Four SUM(CASE WHEN month BETWEEN .. THEN qty*price ELSE 0 END) columns, GROUP BY category, ORDER BY category."
+      ],
+      "why": "Filters that apply to every cell belong in WHERE; conditions that differ per column belong in CASE.",
+      "recall": {
+        "q": "Where should a filter common to all pivot columns go \u2014 WHERE or each CASE?",
+        "a": "WHERE: it's simpler, faster, and keeps rows that match no column out of the group entirely."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "PIVOT (SUM(revenue) FOR qtr IN (1, 2, 3, 4)) with qtr = QUARTER(order_date), filtered on YEAR(order_date) = 2025.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "q1_revenue",
+        "q2_revenue",
+        "q3_revenue",
+        "q4_revenue"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 4,
+      "title": "Regional growth table",
+      "question": "Sales leadership wants revenue by region for 2024 and 2025 with the growth rate.",
+      "tables": [
+        "orders",
+        "order_items",
+        "customers"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Attribute revenue to the customer's region (INNER JOIN customers, so the orphan order 31 is excluded; label NULL regions 'Unknown'). Return region, revenue_2024, revenue_2025 (rounded 2, 0 when none) and growth_pct (100.0 * (revenue_2025 - revenue_2024) / revenue_2024 using unrounded sums, rounded to 1 decimal; NULL when revenue_2024 is 0). Order by region.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Pivot in a CTE first, then compute growth from the pivoted columns.",
+        "NULLIF(rev_2024, 0) turns a zero denominator into NULL, so the division returns NULL instead of failing.",
+        "WITH pivoted AS (SELECT COALESCE(c.region,'Unknown') AS region, SUM(CASE ... '2024' ...) AS rev_2024, SUM(CASE ... '2025' ...) AS rev_2025 ... GROUP BY 1) SELECT region, ROUND(rev_2024,2), ROUND(rev_2025,2), ROUND(100.0*(rev_2025-rev_2024)/NULLIF(rev_2024,0),1) FROM pivoted ORDER BY region;"
+      ],
+      "why": "Pivot-then-compute is how growth tables, variance reports and budget-vs-actual sheets are built.",
+      "recall": {
+        "q": "How do you avoid divide-by-zero in a growth percentage?",
+        "a": "Divide by NULLIF(denominator, 0) (Snowflake also has DIV0 / DIV0NULL)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DIV0NULL(rev_2025 - rev_2024, rev_2024) * 100 returns 0 instead of NULL for zero denominators; pick deliberately.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "revenue_2024",
+        "revenue_2025",
+        "growth_pct"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Unpivot price and cost",
+      "question": "The pricing tool wants a long table: one row per product and price type.",
+      "tables": [
+        "products",
+        "product_costs"
+      ],
+      "prompt": "For products 1 to 5, unpivot the two price columns into rows. Return product_id, price_type (the text 'list_price' or 'unit_cost') and amount (products.list_price or product_costs.unit_cost). That is 2 rows per product. Order by product_id, then price_type.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Unpivot = one SELECT per column you turn into rows, stacked with UNION ALL.",
+        "Each SELECT emits the key, a literal label ('list_price') and the value.",
+        "SELECT product_id, 'list_price' AS price_type, list_price AS amount FROM products WHERE ... UNION ALL SELECT product_id, 'unit_cost', unit_cost FROM product_costs WHERE ... ORDER BY product_id, price_type;"
+      ],
+      "why": "Long ('tidy') data is what charting tools and joins want. ORDER BY on a UNION applies to the whole combined result.",
+      "recall": {
+        "q": "Why UNION ALL rather than UNION for an unpivot?",
+        "a": "UNION removes duplicate rows; two columns that happen to share a value for the same key would collapse into one row."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "WITH prices AS (SELECT p.product_id, p.list_price, pc.unit_cost FROM products p JOIN product_costs pc USING (product_id)) SELECT product_id, price_type, amount FROM prices UNPIVOT (amount FOR price_type IN (list_price, unit_cost)) \u2014 price_type comes back as upper-case 'LIST_PRICE'/'UNIT_COST'; also the two columns must share a data type.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "price_type",
+        "amount"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 6,
+      "title": "Budget vs actual (unpivot a wide sheet)",
+      "question": "Finance pasted its 2025 quarterly budget as a wide sheet. Compare it with actual revenue, quarter by quarter.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Start your query with this CTE (copy it):\nWITH budget(category, q1, q2, q3, q4) AS (VALUES ('Electronics', 600, 600, 700, 800), ('Home', 300, 300, 300, 400), ('Books', 150, 150, 150, 200))\nUnpivot it to (category, quarter, budget) with quarter = 1..4. Actual = 2025 revenue per category and calendar quarter (Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')).); 0 when there was none. Return category, quarter (integer 1\u20134), budget, actual (rounded 2) and variance (actual - budget, rounded 2) for the 12 budget rows. Order by category, quarter.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Three steps: unpivot the budget (UNION ALL of 4 SELECTs), aggregate actuals per category & quarter, join them.",
+        "Quarter number = (CAST(strftime('%m', order_date) AS INTEGER) + 2) / 3. LEFT JOIN from the budget so a quarter without sales still appears.",
+        "budget_long: SELECT category, 1 AS quarter, q1 AS budget FROM budget UNION ALL SELECT category, 2, q2 ... ; then budget_long LEFT JOIN actuals ON category AND quarter, COALESCE(actual, 0)."
+      ],
+      "why": "Spreadsheets arrive wide; databases join long. Unpivoting is the step that makes the budget joinable to actuals.",
+      "recall": {
+        "q": "Why must the budget be unpivoted before joining to actuals?",
+        "a": "Actuals are one row per (category, quarter); the budget has quarters as columns. You can only join on matching keys, so both need the long shape."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT category, CAST(REPLACE(qtr, 'Q', '') AS INT) AS quarter, budget FROM budget UNPIVOT (budget FOR qtr IN (q1, q2, q3, q4)); actual quarter = QUARTER(order_date).",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "quarter",
+        "budget",
+        "actual",
+        "variance"
+      ],
+      "expected_row_count": 12
+    }
+  ],
+  "worked_example": {
+    "question": "How many valid orders did we have per year and quarter, laid out as a year \u00d7 quarter grid?",
+    "sql": "SELECT strftime('%Y', order_date) AS order_year,\n       SUM(CASE WHEN strftime('%m', order_date) BETWEEN '01' AND '03' THEN 1 ELSE 0 END) AS q1_orders,\n       SUM(CASE WHEN strftime('%m', order_date) BETWEEN '04' AND '06' THEN 1 ELSE 0 END) AS q2_orders,\n       SUM(CASE WHEN strftime('%m', order_date) BETWEEN '07' AND '09' THEN 1 ELSE 0 END) AS q3_orders,\n       SUM(CASE WHEN strftime('%m', order_date) BETWEEN '10' AND '12' THEN 1 ELSE 0 END) AS q4_orders\nFROM orders\nWHERE order_status IN ('completed','shipped','returned')\nGROUP BY strftime('%Y', order_date)\nORDER BY order_year;",
+    "explanation": "Each CASE routes a row into exactly one quarter column; summing the 1s counts them. The row key (year) is the only GROUP BY column. strftime returns text, so the month comparison is a string comparison on zero-padded months \u2014 which works.",
+    "columns": [
+      "order_year",
+      "q1_orders",
+      "q2_orders",
+      "q3_orders",
+      "q4_orders"
+    ],
+    "rows": [
+      [
+        "2024",
+        8,
+        6,
+        6,
+        8
+      ],
+      [
+        "2025",
+        6,
+        8,
+        6,
+        5
+      ]
+    ]
+  },
+  "recipe": "**Recipe: pivot with conditional aggregation**\n\n1. Decide the **row key** (stays in GROUP BY), the **column key** (becomes column names) and the **value**.\n2. One output column per column-key value: `SUM(CASE WHEN key = 'X' THEN value ELSE 0 END) AS x_col`.\n   `ELSE 0` gives 0 for empty cells; omit it (\u2192 NULL) when \"no data\" must differ from \"zero\".\n3. `GROUP BY` the row key only.\n4. Counts: `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` or `COUNT(*) FILTER (WHERE ...)` (SQLite & Postgres).\n\n```sql\nSELECT category,\n       SUM(CASE WHEN yr = '2024' THEN revenue ELSE 0 END) AS revenue_2024,\n       SUM(CASE WHEN yr = '2025' THEN revenue ELSE 0 END) AS revenue_2025\nFROM   base\nGROUP  BY category;\n```\n\n**Recipe: unpivot with UNION ALL** \u2014 one SELECT per column, each emitting (key, 'column name', value):\n\n```sql\nSELECT category, '2024' AS yr, revenue_2024 AS revenue FROM wide\nUNION ALL\nSELECT category, '2025',       revenue_2025            FROM wide;\n```\n\nUse `UNION ALL`, not `UNION` \u2014 UNION would de-duplicate identical rows and silently drop data.",
+  "snowflake_notes": "Snowflake has native operators \u2014 handy, but the column list must be **static** (or use `ANY`):\n\n```sql\n-- PIVOT: rows \u2192 columns\nSELECT *\nFROM (SELECT COALESCE(p.category,'Uncategorized') AS category,\n             YEAR(o.order_date)               AS yr,\n             oi.quantity * oi.unit_price      AS revenue\n      FROM orders o JOIN order_items oi ON oi.order_id = o.order_id\n                    JOIN products p     ON p.product_id = oi.product_id\n      WHERE o.order_status IN ('completed','shipped','returned'))\nPIVOT (SUM(revenue) FOR yr IN (2024, 2025)) AS pv (category, revenue_2024, revenue_2025);\n-- Newer Snowflake: FOR yr IN (ANY ORDER BY yr), and DEFAULT ON NULL (0) to turn empty cells into 0.\n\n-- UNPIVOT: columns \u2192 rows (rows whose value is NULL are dropped unless INCLUDE NULLS)\nSELECT product_id, price_type, amount\nFROM prices UNPIVOT (amount FOR price_type IN (list_price, unit_cost));\n```\n\n- `IFF(cond, a, b)` is Snowflake's short CASE; `COUNT_IF(cond)` counts matching rows.\n- Conditional aggregation (`SUM(CASE ...)`) works identically in Snowflake and is often clearer than PIVOT\n  when you need several measures per cell or computed columns like growth %.\n- Note PIVOT groups by **every** non-pivoted column of its input \u2014 select only what you need in the subquery.",
+  "common_mistakes": [
+    "Putting the column key in GROUP BY \u2014 you get one row per (row key, column key), i.e. nothing pivoted.",
+    "Forgetting ELSE 0 and then being surprised by NULL cells (or vice versa: showing 0 where 'no data' was meant).",
+    "Using UNION instead of UNION ALL when unpivoting, silently dropping duplicate rows.",
+    "Comparing strftime text to numbers: strftime('%Y', d) = 2024 is false in SQLite \u2014 compare to '2024'.",
+    "Expecting Snowflake PIVOT to discover new values automatically: the IN list is static unless you use ANY."
+  ],
+  "recall": [
+    [
+      "Write the conditional-aggregation pattern for one pivot column.",
+      "SUM(CASE WHEN column_key = 'X' THEN value ELSE 0 END) AS x_col, with GROUP BY on the row key."
+    ],
+    [
+      "How do you unpivot three columns a, b, c in portable SQL?",
+      "Three SELECTs, each emitting key, a label literal and that column, combined with UNION ALL."
+    ],
+    [
+      "What does Snowflake's UNPIVOT do with NULL values by default?",
+      "It drops those rows (use INCLUDE NULLS to keep them)."
+    ]
+  ],
+  "review_next": "Next, Lesson 38 combines pivots with date math to build cohort retention tables. Re-do 37.6 in your head as a Snowflake UNPIVOT."
+}

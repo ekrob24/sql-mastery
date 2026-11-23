@@ -1,0 +1,23 @@
+-- Lesson 17 · Exercise 17.3 — Suppliers with no products
+--
+-- BUSINESS QUESTION
+--   Procurement wants to close supplier accounts that supply nothing in our catalog.
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id, supplier_name and country for suppliers that no product references
+--   via products.supplier_id.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, country
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.3
+-- Grade it:              python3 sqlm.py submit 17.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

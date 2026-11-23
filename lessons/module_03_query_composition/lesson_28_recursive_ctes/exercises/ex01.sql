@@ -1,0 +1,15 @@
+-- Lesson 28 · Exercise 28.1 — Count from 1 to 12
+--
+-- BUSINESS QUESTION
+--   You need a helper list of month numbers 1–12 for a report template.
+-- TABLES: categories
+-- TASK
+--   Using a recursive CTE (no tables needed), return one column month_number with the
+--   integers 1 through 12.
+-- REQUIRED COLUMNS: month_number
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 28.1
+-- Grade it:              python3 sqlm.py submit 28.1
+--
+-- Write your query below (from memory!):
+

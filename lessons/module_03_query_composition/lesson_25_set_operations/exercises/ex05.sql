@@ -1,0 +1,19 @@
+-- Lesson 25 · Exercise 25.5 — Net cash by year
+--
+-- BUSINESS QUESTION
+--   Now finance wants a single net number per year: sales minus refunds (cash basis).
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Return activity_year and net_amount, where net_amount = gross revenue =
+--   SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders
+--   (valid orders = order_status IN ('completed','shipped','returned'); cancelled and
+--   pending are excluded) (by order_date year) minus refund_amount (by return_date year),
+--   rounded to 2 decimals. Stack line-level sales and negative refunds with UNION ALL
+--   inside a derived table, then GROUP BY year.
+-- REQUIRED COLUMNS: activity_year, net_amount
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.5
+-- Grade it:              python3 sqlm.py submit 25.5
+--
+-- Write your query below (from memory!):
+

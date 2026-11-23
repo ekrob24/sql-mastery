@@ -1,0 +1,15 @@
+-- Lesson 49 · Exercise 49.2 — Completeness: NULL counts per column
+--
+-- BUSINESS QUESTION
+--   How complete is the customer table?
+-- TABLES: customers
+-- TASK
+--   Return column_name and null_count for the customers columns name, email, signup_date
+--   and region (one row per column, column_name exactly the column's name).
+-- REQUIRED COLUMNS: column_name, null_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.2
+-- Grade it:              python3 sqlm.py submit 49.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 40 · Exercise 40.6 — Yearly P&L after refunds
+--
+-- BUSINESS QUESTION
+--   The CFO wants a two-line P&L: 2024 vs 2025 revenue, refunds, cost and net margin.
+-- TABLES: orders, order_items, returns, product_costs
+-- TASK
+--   Valid orders only (order_status IN ('completed','shipped','returned')); attribute
+--   everything to the year of the ORDER date (not the return date). Return order_year
+--   ('YYYY'), revenue (SUM(quantity * unit_price)), refunds (SUM(refund_amount) of
+--   returned lines, 0 if none), cogs (SUM(quantity * unit_cost)), net_margin (revenue -
+--   refunds - cogs), all rounded to 2, and net_margin_pct (100.0 * net_margin / (revenue -
+--   refunds), rounded to 1 decimal). Order by order_year.
+-- REQUIRED COLUMNS: order_year, revenue, refunds, cogs, net_margin, net_margin_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 40.6
+-- Grade it:              python3 sqlm.py submit 40.6
+--
+-- Write your query below (from memory!):
+

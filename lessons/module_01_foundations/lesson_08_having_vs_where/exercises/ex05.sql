@@ -1,0 +1,16 @@
+-- Lesson 8 · Exercise 8.5 — Big orders
+--
+-- BUSINESS QUESTION
+--   Which orders have a total line value of at least $500?
+-- TABLES: order_items
+-- TASK
+--   Over all order_items rows, return order_id and order_value (SUM of quantity *
+--   unit_price, rounded to 2 decimals) for orders whose total line value is at least 500,
+--   sorted by order_value descending, then order_id ascending.
+-- REQUIRED COLUMNS: order_id, order_value
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 8.5
+-- Grade it:              python3 sqlm.py submit 8.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,22 @@
+-- Lesson 45 · Exercise 45.1 — High-value customers, untangled
+--
+-- BUSINESS QUESTION
+--   Refactor this query (it lists high-value customers):
+--   SELECT c.customer_id, c.name, x.rev FROM customers c JOIN (SELECT customer_id,
+--   SUM(q*p) rev FROM (SELECT o.customer_id, oi.quantity q, oi.unit_price p FROM orders o,
+--   order_items oi WHERE o.order_id = oi.order_id AND o.order_status IN
+--   ('completed','shipped','returned')) GROUP BY customer_id) x ON x.customer_id =
+--   c.customer_id WHERE x.rev >= 1000
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Write it as a CTE pipeline returning customer_id, name, gross_revenue (rounded to 2
+--   decimals) for existing customers whose gross revenue is at least 1000. Valid orders =
+--   order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity *
+--   unit_price) over those orders' order_items lines (never products.list_price).
+-- REQUIRED COLUMNS: customer_id, name, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 45.1
+-- Grade it:              python3 sqlm.py submit 45.1
+--
+-- Write your query below (from memory!):
+

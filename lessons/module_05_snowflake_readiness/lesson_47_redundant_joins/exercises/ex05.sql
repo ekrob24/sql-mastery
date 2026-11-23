@@ -1,0 +1,22 @@
+-- Lesson 47 · Exercise 47.5 — Keep the filter join, drop the decoration join
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT oi.order_id, ROUND(SUM(oi.quantity*oi.unit_price),2) AS
+--   gross_value FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN
+--   products p ON p.product_id = oi.product_id JOIN suppliers s ON s.supplier_id =
+--   p.supplier_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY
+--   oi.order_id`. Products 21 (supplier 9 doesn't exist) and 22 (NULL supplier) make the
+--   suppliers join drop lines.
+-- TABLES: order_items, orders
+-- TASK
+--   Return order_id and gross_value (SUM(quantity * unit_price) of ALL the order's lines,
+--   rounded to 2 decimals) for every valid order (order_status IN
+--   ('completed','shipped','returned')) that has lines. Use orders only as a filter
+--   (EXISTS or IN) and do not join products or suppliers.
+-- REQUIRED COLUMNS: order_id, gross_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.5
+-- Grade it:              python3 sqlm.py submit 47.5
+--
+-- Write your query below (from memory!):
+

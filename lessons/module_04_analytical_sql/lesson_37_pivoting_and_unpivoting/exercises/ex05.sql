@@ -1,0 +1,17 @@
+-- Lesson 37 · Exercise 37.5 — Unpivot price and cost
+--
+-- BUSINESS QUESTION
+--   The pricing tool wants a long table: one row per product and price type.
+-- TABLES: products, product_costs
+-- TASK
+--   For products 1 to 5, unpivot the two price columns into rows. Return product_id,
+--   price_type (the text 'list_price' or 'unit_cost') and amount (products.list_price or
+--   product_costs.unit_cost). That is 2 rows per product. Order by product_id, then
+--   price_type.
+-- REQUIRED COLUMNS: product_id, price_type, amount
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 37.5
+-- Grade it:              python3 sqlm.py submit 37.5
+--
+-- Write your query below (from memory!):
+

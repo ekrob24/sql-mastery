@@ -1,0 +1,18 @@
+-- Lesson 25 · Exercise 25.7 — Products popular in both North and South
+--
+-- BUSINESS QUESTION
+--   Merchandising wants products that sell in both the North and South regions to plan a
+--   joint promotion.
+-- TABLES: orders, order_items, customers, products
+-- TASK
+--   Return product_id, product_name for products that appear in a valid order (valid
+--   orders = order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) placed by a North-region customer AND in a valid order placed by a South-
+--   region customer. Use INTERSECT.
+-- REQUIRED COLUMNS: product_id, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.7
+-- Grade it:              python3 sqlm.py submit 25.7
+--
+-- Write your query below (from memory!):
+

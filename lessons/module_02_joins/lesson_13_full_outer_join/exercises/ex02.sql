@@ -1,0 +1,26 @@
+-- Lesson 13 · Exercise 13.2 — Only the mismatches, classified
+--
+-- BUSINESS QUESTION
+--   Data quality wants just the problem rows from the supplier–product reconciliation,
+--   with a label.
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id (= COALESCE(s.supplier_id, p.supplier_id)), product_id and issue,
+--   only for unmatched rows. issue is 'supplier has no products' when the product side is
+--   missing, 'product has no supplier_id' when the product's supplier_id is NULL, and
+--   'unknown supplier' when the product's supplier_id points to no supplier.
+-- REQUIRED COLUMNS: supplier_id, product_id, issue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.2
+-- Grade it:              python3 sqlm.py submit 13.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

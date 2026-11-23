@@ -1,0 +1,15 @@
+-- Lesson 8 · Exercise 8.1 — Repeat customers (any status)
+--
+-- BUSINESS QUESTION
+--   Which customers have placed 4 or more orders of any status?
+-- TABLES: orders
+-- TASK
+--   Return customer_id and order_count (number of orders, any status) for customers with
+--   at least 4 orders.
+-- REQUIRED COLUMNS: customer_id, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 8.1
+-- Grade it:              python3 sqlm.py submit 8.1
+--
+-- Write your query below (from memory!):
+

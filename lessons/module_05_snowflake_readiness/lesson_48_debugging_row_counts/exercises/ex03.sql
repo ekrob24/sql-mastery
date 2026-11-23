@@ -1,0 +1,21 @@
+-- Lesson 48 · Exercise 48.3 — WHERE kills the LEFT JOIN
+--
+-- BUSINESS QUESTION
+--   Product wants 2025 units for EVERY product (zeros included), but this returns only
+--   products sold in 2025: `SELECT p.product_id, p.product_name,
+--   COALESCE(SUM(oi.quantity),0) AS units_2025 FROM products p LEFT JOIN order_items oi ON
+--   oi.product_id = p.product_id LEFT JOIN orders o ON o.order_id = oi.order_id WHERE
+--   o.order_date >= '2025-01-01' AND o.order_status IN ('completed','shipped','returned')
+--   GROUP BY p.product_id, p.product_name`.
+-- TABLES: products, order_items, orders
+-- TASK
+--   Fix it: return product_id, product_name and units_2025 (sum of quantity on valid
+--   orders — order_status IN ('completed','shipped','returned') — dated on or after
+--   '2025-01-01'; 0 if none) for all 25 products.
+-- REQUIRED COLUMNS: product_id, product_name, units_2025
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.3
+-- Grade it:              python3 sqlm.py submit 48.3
+--
+-- Write your query below (from memory!):
+

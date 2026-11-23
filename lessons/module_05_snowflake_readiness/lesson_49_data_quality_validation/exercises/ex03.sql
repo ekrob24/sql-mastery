@@ -1,0 +1,16 @@
+-- Lesson 49 · Exercise 49.3 — Uniqueness: duplicate order lines
+--
+-- BUSINESS QUESTION
+--   Find order lines that duplicate another line's natural key.
+-- TABLES: order_items
+-- TASK
+--   Group order_items by (order_id, product_id, quantity, unit_price) and for every group
+--   with more than one row return order_id, product_id, copies (rows in the group),
+--   keep_item_id (lowest order_item_id) and drop_item_id (highest order_item_id).
+-- REQUIRED COLUMNS: order_id, product_id, copies, keep_item_id, drop_item_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.3
+-- Grade it:              python3 sqlm.py submit 49.3
+--
+-- Write your query below (from memory!):
+

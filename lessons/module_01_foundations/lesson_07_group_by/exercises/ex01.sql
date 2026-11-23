@@ -1,0 +1,16 @@
+-- Lesson 7 · Exercise 7.1 — Products per category
+--
+-- BUSINESS QUESTION
+--   How big is each category, and what's its average list price?
+-- TABLES: products
+-- TASK
+--   Return category, product_count (number of products) and avg_list_price (average
+--   list_price, rounded to 2 decimals) for each category. Keep the NULL category as its
+--   own group.
+-- REQUIRED COLUMNS: category, product_count, avg_list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 7.1
+-- Grade it:              python3 sqlm.py submit 7.1
+--
+-- Write your query below (from memory!):
+

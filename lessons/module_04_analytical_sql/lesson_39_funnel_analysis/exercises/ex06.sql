@@ -1,0 +1,18 @@
+-- Lesson 39 · Exercise 39.6 — Known vs anonymous visitors
+--
+-- BUSINESS QUESTION
+--   Do logged-in customers convert better than anonymous visitors?
+-- TABLES: web_events
+-- TASK
+--   A session is 'anonymous' if none of its events has a customer_id, else 'known'. Return
+--   visitor_type, sessions (distinct sessions), product_view_sessions,
+--   add_to_cart_sessions, purchase_sessions (sessions reaching those stages) and
+--   purchase_rate_pct (100.0 * purchase_sessions / sessions, rounded to 1 decimal). Order
+--   by visitor_type.
+-- REQUIRED COLUMNS: visitor_type, sessions, product_view_sessions, add_to_cart_sessions, purchase_sessions, purchase_rate_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 39.6
+-- Grade it:              python3 sqlm.py submit 39.6
+--
+-- Write your query below (from memory!):
+

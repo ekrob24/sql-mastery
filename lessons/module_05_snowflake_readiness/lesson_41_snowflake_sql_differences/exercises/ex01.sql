@@ -1,0 +1,17 @@
+-- Lesson 41 · Exercise 41.1 — ILIKE → case-insensitive LIKE
+--
+-- BUSINESS QUESTION
+--   Snowflake query from the CRM team: `SELECT customer_id, name, email FROM customers
+--   WHERE name ILIKE '%johnson%'`. Reproduce it — they suspect a duplicate account.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name, email for every customer whose name contains 'johnson' in
+--   any letter case. The match must work regardless of the database's default LIKE case
+--   sensitivity (so normalise the case yourself).
+-- REQUIRED COLUMNS: customer_id, name, email
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.1
+-- Grade it:              python3 sqlm.py submit 41.1
+--
+-- Write your query below (from memory!):
+

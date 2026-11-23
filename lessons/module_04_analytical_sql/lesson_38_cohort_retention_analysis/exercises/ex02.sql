@@ -1,0 +1,17 @@
+-- Lesson 38 · Exercise 38.2 — Cohort sizes by quarter
+--
+-- BUSINESS QUESTION
+--   How many new customers did we acquire each quarter?
+-- TABLES: orders, customers
+-- TASK
+--   Same customer/order definition as 38.1 (valid orders of known customers). Assign each
+--   customer the quarter of their first valid order as cohort_quarter (format 'YYYY-Qn',
+--   e.g. '2024-Q1'). Return cohort_quarter and new_customers (number of customers in that
+--   cohort). Order by cohort_quarter.
+-- REQUIRED COLUMNS: cohort_quarter, new_customers
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 38.2
+-- Grade it:              python3 sqlm.py submit 38.2
+--
+-- Write your query below (from memory!):
+

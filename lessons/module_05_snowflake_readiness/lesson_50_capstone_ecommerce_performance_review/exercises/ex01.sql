@@ -1,0 +1,24 @@
+-- Lesson 50 · Exercise 50.1 — Monthly revenue and order count
+--
+-- BUSINESS QUESTION
+--   CEO: "Show me the monthly trend for the last two years — orders, gross, refunds and
+--   net."
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned') (cancelled and
+--   pending are excluded). Gross revenue = SUM(quantity * unit_price) over the order_items
+--   lines of valid orders (count every line as recorded — do not de-duplicate). Refunds =
+--   SUM(returns.refund_amount) for returned lines of valid orders. Net revenue = gross
+--   revenue − refunds. Group by the order's month, order_month = strftime('%Y-%m',
+--   order_date); refunds are attributed to the month of the ORIGINAL order (not the
+--   return_date). Return order_month, valid_orders (number of distinct valid orders),
+--   gross_revenue, refunds and net_revenue, all money rounded to 2 decimals. One row per
+--   month that has at least one valid order (all 24 months do). Order by order_month
+--   ascending.
+-- REQUIRED COLUMNS: order_month, valid_orders, gross_revenue, refunds, net_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.1
+-- Grade it:              python3 sqlm.py submit 50.1
+--
+-- Write your query below (from memory!):
+

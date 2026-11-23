@@ -1,0 +1,20 @@
+-- Lesson 48 · Exercise 48.1 — Fan-out inflates order counts
+--
+-- BUSINESS QUESTION
+--   This query reports far too many orders per customer: `SELECT o.customer_id, COUNT(*)
+--   AS valid_orders, SUM(oi.quantity) AS units FROM orders o JOIN order_items oi ON
+--   oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')
+--   GROUP BY o.customer_id`.
+-- TABLES: orders, order_items
+-- TASK
+--   Fix it: return customer_id, valid_orders (number of distinct valid orders) and units
+--   (sum of quantity on those orders' lines) per customer_id that has valid orders
+--   (include the orphan id 99). Valid = order_status IN
+--   ('completed','shipped','returned').
+-- REQUIRED COLUMNS: customer_id, valid_orders, units
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.1
+-- Grade it:              python3 sqlm.py submit 48.1
+--
+-- Write your query below (from memory!):
+

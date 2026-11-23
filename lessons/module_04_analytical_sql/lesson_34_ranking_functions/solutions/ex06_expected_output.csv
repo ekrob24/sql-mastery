@@ -1,0 +1,9 @@
+region,customer_id,name,gross_revenue,region_rank
+East,3,John Smith,1425.7,1
+East,10,Emma Brown,985.3,2
+North,1,Alice Johnson,1937.02,1
+North,13,Noah Wilson,249.76,2
+South,2,Brian Lee,1063.95,1
+South,12,Sofia Rossi,788.9,2
+West,7,Chen Wei,1305.28,1
+West,4,John Smith,1262.85,2

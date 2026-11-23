@@ -1,0 +1,20 @@
+-- Lesson 34 · Exercise 34.6 — Top 2 revenue levels per region (with ties)
+--
+-- BUSINESS QUESTION
+--   Regional sales leads want their top customers — if two customers tie, both should be
+--   listed.
+-- TABLES: orders, order_items, customers
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Per customer (customers table, region not NULL), compute gross revenue.
+--   Within each region, rank customers with DENSE_RANK by gross revenue descending and
+--   keep those with region_rank <= 2. Return region, customer_id, name, gross_revenue
+--   (rounded to 2 decimals) and region_rank.
+-- REQUIRED COLUMNS: region, customer_id, name, gross_revenue, region_rank
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.6
+-- Grade it:              python3 sqlm.py submit 34.6
+--
+-- Write your query below (from memory!):
+

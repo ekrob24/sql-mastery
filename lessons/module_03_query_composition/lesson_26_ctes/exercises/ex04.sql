@@ -1,0 +1,19 @@
+-- Lesson 26 · Exercise 26.4 — Best month of each year
+--
+-- BUSINESS QUESTION
+--   For the annual review: which month had the highest revenue in each year?
+-- TABLES: orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE
+--   monthly_revenue (order_year, order_month as 'YYYY-MM', revenue). Return order_year,
+--   best_month and revenue (rounded to 2 decimals) for the month with the highest revenue
+--   in each year.
+-- REQUIRED COLUMNS: order_year, best_month, revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.4
+-- Grade it:              python3 sqlm.py submit 26.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 38 · Exercise 38.3 — Months since first order
+--
+-- BUSINESS QUESTION
+--   For each customer, list the months they were active and how many months after their
+--   first order each was.
+-- TABLES: orders, customers
+-- TASK
+--   Valid orders of known customers (as in 38.1). Return one row per customer per active
+--   month: customer_id, cohort_month ('YYYY-MM' of their first valid order), order_month
+--   ('YYYY-MM' of a month with at least one valid order) and months_since_first (calendar-
+--   month difference: (year*12 + month) of order_month minus the same for cohort_month; 0
+--   for the first month).
+-- REQUIRED COLUMNS: customer_id, cohort_month, order_month, months_since_first
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 38.3
+-- Grade it:              python3 sqlm.py submit 38.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,24 @@
+-- Lesson 19 · Exercise 19.1 — Each customer's latest order date
+--
+-- BUSINESS QUESTION
+--   Account managers want every customer with the date of their most recent order.
+-- TABLES: customers, orders
+-- TASK
+--   Return all 20 customers with columns customer_id, name and latest_order_date (the
+--   latest order_date of any of their orders, any status; NULL if none). Use a correlated
+--   subquery in the SELECT list.
+-- REQUIRED COLUMNS: customer_id, name, latest_order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.1
+-- Grade it:              python3 sqlm.py submit 19.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

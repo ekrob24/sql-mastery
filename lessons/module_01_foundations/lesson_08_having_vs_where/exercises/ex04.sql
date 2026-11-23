@@ -1,0 +1,16 @@
+-- Lesson 8 · Exercise 8.4 — Premium categories
+--
+-- BUSINESS QUESTION
+--   Which categories have an average list price above $50?
+-- TABLES: products
+-- TASK
+--   Return category, product_count (number of products) and avg_list_price (average
+--   list_price, rounded to 2 decimals) for categories whose average list_price is greater
+--   than 50.
+-- REQUIRED COLUMNS: category, product_count, avg_list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 8.4
+-- Grade it:              python3 sqlm.py submit 8.4
+--
+-- Write your query below (from memory!):
+

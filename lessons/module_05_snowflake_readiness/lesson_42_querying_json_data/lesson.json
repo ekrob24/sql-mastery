@@ -1,0 +1,286 @@
+{
+  "number": 42,
+  "slug": "querying_json_data",
+  "title": "Querying semi-structured JSON-like data",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Extract top-level and nested fields from JSON payloads with path expressions, cast them to proper types, and understand why missing keys (and JSON nulls) come back as SQL NULL.",
+  "context": "The e-commerce platform streams every order as a JSON event into raw_order_events before it lands in the clean orders tables. When the pipeline breaks, or a new field appears (customer tier, tags) that the clean tables don't have yet, the analyst who can query the raw JSON directly gets the answer first.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Flatten the top-level scalars",
+      "question": "Data engineering wants a typed view of the raw events' key fields.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "For all 60 events return event_id, order_id (payload $.order_id), placed_at (payload $.placed_at, as the raw text) and customer_id (payload $.customer.id).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The ->> operator extracts a SQL value: payload ->> '$.key'.",
+        "Nested objects are reached with dots: '$.customer.id'.",
+        "SELECT event_id, payload ->> '$.order_id' AS order_id, payload ->> '$.placed_at' AS placed_at, payload ->> '$.customer.id' AS customer_id FROM raw_order_events;"
+      ],
+      "why": "This is literally the first staging model you'd build on a raw VARIANT table in Snowflake.",
+      "recall": {
+        "q": "What does the $ mean in '$.customer.id'?",
+        "a": "The root of the JSON document."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_id, payload:order_id::INT AS order_id, payload:placed_at::STRING AS placed_at, payload:customer.id::INT AS customer_id FROM raw_order_events;",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "placed_at",
+        "customer_id"
+      ],
+      "expected_row_count": 60
+    },
+    {
+      "number": 2,
+      "title": "Filter on a deeply nested field",
+      "question": "Logistics: which orders were shipped to Canada, and how?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return event_id, order_id, shipping_method ($.shipping.method) and city ($.shipping.address.city) for events whose $.shipping.address.country is 'Canada'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "You can use a JSON path in WHERE exactly like in SELECT.",
+        "Two levels of nesting: '$.shipping.address.country'.",
+        "... WHERE payload ->> '$.shipping.address.country' = 'Canada';"
+      ],
+      "why": "Filtering on nested attributes without first building a clean table is what makes semi-structured data useful for fast investigations.",
+      "recall": {
+        "q": "Why must you cast payload:shipping.address.country::STRING in Snowflake before comparing?",
+        "a": "Without the cast it's a VARIANT (a JSON string with quotes); the cast gives a plain SQL string."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_id, payload:order_id::INT AS order_id, payload:shipping.method::STRING AS shipping_method, payload:shipping.address.city::STRING AS city FROM raw_order_events WHERE payload:shipping.address.country::STRING = 'Canada';",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "shipping_method",
+        "city"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 3,
+      "title": "Missing keys become NULL: tier breakdown",
+      "question": "Marketing added an optional customer tier to the event feed. How many events carry it?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return tier and events: the number of events per value of $.customer.tier, where events without a tier key are labelled 'none'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A missing key does not raise an error \u2014 it extracts as NULL.",
+        "COALESCE(payload ->> '$.customer.tier', 'none') gives you the label.",
+        "SELECT COALESCE(payload ->> '$.customer.tier','none') AS tier, COUNT(*) AS events FROM raw_order_events GROUP BY 1;"
+      ],
+      "why": "Optional fields are the norm in event data. If you GROUP BY the raw path you get a NULL group that dashboards often hide \u2014 label it explicitly.",
+      "recall": {
+        "q": "What does payload ->> '$.no_such_key' return?",
+        "a": "NULL \u2014 missing keys are not errors."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT NVL(payload:customer.tier::STRING, 'none') AS tier, COUNT(*) AS events FROM raw_order_events GROUP BY 1;",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "tier",
+        "events"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 4,
+      "title": "Absent key vs JSON null",
+      "question": "Some events have no region. Is the region key missing, or present with a null value? The answer decides whether the bug is in the producer or in the CRM.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "For events whose $.customer.region does not extract as a text value, return event_id, customer_id ($.customer.id), region_type = json_type of $.customer.region and tier_type = json_type of $.customer.tier (json_type returns NULL when the key is absent and the text 'null' when the key holds a JSON null).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Filter with payload ->> '$.customer.region' IS NULL \u2014 that catches both absent and JSON null.",
+        "json_type(payload, '$.path') returns 'text', 'integer', 'real', 'object', 'array', 'null' \u2014 or SQL NULL if the path doesn't exist.",
+        "SELECT event_id, payload ->> '$.customer.id' AS customer_id, json_type(payload,'$.customer.region') AS region_type, json_type(payload,'$.customer.tier') AS tier_type FROM raw_order_events WHERE payload ->> '$.customer.region' IS NULL;"
+      ],
+      "why": "region_type = 'null' tells you the producer sent the key with no value (these are customers 9, 16 and the orphan 99 \u2014 they have no region upstream either); tier_type NULL means the key was never sent.",
+      "recall": {
+        "q": "How do you distinguish an absent key from a JSON null in SQLite?",
+        "a": "json_type(doc, path): SQL NULL = absent key, the text 'null' = key present with JSON null."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_id, payload:customer.id::INT AS customer_id, TYPEOF(payload:customer.region) AS region_type, TYPEOF(payload:customer.tier) AS tier_type FROM raw_order_events WHERE payload:customer.region::STRING IS NULL;  -- TYPEOF gives 'NULL_VALUE' for JSON null, NULL for absent",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "customer_id",
+        "region_type",
+        "tier_type"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Join JSON to the clean tables",
+      "question": "Operations wants valid orders by shipping method \u2014 the method only exists in the raw feed, the status only in orders.",
+      "tables": [
+        "raw_order_events",
+        "orders"
+      ],
+      "prompt": "Join raw_order_events to orders on the payload's $.order_id = orders.order_id and return shipping_method ($.shipping.method) and valid_orders = number of valid orders (order_status IN ('completed','shipped','returned')) per method.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "An extracted JSON value can be used as a join key like any column.",
+        "JOIN orders o ON o.order_id = e.payload ->> '$.order_id', then filter on o.order_status.",
+        "SELECT e.payload ->> '$.shipping.method' AS shipping_method, COUNT(*) AS valid_orders FROM raw_order_events e JOIN orders o ON o.order_id = e.payload ->> '$.order_id' WHERE o.order_status IN (...) GROUP BY 1;"
+      ],
+      "why": "Enriching clean facts with a raw attribute that hasn't been modelled yet is a weekly task. In Snowflake, forgetting ::INT on the key can turn the join into a slow VARIANT comparison.",
+      "recall": {
+        "q": "Why cast payload:order_id::INT before joining in Snowflake?",
+        "a": "So both sides are the same SQL type \u2014 VARIANT-to-NUMBER comparisons are implicit and can be slow or surprising."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT e.payload:shipping.method::STRING AS shipping_method, COUNT(*) AS valid_orders FROM raw_order_events e JOIN orders o ON o.order_id = e.payload:order_id::INT WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "shipping_method",
+        "valid_orders"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 6,
+      "title": "Index into an array: the first order line",
+      "question": "Merchandising asks: which orders started with a big-ticket item (first line priced at 100 or more)?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return event_id, order_id, first_product_id ($.items[0].product_id), first_qty ($.items[0].qty) and first_price ($.items[0].price) for events where first_price >= 100. (Arrays are 0-based; an order with an empty items array simply returns NULL and drops out.)",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Array elements are addressed with [n], starting at 0.",
+        "'$.items[0].price' = price of the first element of items.",
+        "... WHERE payload ->> '$.items[0].price' >= 100;"
+      ],
+      "why": "Positional access is fine for 'first/last element' questions; for 'every element' you need FLATTEN (Lesson 44).",
+      "recall": {
+        "q": "Is JSON array indexing 0-based or 1-based?",
+        "a": "0-based, in both SQLite paths and Snowflake ([0] is the first element)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_id, payload:order_id::INT AS order_id, payload:items[0].product_id::INT AS first_product_id, payload:items[0].qty::INT AS first_qty, payload:items[0].price::NUMBER(10,2) AS first_price FROM raw_order_events WHERE first_price >= 100;",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "first_product_id",
+        "first_qty",
+        "first_price"
+      ],
+      "expected_row_count": 9
+    }
+  ],
+  "worked_example": {
+    "question": "Show the order id, shipping method and destination city of the first 5 events.",
+    "sql": "SELECT event_id,\n       payload ->> '$.order_id'                AS order_id,\n       payload ->> '$.shipping.method'         AS shipping_method,\n       payload ->> '$.shipping.address.city'   AS city,\n       payload ->  '$.shipping.address'        AS address_json\nFROM raw_order_events\nORDER BY event_id\nLIMIT 5;",
+    "explanation": "`->>` returns plain SQL values you can filter, group and join on. `->` returns the JSON fragment itself \u2014 handy for eyeballing a nested object, useless for arithmetic. In Snowflake the same query reads `payload:shipping.address.city::STRING`.",
+    "columns": [
+      "event_id",
+      "order_id",
+      "shipping_method",
+      "city",
+      "address_json"
+    ],
+    "rows": [
+      [
+        1,
+        1,
+        "pickup",
+        "Minneapolis",
+        "{\"city\":\"Minneapolis\",\"country\":\"USA\"}"
+      ],
+      [
+        2,
+        2,
+        "pickup",
+        "Minneapolis",
+        "{\"city\":\"Minneapolis\",\"country\":\"USA\"}"
+      ],
+      [
+        3,
+        3,
+        "express",
+        "Austin",
+        "{\"city\":\"Austin\",\"country\":\"USA\"}"
+      ],
+      [
+        4,
+        4,
+        "pickup",
+        "Boston",
+        "{\"city\":\"Boston\",\"country\":\"USA\"}"
+      ],
+      [
+        5,
+        5,
+        "express",
+        "Boston",
+        "{\"city\":\"Boston\",\"country\":\"USA\"}"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: pull fields out of a JSON column in 4 moves**\n\n1. **Look at one payload** (`SELECT payload FROM raw_order_events LIMIT 1`) and sketch the shape:\n   `{\"order_id\", \"placed_at\", \"customer\": {\"id\",\"region\",\"tier\"?}, \"items\": [{...}], \"shipping\": {\"method\",\"address\":{\"city\",\"country\"}}, \"tags\"?: [...]}`\n2. **Write the path.** `$` is the document root, `.key` steps into an object, `[0]` into an array:\n   `'$.customer.id'`, `'$.shipping.address.city'`, `'$.items[0].price'`.\n3. **Extract as a SQL value** with `payload ->> '$.path'` (or `json_extract(payload, '$.path')`).\n   `->>` returns TEXT/INTEGER/REAL; `->` returns a JSON fragment (keeps quotes, objects stay JSON).\n4. **Handle absence:** a missing key and a JSON `null` both extract as SQL NULL. Use `COALESCE` for defaults\n   and `json_type(payload, '$.path')` when you must tell them apart (`NULL` = key absent, `'null'` = present but null).\n\n```sql\nSELECT event_id,\n       payload ->> '$.order_id'                 AS order_id,\n       payload ->> '$.customer.id'              AS customer_id,\n       COALESCE(payload ->> '$.customer.tier', 'none') AS tier\nFROM raw_order_events;\n```",
+  "snowflake_notes": "In Snowflake the payload would be a **VARIANT** column and you navigate it with `:` and `.` / `[ ]`:\n\n```sql\nSELECT event_id,\n       payload:order_id::INT                        AS order_id,\n       payload:placed_at::TIMESTAMP_NTZ             AS placed_at,\n       payload:customer.id::INT                     AS customer_id,\n       payload:customer:tier::STRING                AS tier,          -- ':' and '.' both step in\n       payload['shipping']['address']['city']::STRING AS city,        -- bracket notation (needed for odd keys)\n       payload:items[0]:price::NUMBER(10,2)         AS first_price,\n       GET_PATH(payload, 'shipping.method')::STRING AS shipping_method\nFROM raw_order_events\nWHERE payload:shipping.address.country::STRING = 'Canada';\n```\n\n- **Always cast** (`::STRING`, `::INT`). Without it you get a VARIANT: `payload:customer.tier` displays as `\"gold\"`\n  *with quotes*, and comparing VARIANT to a string can surprise you.\n- **Missing key \u2192 SQL NULL**, but a JSON `null` \u2192 a *VARIANT null* (displays `null`, `IS NULL` is FALSE!).\n  `IS_NULL_VALUE(payload:customer.region)` detects it; casting with `::STRING` turns it into SQL NULL.\n  (SQLite's `->>` collapses both to SQL NULL; `json_type` returns `'null'` vs NULL to tell them apart.)\n- `TYPEOF(payload:customer.tier)` \u2248 `json_type` \u2192 `'VARCHAR'`, `'INTEGER'`, `'OBJECT'`, `'ARRAY'`, `'NULL_VALUE'`.\n- Field names in paths are **case-sensitive** (`payload:Customer` \u2260 `payload:customer`), unlike column names.\n- Loading: `PARSE_JSON(text)` turns a string into VARIANT; `TRY_PARSE_JSON` returns NULL for bad JSON.",
+  "common_mistakes": [
+    "Using -> (returns JSON text, with quotes) where you meant ->> (returns a SQL value).",
+    "Expecting an error for a misspelled key \u2014 you silently get NULL. Check a few rows by eye.",
+    "Forgetting ::STRING / ::INT in Snowflake and comparing VARIANTs ('\"gold\"' with quotes vs 'gold').",
+    "Treating a Snowflake VARIANT null as SQL NULL \u2014 IS NULL is false for it until you cast.",
+    "Assuming arrays are 1-based: items[1] is the SECOND line."
+  ],
+  "recall": [
+    [
+      "Difference between -> and ->> in SQLite?",
+      "-> returns a JSON fragment; ->> returns a plain SQL value (text/number/NULL)."
+    ],
+    [
+      "Snowflake spelling of payload ->> '$.shipping.address.city'?",
+      "payload:shipping.address.city::STRING"
+    ],
+    [
+      "What does json_type return for a key that is absent?",
+      "SQL NULL (vs the text 'null' for a JSON null)."
+    ]
+  ],
+  "review_next": "Lesson 43 looks at whole values \u2014 objects vs arrays, array lengths, optional keys \u2014 and builds JSON with json_object / json_group_array (Snowflake OBJECT_CONSTRUCT / ARRAY_AGG)."
+}

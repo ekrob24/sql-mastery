@@ -1,0 +1,19 @@
+-- Lesson 46 · Exercise 46.4 — Pre-aggregate before joining
+--
+-- BUSINESS QUESTION
+--   Product revenue report: the old query joins products to every order line, then groups
+--   by product name and list price. Rewrite it to aggregate order_items first.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Return product_id, product_name, units_sold and gross_revenue (rounded to 2 decimals)
+--   for every product that has at least one line on a valid order. Aggregate the lines per
+--   product_id in a CTE before joining products. Valid orders = order_status IN
+--   ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over
+--   those orders' order_items lines (never products.list_price).
+-- REQUIRED COLUMNS: product_id, product_name, units_sold, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 46.4
+-- Grade it:              python3 sqlm.py submit 46.4
+--
+-- Write your query below (from memory!):
+

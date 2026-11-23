@@ -1,0 +1,17 @@
+-- Lesson 6 · Exercise 6.4 — Units and line value across all lines
+--
+-- BUSINESS QUESTION
+--   What's the raw volume in order_items: units, line value, and average line?
+-- TABLES: order_items
+-- TASK
+--   Over ALL rows of order_items (no status filter — status lives in orders, which you'll
+--   join in Module 2), return one row with columns total_units (SUM of quantity),
+--   total_line_value (SUM of quantity * unit_price, rounded to 2 decimals) and
+--   avg_line_value (AVG of quantity * unit_price, rounded to 2 decimals).
+-- REQUIRED COLUMNS: total_units, total_line_value, avg_line_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.4
+-- Grade it:              python3 sqlm.py submit 6.4
+--
+-- Write your query below (from memory!):
+

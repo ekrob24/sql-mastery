@@ -1,0 +1,18 @@
+-- Lesson 39 · Exercise 39.2 — Furthest stage per session
+--
+-- BUSINESS QUESTION
+--   For session-level analysis, tag every session with the furthest funnel stage it
+--   reached.
+-- TABLES: web_events
+-- TASK
+--   Return one row per session: session_id, session_month ('YYYY-MM' of the session's
+--   earliest event_time), visitor_type ('anonymous' if customer_id is NULL, else 'known')
+--   and furthest_stage (highest stage reached, as a number: visit=1, product_view=2,
+--   add_to_cart=3, checkout=4, purchase=5).
+-- REQUIRED COLUMNS: session_id, session_month, visitor_type, furthest_stage
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 39.2
+-- Grade it:              python3 sqlm.py submit 39.2
+--
+-- Write your query below (from memory!):
+

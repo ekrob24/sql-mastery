@@ -1,0 +1,19 @@
+-- Lesson 46 · Exercise 46.3 — Filter early: December 2025 order lines
+--
+-- BUSINESS QUESTION
+--   This query joins everything and filters at the end: `SELECT * FROM (SELECT o.*, oi.*,
+--   p.* FROM orders o JOIN order_items oi ON oi.order_id=o.order_id JOIN products p ON
+--   p.product_id=oi.product_id) WHERE order_date LIKE '2025-12%'`. The dashboard only
+--   needs a few columns.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Return order_id, order_date, product_name, quantity and line_total (quantity *
+--   unit_price) for order lines of orders placed in December 2025 (any status). Filter
+--   orders with a sargable date range first and select only these columns.
+-- REQUIRED COLUMNS: order_id, order_date, product_name, quantity, line_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 46.3
+-- Grade it:              python3 sqlm.py submit 46.3
+--
+-- Write your query below (from memory!):
+

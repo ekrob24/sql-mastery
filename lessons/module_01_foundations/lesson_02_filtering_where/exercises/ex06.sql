@@ -1,0 +1,17 @@
+-- Lesson 2 · Exercise 2.6 — NOT and NOT IN on a 2024 problem list
+--
+-- BUSINESS QUESTION
+--   Finance is closing the 2024 books and wants every 2024 order that did NOT end as a
+--   plain completed sale.
+-- TABLES: orders
+-- TASK
+--   Return order_id, customer_id, order_date and order_status for orders placed in 2024
+--   (order_date from '2024-01-01' to '2024-12-31' inclusive) whose order_status is NOT
+--   'completed'.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.6
+-- Grade it:              python3 sqlm.py submit 2.6
+--
+-- Write your query below (from memory!):
+

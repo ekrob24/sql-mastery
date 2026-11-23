@@ -1,0 +1,296 @@
+{
+  "number": 30,
+  "slug": "period_aggregation",
+  "title": "Daily, weekly, monthly, and yearly aggregation",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Roll transactions up to a time grain (day, week, month, quarter, year) with a period key, and compute per-period counts, revenue and averages without double counting.",
+  "context": "The exec dashboard has a time-series chart for every KPI: orders per month, revenue per quarter, web sessions per week. Each chart is one GROUP BY on a period key \u2014 the trick is choosing the key correctly and keeping the revenue definition consistent.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Orders per month",
+      "question": "Ops wants a simple trend line: how many orders (of any status) were placed each month?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return order_month (text 'YYYY-MM') and order_count (number of orders of any status) for every month that has orders, ordered by order_month ascending.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "The period key is strftime('%Y-%m', order_date).",
+        "GROUP BY the key, COUNT(*) the rows, ORDER BY the key.",
+        "SELECT strftime('%Y-%m', order_date) AS order_month, COUNT(*) AS order_count FROM orders GROUP BY order_month ORDER BY order_month;"
+      ],
+      "why": "A month key that includes the year is the backbone of every trend chart.",
+      "recall": {
+        "q": "Why must a month key include the year?",
+        "a": "Otherwise January 2024 and January 2025 collapse into one group."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT TO_CHAR(DATE_TRUNC('month', order_date), 'YYYY-MM') AS order_month, COUNT(*) AS order_count FROM orders GROUP BY 1 ORDER BY 1;",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "order_count"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 2,
+      "title": "Monthly gross revenue",
+      "question": "Finance needs monthly revenue and the number of revenue-generating orders.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Return order_month ('YYYY-MM'), valid_orders (distinct valid orders in the month) and gross_revenue (rounded to 2 decimals), one row per month, ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Join orders to order_items and filter to valid statuses before grouping.",
+        "After the join there is one row per line, so count orders with COUNT(DISTINCT o.order_id).",
+        "... COUNT(DISTINCT o.order_id) AS valid_orders, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue ... GROUP BY order_month ORDER BY order_month"
+      ],
+      "why": "COUNT(*) after joining to line items counts lines, not orders \u2014 a very common inflated KPI.",
+      "recall": {
+        "q": "After joining orders to order_items, how do you count orders?",
+        "a": "COUNT(DISTINCT o.order_id) \u2014 COUNT(*) would count order lines."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "GROUP BY DATE_TRUNC('month', o.order_date) and label with TO_CHAR(..., 'YYYY-MM').",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "valid_orders",
+        "gross_revenue"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 3,
+      "title": "Yearly revenue and average order value",
+      "question": "The CFO wants a two-line summary: revenue and average order value by year.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Return order_year (text 'YYYY'), valid_orders (distinct valid orders), gross_revenue (rounded to 2 decimals) and avg_order_value (gross revenue / valid_orders, rounded to 2 decimals), ordered by order_year.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Same shape as the monthly query, with strftime('%Y', ...) as the key.",
+        "AOV = total revenue / number of orders \u2014 not AVG(line revenue), which averages lines.",
+        "ROUND(SUM(oi.quantity * oi.unit_price) / COUNT(DISTINCT o.order_id), 2) AS avg_order_value"
+      ],
+      "why": "AVG(quantity*unit_price) would be average *line* value. Ratio metrics must be built from the right numerator and denominator at the right grain.",
+      "recall": {
+        "q": "Why is AVG(oi.quantity * oi.unit_price) not the average order value?",
+        "a": "It averages order lines, not orders; AOV = SUM(revenue) / COUNT(DISTINCT order_id)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "YEAR(o.order_date) AS order_year (an integer) or TO_CHAR(o.order_date, 'YYYY'). Division of numbers is decimal in Snowflake, so no integer-division surprise.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "valid_orders",
+        "gross_revenue",
+        "avg_order_value"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 4,
+      "title": "Quarterly revenue",
+      "question": "The board pack reports revenue by quarter.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Return order_quarter (text like '2025-Q1': year, '-Q', quarter number 1\u20134) and gross_revenue (rounded to 2 decimals), ordered by order_quarter.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Quarter number = (month + 2) / 3 with integer division.",
+        "Concatenate year, '-Q' and the quarter number with ||.",
+        "strftime('%Y', o.order_date) || '-Q' || ((CAST(strftime('%m', o.order_date) AS INTEGER) + 2) / 3) AS order_quarter"
+      ],
+      "why": "Custom period labels are common (fiscal quarters, half-years). Build them so they still sort chronologically as text.",
+      "recall": {
+        "q": "Snowflake function for the quarter number?",
+        "a": "QUARTER(d) (or DATE_PART('quarter', d))."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT YEAR(o.order_date) || '-Q' || QUARTER(o.order_date) AS order_quarter, ... GROUP BY 1 ORDER BY 1; or keep DATE_TRUNC('quarter', o.order_date) as a DATE key.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "order_quarter",
+        "gross_revenue"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 5,
+      "title": "Weekly web sessions in Q4 2025",
+      "question": "Marketing wants weekly site traffic for Q4 2025.",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "Define the week as strftime('%Y-%W', event_time) (Monday-start weeks; '%W' week 00 holds days before the year's first Monday). For events with event_time >= '2025-10-01' and < '2026-01-01', return event_week (that 'YYYY-WW' text), sessions (distinct session_id) and events (number of event rows), ordered by event_week.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "event_time is a timestamp text; the half-open filter keeps all of 2025-12-31.",
+        "strftime('%Y-%W', event_time) is the week key; sessions are COUNT(DISTINCT session_id).",
+        "SELECT strftime('%Y-%W', event_time) AS event_week, COUNT(DISTINCT session_id) AS sessions, COUNT(*) AS events FROM web_events WHERE ... GROUP BY event_week ORDER BY event_week;"
+      ],
+      "why": "Weeks are the most ambiguous grain (Sunday vs Monday start, ISO weeks that straddle years). Always write the definition down next to the chart.",
+      "recall": {
+        "q": "Name two different 'week' definitions that give different results.",
+        "a": "e.g. Monday-start %W weeks vs ISO weeks (WEEKISO in Snowflake), or Sunday-start weeks; ISO week 1 can start in December."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('week', event_time) AS event_week (a DATE = Monday by default, controlled by the WEEK_START session parameter). WEEKISO(d) / YEAROFWEEKISO(d) give ISO numbering.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "event_week",
+        "sessions",
+        "events"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 6,
+      "title": "Daily site activity in December 2025",
+      "question": "The web team wants a day-by-day activity table for December 2025.",
+      "tables": [
+        "web_events"
+      ],
+      "prompt": "For events in December 2025 (event_time >= '2025-12-01' and < '2026-01-01'), return event_date ('YYYY-MM-DD'), events (event rows), sessions (distinct session_id) and known_customers (distinct non-NULL customer_id) for each day that has events, ordered by event_date.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "date(event_time) truncates a timestamp to its day.",
+        "COUNT(DISTINCT customer_id) already ignores NULLs (anonymous visitors).",
+        "SELECT date(event_time) AS event_date, COUNT(*) AS events, COUNT(DISTINCT session_id) AS sessions, COUNT(DISTINCT customer_id) AS known_customers ... GROUP BY event_date ORDER BY event_date;"
+      ],
+      "why": "Daily grain is where timestamps bite: grouping by the raw event_time gives one group per second. Truncate first, then group. Note days without events simply don't appear (Lesson 31 fixes gaps).",
+      "recall": {
+        "q": "How do you truncate a timestamp to its date in SQLite and Snowflake?",
+        "a": "SQLite: date(ts). Snowflake: ts::DATE or DATE_TRUNC('day', ts)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_time::DATE AS event_date, COUNT(*) AS events, ... GROUP BY 1 ORDER BY 1;",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "event_date",
+        "events",
+        "sessions",
+        "known_customers"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 7,
+      "title": "Monthly net revenue",
+      "question": "Finance wants gross, refunds and net revenue per month, with refunds booked against the month the original order was placed.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Refunds = SUM(returns.refund_amount) for returned lines of valid orders, assigned to the month of the original order_date. Net revenue = gross revenue \u2212 refunds (refunds = 0 when a month has none). Return order_month ('YYYY-MM'), gross_revenue, refunds and net_revenue (all rounded to 2 decimals), one row per month with valid orders, ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Two different grains: revenue lives on order_items, refunds on returns. Aggregate each to the month separately.",
+        "Build two CTEs keyed by order_month, then LEFT JOIN refunds onto gross (most months have no refunds).",
+        "WITH gross AS (... GROUP BY order_month), refunds AS (returns \u2192 order_items \u2192 orders ... GROUP BY order_month) SELECT g.order_month, ..., COALESCE(f.refunds, 0) ... FROM gross g LEFT JOIN refunds f ON f.order_month = g.order_month"
+      ],
+      "why": "Pre-aggregating each measure to the common grain before joining is THE pattern for multi-fact reporting \u2014 it avoids fan-out double counting.",
+      "recall": {
+        "q": "Why aggregate revenue and refunds separately before joining them?",
+        "a": "They live at different grains; joining raw rows first duplicates revenue or refunds (fan-out)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same CTE structure; key both CTEs on DATE_TRUNC('month', o.order_date). Snowflake's ZEROIFNULL(f.refunds) is shorthand for COALESCE(f.refunds, 0).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "refunds",
+        "net_revenue"
+      ],
+      "expected_row_count": 24
+    }
+  ],
+  "worked_example": {
+    "question": "How many orders (any status) were placed in each calendar year?",
+    "sql": "SELECT strftime('%Y', order_date) AS order_year,\n       COUNT(*)                     AS order_count\nFROM orders\nGROUP BY order_year\nORDER BY order_year;",
+    "explanation": "The period key is computed per row and then used for grouping. SQLite lets you GROUP BY a SELECT alias; Snowflake does too (and also allows `GROUP BY 1`).",
+    "columns": [
+      "order_year",
+      "order_count"
+    ],
+    "rows": [
+      [
+        "2024",
+        30
+      ],
+      [
+        "2025",
+        30
+      ]
+    ]
+  },
+  "recipe": "**Recipe: aggregate by period in 4 moves**\n\n1. **Build a period key** from the date: day `date(d)`, month `strftime('%Y-%m', d)`, year `strftime('%Y', d)`,\n   quarter `strftime('%Y', d) || '-Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3)`,\n   week `strftime('%Y-%W', d)` (Monday-start weeks; week `00` = days before the year's first Monday).\n   Always include the **year** in the key \u2014 `'%m'` alone merges Jan 2024 with Jan 2025.\n2. **Filter** to the rows that count (valid orders, a date range) in WHERE.\n3. **GROUP BY the period key** and aggregate: `COUNT(DISTINCT o.order_id)` (orders, safe after joining\n   to items), `SUM(oi.quantity * oi.unit_price)` (gross revenue).\n4. **ORDER BY the key** \u2014 ISO-style text keys ('2025-03') sort chronologically.\n\n```sql\nSELECT strftime('%Y-%m', o.order_date)       AS order_month,\n       COUNT(DISTINCT o.order_id)            AS valid_orders,\n       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue\nFROM orders o JOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY order_month\nORDER BY order_month;\n```\n\n**Revenue definition (course-wide):** gross revenue = SUM(quantity * unit_price) over order_items of valid\norders (completed, shipped, returned). Net revenue = gross \u2212 refunds (returns.refund_amount).\n\n**Two-measure trap:** when combining revenue (order_items grain) and refunds (returns grain), aggregate each to\nthe period *first*, then join the per-period results \u2014 joining raw tables first multiplies rows.",
+  "snowflake_notes": "In Snowflake the idiomatic period key is a **DATE**, not text: `DATE_TRUNC('month', order_date)` returns\n2025-03-01. Keeping it a DATE lets BI tools treat it as a time axis and lets you do DATEADD on it later.\n\n```sql\nSELECT DATE_TRUNC('month', o.order_date)          AS order_month,   -- DATE 2025-03-01\n       COUNT(DISTINCT o.order_id)                 AS valid_orders,\n       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue\nFROM orders o JOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY 1\nORDER BY 1;\n```\n\n| grain | SQLite key | Snowflake key |\n|---|---|---|\n| day | `date(d)` | `d::DATE` or `DATE_TRUNC('day', ts)` |\n| week | `strftime('%Y-%W', d)` | `DATE_TRUNC('week', d)` (week start set by `WEEK_START` parameter; default Monday) |\n| month | `strftime('%Y-%m', d)` | `DATE_TRUNC('month', d)`; label: `TO_CHAR(d, 'YYYY-MM')` |\n| quarter | `strftime('%Y',d) \\|\\| '-Q' \\|\\| ((month+2)/3)` | `DATE_TRUNC('quarter', d)`; label `YEAR(d) \\|\\| '-Q' \\|\\| QUARTER(d)` |\n| year | `strftime('%Y', d)` | `DATE_TRUNC('year', d)` or `YEAR(d)` |\n\nWeek numbering differs between systems (`%W`, ISO `WEEKISO()`, `WEEKOFYEAR()`), so always state the definition.",
+  "common_mistakes": [
+    "Grouping by `strftime('%m', d)` without the year \u2014 merges the same month of different years.",
+    "COUNT(*) after joining to order_items counts lines, not orders; use COUNT(DISTINCT order_id).",
+    "Leaving an undefined 'week' \u2014 Sunday vs Monday start and ISO weeks give different numbers.",
+    "Grouping by a raw timestamp instead of truncating it to the day/month first.",
+    "Joining two fact tables (items and returns) before aggregating \u2014 fan-out inflates totals.",
+    "Including cancelled/pending orders in revenue \u2014 restate and apply the valid-order filter every time."
+  ],
+  "recall": [
+    [
+      "Snowflake expression for a month period key that stays a DATE?",
+      "DATE_TRUNC('month', order_date)."
+    ],
+    [
+      "SQLite month label from a date?",
+      "strftime('%Y-%m', d)."
+    ],
+    [
+      "Average order value formula?",
+      "SUM(line revenue) / COUNT(DISTINCT order_id)."
+    ],
+    [
+      "What's missing from a GROUP BY month result when a month had no orders?",
+      "The month itself \u2014 it has no rows, so it doesn't appear. You need a calendar spine to show it."
+    ]
+  ],
+  "review_next": "Lesson 31 compares periods with each other (month over month, year over year) \u2014 reuse your monthly revenue query from 30.2 as a CTE. Re-do 30.7 to cement the aggregate-then-join pattern."
+}

@@ -1,0 +1,18 @@
+-- Lesson 30 · Exercise 30.3 — Yearly revenue and average order value
+--
+-- BUSINESS QUESTION
+--   The CFO wants a two-line summary: revenue and average order value by year.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_year (text 'YYYY'), valid_orders (distinct valid orders),
+--   gross_revenue (rounded to 2 decimals) and avg_order_value (gross revenue /
+--   valid_orders, rounded to 2 decimals), ordered by order_year.
+-- REQUIRED COLUMNS: order_year, valid_orders, gross_revenue, avg_order_value
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.3
+-- Grade it:              python3 sqlm.py submit 30.3
+--
+-- Write your query below (from memory!):
+

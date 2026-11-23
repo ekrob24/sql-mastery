@@ -1,0 +1,6 @@
+customer_id,profile
+3,"{""name"":""John Smith"",""email"":""john.smith@example.com"",""signup_date"":""2024-02-02""}"
+5,"{""name"":""Jon Smith"",""email"":""jon.smith@example.com"",""signup_date"":""2024-03-22""}"
+10,"{""name"":""Emma Brown"",""email"":""emma.brown@example.com"",""signup_date"":""2024-07-07""}"
+14,"{""name"":""Olivia Davis"",""email"":""olivia.davis@example.com"",""signup_date"":""2025-01-20""}"
+20,"{""name"":""Zoe Turner"",""email"":null,""signup_date"":""2025-12-01""}"

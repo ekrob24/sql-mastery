@@ -1,0 +1,25 @@
+-- Lesson 14 · Exercise 14.4 — Return details across five tables
+--
+-- BUSINESS QUESTION
+--   Quality wants every return with who bought it, what it was and which supplier made it
+--   — no return may be dropped.
+-- TABLES: returns, order_items, orders, customers, products, suppliers
+-- TASK
+--   Return return_id, return_date, customer_name, product_name, supplier_name and
+--   refund_amount for all 10 returns. customer_name / supplier_name are NULL when the
+--   customer / supplier is missing.
+-- REQUIRED COLUMNS: return_id, return_date, customer_name, product_name, supplier_name, refund_amount
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.4
+-- Grade it:              python3 sqlm.py submit 14.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

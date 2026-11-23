@@ -1,0 +1,17 @@
+-- Lesson 47 · Exercise 47.2 — Join + DISTINCT → EXISTS
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT DISTINCT o.order_id, o.order_date FROM orders o JOIN order_items
+--   oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE
+--   p.category = 'Books'`.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Rewrite it with EXISTS (no DISTINCT needed) and return order_id and order_date of
+--   every order (any status) containing at least one product in category 'Books'.
+-- REQUIRED COLUMNS: order_id, order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.2
+-- Grade it:              python3 sqlm.py submit 47.2
+--
+-- Write your query below (from memory!):
+

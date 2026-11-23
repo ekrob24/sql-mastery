@@ -1,0 +1,23 @@
+-- Lesson 9 · Exercise 9.2 — Orders per customer (children per parent)
+--
+-- BUSINESS QUESTION
+--   Sales wants to know how many orders each customer has placed (any status).
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name and order_count (number of orders of any status) for every
+--   customer who has at least one order.
+-- REQUIRED COLUMNS: customer_id, name, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.2
+-- Grade it:              python3 sqlm.py submit 9.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

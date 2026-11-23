@@ -1,0 +1,26 @@
+-- Lesson 16 · Exercise 16.2 — Joined rows vs real order count per customer
+--
+-- BUSINESS QUESTION
+--   A report counted 'orders per customer' after joining order lines and got numbers that
+--   look too high. Show the wrong and right count side by side.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   For every customer who has at least one order (any status), join customers → orders
+--   (inner) → order_items (LEFT JOIN, so orders without lines stay). Return customer_id,
+--   name, joined_rows (COUNT(*) of the joined rows) and order_count (number of distinct
+--   orders).
+-- REQUIRED COLUMNS: customer_id, name, joined_rows, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.2
+-- Grade it:              python3 sqlm.py submit 16.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 8 · Exercise 8.2 — Repeat customers on valid orders only
+--
+-- BUSINESS QUESTION
+--   Same question, but only valid orders count toward loyalty.
+-- TABLES: orders
+-- TASK
+--   Considering only valid orders (order_status IN ('completed', 'shipped', 'returned')),
+--   return customer_id and valid_orders (count of their valid orders) for customers with
+--   at least 4 valid orders, sorted by valid_orders descending, then customer_id
+--   ascending.
+-- REQUIRED COLUMNS: customer_id, valid_orders
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 8.2
+-- Grade it:              python3 sqlm.py submit 8.2
+--
+-- Write your query below (from memory!):
+

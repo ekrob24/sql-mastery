@@ -1,0 +1,26 @@
+product_id,product_name,list_price,price_tier
+1,Wireless Mouse,24.99,Budget
+2,Mechanical Keyboard,89,Mid
+3,USB-C Hub,39.5,Mid
+4,Noise-Cancelling Headphones,199,Premium
+5,27in Monitor,279.99,Premium
+6,Chef Knife,59,Mid
+7,Cast Iron Skillet,45,Mid
+8,French Press,32,Mid
+9,Throw Blanket,38,Mid
+10,Desk Lamp,27.5,Budget
+11,Running Shoes,120,Premium
+12,Rain Jacket,95,Mid
+13,Wool Socks (3-pack),18,Budget
+14,Baseball Cap,22,Budget
+15,SQL for Analysts,42,Mid
+16,Data Storytelling,35,Mid
+17,The Pragmatic Warehouse,48,Mid
+18,Yoga Mat,30,Mid
+19,Adjustable Dumbbells,,Unpriced
+20,Mystery Gift Box,25,Budget
+21,Water Bottle,15,Budget
+22,Phone Stand,12,Budget
+23,Smart Watch,249,Premium
+24,Linen Tablecloth,54,Mid
+25,Tennis Racket,140,Premium

@@ -1,0 +1,6 @@
+supplier_id,supplier_name,products_listed,products_sold,gross_revenue
+1,Northwind Traders,6,6,2656.46
+2,Pacific Goods Co,6,5,2014.74
+3,EuroSupply GmbH,6,5,1774.05
+4,Sakura Imports,5,4,6395.44
+5,Andes Trading,0,0,0.0

@@ -1,0 +1,21 @@
+-- Lesson 36 · Exercise 36.6 — ROWS vs RANGE on tied dates
+--
+-- BUSINESS QUESTION
+--   An analyst's running total 'jumps' several lines at once. Show Q4 2025 order lines
+--   with both frame types side by side.
+-- TABLES: orders, order_items
+-- TASK
+--   Take order lines of valid orders (order_status IN ('completed','shipped','returned'))
+--   with order_date between '2025-10-01' and '2025-12-31'. Return order_item_id, order_id,
+--   order_date, line_revenue (quantity * unit_price, rounded 2), running_rows (running SUM
+--   of line revenue ordered by order_date, order_item_id with a ROWS frame from the first
+--   row to the current row, rounded 2) and running_range (running SUM of line revenue
+--   ordered by order_date ONLY, using RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW,
+--   rounded 2). Order by order_date, order_item_id.
+-- REQUIRED COLUMNS: order_item_id, order_id, order_date, line_revenue, running_rows, running_range
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 36.6
+-- Grade it:              python3 sqlm.py submit 36.6
+--
+-- Write your query below (from memory!):
+

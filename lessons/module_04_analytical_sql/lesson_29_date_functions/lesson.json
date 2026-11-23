@@ -1,0 +1,283 @@
+{
+  "number": 29,
+  "slug": "date_functions",
+  "title": "Date functions and time-based filtering",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Filter rows by date ranges, pull out date parts (year, month, quarter, weekday), do date arithmetic (add/subtract days, month ends) and measure the gap between two dates in days.",
+  "context": "Almost every analytics question has a time window: 'last 90 days', 'Q1', 'how long until a customer's first purchase?'. Operations and finance want these answers relative to a fixed reporting date \u2014 in this course the as-of date is always '2025-12-31' (never date('now'), so results are reproducible).",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Orders placed in Q1 2025",
+      "question": "Finance is closing Q1 2025 and wants every order placed in that quarter, whatever its status.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return order_id, order_date and order_status for all orders (any status) with an order_date from 2025-01-01 up to and including 2025-03-31. Use a half-open range (>= start AND < first day of the next quarter).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "ISO date text compares correctly with >= and <.",
+        "The quarter starts on 2025-01-01; the next quarter starts on 2025-04-01.",
+        "WHERE order_date >= '2025-01-01' AND order_date < '2025-04-01'"
+      ],
+      "why": "Half-open ranges are the habit that never breaks: they work for DATE and TIMESTAMP columns and chain cleanly (Q1 ends exactly where Q2 starts).",
+      "recall": {
+        "q": "Why prefer `d >= '2025-01-01' AND d < '2025-04-01'` over `BETWEEN '2025-01-01' AND '2025-03-31'`?",
+        "a": "If d is a timestamp, BETWEEN drops everything after midnight on 2025-03-31; the half-open range does not."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same WHERE clause works. Alternatively: WHERE DATE_TRUNC('quarter', order_date) = '2025-01-01'::DATE (readable, but it wraps the column in a function, which can hurt pruning on huge tables).",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 2,
+      "title": "Breaking dates into parts",
+      "question": "The BI team wants 2025 orders tagged with year, quarter, month and weekday so they can slice them in a dashboard.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "For all orders (any status) placed in calendar year 2025, return order_id, order_date, order_year (integer), order_quarter (integer 1\u20134), order_month (integer 1\u201312) and day_of_week (integer, 0 = Sunday \u2026 6 = Saturday, as returned by strftime('%w')).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "strftime('%Y', d), strftime('%m', d) and strftime('%w', d) return text; CAST them to INTEGER.",
+        "SQLite has no quarter format code. Integer division helps: months 1\u20133 \u2192 1, 4\u20136 \u2192 2 \u2026",
+        "(CAST(strftime('%m', order_date) AS INTEGER) + 2) / 3 AS order_quarter"
+      ],
+      "why": "Date-part columns are the raw material of every 'by month' / 'by weekday' chart. Knowing the quarter trick matters in SQLite; in Snowflake it's simply QUARTER(d).",
+      "recall": {
+        "q": "What does strftime('%w', '2025-12-28') return, and what day is 0?",
+        "a": "'0' \u2014 %w is the weekday as text with 0 = Sunday (2025-12-28 is a Sunday)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_id, order_date, YEAR(order_date) AS order_year, QUARTER(order_date) AS order_quarter, MONTH(order_date) AS order_month, DAYOFWEEK(order_date) AS day_of_week FROM orders WHERE order_date >= '2025-01-01' AND order_date < '2026-01-01';",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_year",
+        "order_quarter",
+        "order_month",
+        "day_of_week"
+      ],
+      "expected_row_count": 30
+    },
+    {
+      "number": 3,
+      "title": "Orders in the last 90 days",
+      "question": "Ops wants the recent order list: everything placed in the 90 days up to the reporting date, with how old each order is.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "As-of date is '2025-12-31'. Return order_id, order_date, order_status and days_ago (whole days between order_date and '2025-12-31', as an integer) for all orders (any status) with order_date >= date('2025-12-31', '-90 days') (i.e. on or after 2025-10-02).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "date('2025-12-31', '-90 days') computes the cut-off date.",
+        "julianday(a) - julianday(b) is the number of days from b to a.",
+        "CAST(julianday('2025-12-31') - julianday(order_date) AS INTEGER) AS days_ago ... WHERE order_date >= date('2025-12-31', '-90 days')"
+      ],
+      "why": "Rolling windows ('last 30/90 days') are the most common dashboard filter. Anchoring them to a fixed as-of date makes numbers reproducible and testable.",
+      "recall": {
+        "q": "How do you express 'as-of date minus 90 days' in SQLite and in Snowflake?",
+        "a": "SQLite: date('2025-12-31', '-90 days'). Snowflake: DATEADD(day, -90, '2025-12-31'::DATE)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_id, order_date, order_status, DATEDIFF(day, order_date, '2025-12-31'::DATE) AS days_ago FROM orders WHERE order_date >= DATEADD(day, -90, '2025-12-31'::DATE);",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_status",
+        "days_ago"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 4,
+      "title": "How long until a return?",
+      "question": "The returns team suspects late returns are abused. How many days after the order did each return arrive?",
+      "tables": [
+        "returns",
+        "order_items",
+        "orders"
+      ],
+      "prompt": "For each of the 10 returns, return return_id, order_id, order_date, return_date and days_to_return (integer days from order_date to return_date). Link returns \u2192 order_items (order_item_id) \u2192 orders (order_id).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "returns has no order_id or order_date \u2014 go through order_items.",
+        "Join returns \u2192 order_items on order_item_id, then order_items \u2192 orders on order_id.",
+        "CAST(julianday(r.return_date) - julianday(o.order_date) AS INTEGER) AS days_to_return"
+      ],
+      "why": "Time-between-events metrics (time to return, time to ship, time to first purchase) always need the two timestamps on one row first \u2014 usually via a join.",
+      "recall": {
+        "q": "Which Snowflake function gives whole days between two dates?",
+        "a": "DATEDIFF(day, start_date, end_date)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATEDIFF(day, o.order_date, r.return_date) AS days_to_return",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "return_id",
+        "order_id",
+        "order_date",
+        "return_date",
+        "days_to_return"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 5,
+      "title": "Days from signup to first purchase",
+      "question": "Growth wants to know how quickly new customers convert: days from signup to their first valid order.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'). For every customer in the customers table who has at least one valid order, return customer_id, signup_date, first_order_date (earliest valid order_date) and days_to_first_order (integer days from signup_date to first_order_date).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "First order = MIN(order_date) per customer \u2014 a GROUP BY.",
+        "An INNER JOIN to orders keeps only customers who have (valid) orders; the orphan customer 99 is dropped because it is not in customers.",
+        "SELECT c.customer_id, c.signup_date, MIN(o.order_date) AS first_order_date, CAST(julianday(MIN(o.order_date)) - julianday(c.signup_date) AS INTEGER) AS days_to_first_order ... GROUP BY c.customer_id, c.signup_date"
+      ],
+      "why": "Time-to-convert is a classic activation KPI. Note you can wrap date math around an aggregate (julianday(MIN(...))).",
+      "recall": {
+        "q": "Can you apply a date function to an aggregate like MIN(order_date)?",
+        "a": "Yes \u2014 julianday(MIN(o.order_date)) is fine; the aggregate is computed per group first."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATEDIFF(day, c.signup_date, MIN(o.order_date)) AS days_to_first_order",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "signup_date",
+        "first_order_date",
+        "days_to_first_order"
+      ],
+      "expected_row_count": 16
+    },
+    {
+      "number": 6,
+      "title": "Orders in the last week of the month",
+      "question": "Sales suspects a month-end rush. Which orders were placed in the final 7 days of their calendar month?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "For all orders (any status), compute month_end = last day of the order's month ('YYYY-MM-DD' text) and days_to_month_end = integer days from order_date to month_end (0 on the last day). Return order_id, order_date, month_end and days_to_month_end only for orders where days_to_month_end is between 0 and 6 inclusive.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Month end = start of month, plus one month, minus one day \u2014 three date modifiers.",
+        "You can't filter on a SELECT alias in the same query's WHERE; compute it in a subquery/CTE first.",
+        "Inner query: date(order_date, 'start of month', '+1 month', '-1 day') AS month_end, then julianday difference; outer: WHERE days_to_month_end BETWEEN 0 AND 6"
+      ],
+      "why": "Calendar-relative logic (month end, quarter end, fiscal periods) is where hand-rolled date math goes wrong; months have 28\u201331 days, so never hard-code 'day >= 24'.",
+      "recall": {
+        "q": "How do you get the last day of a date's month in SQLite and in Snowflake?",
+        "a": "SQLite: date(d, 'start of month', '+1 month', '-1 day'). Snowflake: LAST_DAY(d)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_id, order_date, LAST_DAY(order_date) AS month_end, DATEDIFF(day, order_date, LAST_DAY(order_date)) AS days_to_month_end FROM orders WHERE DATEDIFF(day, order_date, LAST_DAY(order_date)) BETWEEN 0 AND 6;",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "month_end",
+        "days_to_month_end"
+      ],
+      "expected_row_count": 10
+    }
+  ],
+  "worked_example": {
+    "question": "For orders placed in December 2025, show the month start, month end and weekday number.",
+    "sql": "SELECT order_id,\n       order_date,\n       date(order_date, 'start of month')                       AS month_start,\n       date(order_date, 'start of month', '+1 month', '-1 day') AS month_end,\n       CAST(strftime('%w', order_date) AS INTEGER)              AS day_of_week\nFROM orders\nWHERE order_date >= '2025-12-01' AND order_date < '2026-01-01';",
+    "explanation": "Modifiers are applied left to right: jump to the 1st, add a month, step back one day \u2192 last day of the month. `%w` returns 0 (Sunday) \u2026 6 (Saturday) as text; the CAST makes it a number. The half-open range `< '2026-01-01'` catches every December date.",
+    "columns": [
+      "order_id",
+      "order_date",
+      "month_start",
+      "month_end",
+      "day_of_week"
+    ],
+    "rows": [
+      [
+        58,
+        "2025-12-06",
+        "2025-12-01",
+        "2025-12-31",
+        6
+      ],
+      [
+        59,
+        "2025-12-19",
+        "2025-12-01",
+        "2025-12-31",
+        5
+      ],
+      [
+        60,
+        "2025-12-27",
+        "2025-12-01",
+        "2025-12-31",
+        6
+      ]
+    ]
+  },
+  "recipe": "**Recipe: work with dates in 5 moves**\n\nDates here are ISO text `'YYYY-MM-DD'`, which sorts and compares correctly as text.\n\n1. **Filter a range with half-open bounds**: `order_date >= '2025-01-01' AND order_date < '2025-04-01'`.\n   This is safe for dates *and* timestamps (`BETWEEN ... '2025-03-31'` silently drops '2025-03-31 14:00').\n2. **Extract parts** with `strftime`: `'%Y'` year, `'%m'` month, `'%d'` day, `'%w'` weekday (0 = Sunday),\n   `'%Y-%m'` month label. Results are TEXT \u2014 `CAST(strftime('%m', d) AS INTEGER)` for numbers.\n3. **Shift dates** with modifiers: `date(d, '-90 days')`, `date(d, '+1 month')`,\n   `date(d, 'start of month')`, `date(d, 'start of month', '+1 month', '-1 day')` (= month end).\n4. **Difference in days**: `julianday(later) - julianday(earlier)` (a REAL; `CAST(... AS INTEGER)` for whole days).\n5. **Anchor \"today\"** to the as-of date: `date('2025-12-31', '-90 days')`, never `date('now')`.\n\n```sql\nSELECT order_id,\n       strftime('%Y-%m', order_date)                                  AS order_month,\n       CAST(julianday('2025-12-31') - julianday(order_date) AS INTEGER) AS days_ago\nFROM   orders\nWHERE  order_date >= date('2025-12-31', '-90 days');\n```",
+  "snowflake_notes": "Snowflake has real DATE/TIMESTAMP types and a richer function set:\n\n| Idea | SQLite (this course) | Snowflake |\n|---|---|---|\n| year / month / quarter | `strftime('%Y', d)`, `strftime('%m', d)` | `YEAR(d)`, `MONTH(d)`, `QUARTER(d)` or `DATE_PART('month', d)` / `EXTRACT(month FROM d)` |\n| weekday | `strftime('%w', d)` (0 = Sun) | `DAYOFWEEK(d)` (0 = Sun by default), `DAYNAME(d)` \u2192 'Mon' |\n| month label | `strftime('%Y-%m', d)` | `TO_CHAR(d, 'YYYY-MM')` |\n| first of month | `date(d, 'start of month')` | `DATE_TRUNC('month', d)` |\n| month end | `date(d,'start of month','+1 month','-1 day')` | `LAST_DAY(d)` |\n| add days / months | `date(d, '-90 days')`, `date(d, '+1 month')` | `DATEADD(day, -90, d)`, `DATEADD(month, 1, d)` |\n| days between | `julianday(b) - julianday(a)` | `DATEDIFF(day, a, b)` (counts boundaries crossed) |\n| literal | `'2025-12-31'` (text) | `'2025-12-31'::DATE` or `DATE '2025-12-31'` |\n| today | (use the as-of literal) | `CURRENT_DATE()` |\n\n`DATEDIFF(month, '2025-01-31', '2025-02-01')` returns **1** in Snowflake \u2014 it counts month *boundaries*,\nnot elapsed time. Use `day` granularity when you need exact durations.",
+  "common_mistakes": [
+    "Using `date('now')` / `CURRENT_DATE` in reports that must be reproducible \u2014 anchor to the as-of date ('2025-12-31').",
+    "`BETWEEN '2025-01-01' AND '2025-03-31'` on a timestamp column drops everything after midnight on the last day.",
+    "Treating strftime output as a number: `strftime('%m', d) = 3` is false because it returns the text '03'.",
+    "Computing month end as 'start + 30 days' \u2014 months have 28\u201331 days; use the modifier chain or LAST_DAY.",
+    "Forgetting that julianday differences are REAL; CAST (or ROUND) when you want whole days."
+  ],
+  "recall": [
+    [
+      "What does date('2025-02-15', 'start of month', '+1 month', '-1 day') return?",
+      "'2025-02-28'."
+    ],
+    [
+      "Snowflake equivalent of strftime('%Y-%m', d)?",
+      "TO_CHAR(d, 'YYYY-MM') (or DATE_TRUNC('month', d) if you want a DATE)."
+    ],
+    [
+      "Write 'orders in the last 90 days as of 2025-12-31' in Snowflake.",
+      "WHERE order_date >= DATEADD(day, -90, '2025-12-31'::DATE)"
+    ],
+    [
+      "What does `%w` return for a Sunday?",
+      "'0' (text). Saturday is '6'."
+    ]
+  ],
+  "review_next": "Lesson 30 rolls dates up into periods \u2014 GROUP BY month, quarter, week, year. Re-do exercise 29.6 from memory first: the month-end modifier chain comes back constantly."
+}

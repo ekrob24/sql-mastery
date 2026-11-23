@@ -1,0 +1,15 @@
+-- Lesson 42 · Exercise 42.1 — Flatten the top-level scalars
+--
+-- BUSINESS QUESTION
+--   Data engineering wants a typed view of the raw events' key fields.
+-- TABLES: raw_order_events
+-- TASK
+--   For all 60 events return event_id, order_id (payload $.order_id), placed_at (payload
+--   $.placed_at, as the raw text) and customer_id (payload $.customer.id).
+-- REQUIRED COLUMNS: event_id, order_id, placed_at, customer_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.1
+-- Grade it:              python3 sqlm.py submit 42.1
+--
+-- Write your query below (from memory!):
+

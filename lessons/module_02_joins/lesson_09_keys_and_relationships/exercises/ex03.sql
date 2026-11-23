@@ -1,0 +1,24 @@
+-- Lesson 9 · Exercise 9.3 — Grain check: what does the join do to row counts?
+--
+-- BUSINESS QUESTION
+--   The data-quality lead wants a one-row reconciliation of orders vs. order lines.
+-- TABLES: orders, order_items
+-- TASK
+--   Return a single row with columns orders_rows (rows in orders), order_items_rows (rows
+--   in order_items), joined_rows (rows produced by INNER JOINing orders to order_items on
+--   order_id) and orders_in_join (number of DISTINCT order_ids in that join).
+-- REQUIRED COLUMNS: orders_rows, order_items_rows, joined_rows, orders_in_join
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.3
+-- Grade it:              python3 sqlm.py submit 9.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

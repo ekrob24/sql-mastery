@@ -1,0 +1,17 @@
+-- Lesson 38 · Exercise 38.5 — Quarterly retention rates
+--
+-- BUSINESS QUESTION
+--   Turn the counts into rates so cohorts of different sizes can be compared.
+-- TABLES: orders, customers
+-- TASK
+--   Extend 38.4: return cohort_quarter, quarters_since_first, cohort_size (customers in
+--   the cohort), active_customers and retention_pct (100.0 * active_customers /
+--   cohort_size, 0–100 scale, rounded to 1 decimal). Same definitions as 38.4. Order by
+--   cohort_quarter, quarters_since_first.
+-- REQUIRED COLUMNS: cohort_quarter, quarters_since_first, cohort_size, active_customers, retention_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 38.5
+-- Grade it:              python3 sqlm.py submit 38.5
+--
+-- Write your query below (from memory!):
+

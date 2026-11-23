@@ -1,0 +1,20 @@
+-- Lesson 47 · Exercise 47.3 — The 'redundant' join that was hiding a bug
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT oi.product_id, SUM(oi.quantity) AS units_sold FROM order_items oi
+--   JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id =
+--   o.customer_id JOIN products p ON p.product_id = oi.product_id WHERE o.order_status IN
+--   ('completed','shipped','returned') GROUP BY oi.product_id`. No customers or products
+--   columns are used — but the customers INNER JOIN silently drops orphan order 31.
+-- TABLES: order_items, orders
+-- TASK
+--   Remove the unused customers and products joins and return product_id and units_sold
+--   (sum of quantity) over ALL valid orders (order_status IN
+--   ('completed','shipped','returned')), including order 31 whose customer is missing.
+-- REQUIRED COLUMNS: product_id, units_sold
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.3
+-- Grade it:              python3 sqlm.py submit 47.3
+--
+-- Write your query below (from memory!):
+

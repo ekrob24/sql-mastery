@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+sql_mastery.db
+progress.json.tmp
+.env
+*.p8
+snowflake/probe_report.json
+snowflake/verify_report.json

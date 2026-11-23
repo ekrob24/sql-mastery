@@ -1,0 +1,16 @@
+-- Lesson 24 · Exercise 24.5 — Suppliers with no products (NULL-safe)
+--
+-- BUSINESS QUESTION
+--   Procurement asks again: which suppliers supply none of our products? This time, no
+--   traps.
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id, supplier_name for suppliers with no product in products, using NOT
+--   EXISTS (products.supplier_id contains a NULL; NOT EXISTS is unaffected).
+-- REQUIRED COLUMNS: supplier_id, supplier_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.5
+-- Grade it:              python3 sqlm.py submit 24.5
+--
+-- Write your query below (from memory!):
+

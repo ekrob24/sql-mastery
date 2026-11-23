@@ -1,0 +1,17 @@
+-- Lesson 2 · Exercise 2.7 — Cheap non-core products (and the NULL that vanishes)
+--
+-- BUSINESS QUESTION
+--   Which products outside our two core categories (Electronics and Home) cost under $40?
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, category and list_price for products whose category
+--   is NOT IN ('Electronics', 'Home') and whose list_price is below 40. Write it with NOT
+--   IN and do not add any NULL handling — products with a NULL category will (silently)
+--   not appear; Lesson 3 explains why.
+-- REQUIRED COLUMNS: product_id, product_name, category, list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.7
+-- Grade it:              python3 sqlm.py submit 2.7
+--
+-- Write your query below (from memory!):
+

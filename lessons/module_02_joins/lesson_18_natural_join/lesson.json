@@ -1,0 +1,359 @@
+{
+  "number": 18,
+  "slug": "natural_join",
+  "title": "NATURAL JOIN: mechanics and risks",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Understand that NATURAL JOIN joins on every same-named column, predict when that silently adds (or removes) join conditions, and replace it with explicit ON or USING.",
+  "context": "A colleague's notebook uses NATURAL JOIN everywhere because it's short. It worked last month. Then someone added a `region` column to a summary table, and a customer report lost two customers without any error. This lesson shows exactly how that happens.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Line counts per status with NATURAL JOIN",
+      "question": "Operations wants the number of order lines per order status.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using NATURAL JOIN (or an equivalent explicit join), return order_status and line_count (number of order_items lines) per status.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "orders and order_items share exactly one column name. Which?",
+        "FROM orders NATURAL JOIN order_items, then GROUP BY order_status.",
+        "SELECT order_status, COUNT(*) AS line_count FROM orders NATURAL JOIN order_items GROUP BY order_status;"
+      ],
+      "why": "NATURAL JOIN is safe only when you have verified the shared names. Doing that check explicitly is the habit that protects you when it isn't safe.",
+      "recall": {
+        "q": "NATURAL JOIN joins on which columns?",
+        "a": "Every column name the two inputs have in common."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items",
+        "shared_key": "order_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "NATURAL JOIN",
+          "INNER JOIN",
+          "JOIN USING"
+        ]
+      },
+      "join_notes": "Shared names: only order_id, so NATURAL JOIN = JOIN USING (order_id). Each of 150 lines matches exactly one order \u2192 150 rows, grouped into 5 statuses. Order 60 (pending, no lines) drops out as in any inner join, so 'pending' only counts order 59's lines. No NULLs appear.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_status",
+        "line_count"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 2,
+      "title": "Rewrite with USING",
+      "question": "Procurement wants each product with its supplier's name and country.",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Return product_id, product_name, supplier_name and country for products whose supplier exists, joining with JOIN \u2026 USING (supplier_id).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "USING takes the shared column name in parentheses.",
+        "FROM products JOIN suppliers USING (supplier_id)",
+        "SELECT product_id, product_name, supplier_name, country FROM products JOIN suppliers USING (supplier_id);"
+      ],
+      "why": "USING is NATURAL JOIN's honest sibling: just as short, but the key is written down, so adding a column to either table can't change the join.",
+      "recall": {
+        "q": "How is JOIN \u2026 USING (k) different from NATURAL JOIN?",
+        "a": "USING joins only on the listed column(s); NATURAL joins on all same-named columns."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "JOIN USING",
+          "NATURAL JOIN"
+        ]
+      },
+      "join_notes": "supplier_id is unique in suppliers: no multiplication. 25 products \u2192 23 rows: product 21 (supplier_id 9, nonexistent) and product 22 (NULL supplier_id) find no supplier and drop. Here NATURAL JOIN would give the same 23 rows, because supplier_id is the only shared name \u2014 today.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_name",
+        "country"
+      ],
+      "expected_row_count": 23
+    },
+    {
+      "number": 3,
+      "title": "No shared columns = cross join",
+      "question": "An analyst NATURAL JOINed suppliers to categories 'to see which supplier serves which category' and got a suspiciously big result. Quantify it.",
+      "tables": [
+        "suppliers",
+        "categories"
+      ],
+      "prompt": "Return a single row with columns supplier_rows (COUNT of suppliers), category_rows (COUNT of categories) and natural_rows (COUNT(*) of suppliers NATURAL JOIN categories).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Three scalar subqueries in one SELECT.",
+        "Compare the column lists: do suppliers and categories share any name?",
+        "SELECT (SELECT COUNT(*) FROM suppliers) AS supplier_rows, (SELECT COUNT(*) FROM categories) AS category_rows, (SELECT COUNT(*) FROM suppliers NATURAL JOIN categories) AS natural_rows;"
+      ],
+      "why": "With no common column, NATURAL JOIN raises no error \u2014 it returns the cartesian product. On real tables that's billions of rows and a very expensive mistake.",
+      "recall": {
+        "q": "What does NATURAL JOIN do when the tables share no column names?",
+        "a": "It becomes a CROSS JOIN."
+      },
+      "join_plan": {
+        "left_table": "suppliers",
+        "right_table": "categories",
+        "shared_key": [
+          "none",
+          "no"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "NATURAL JOIN",
+          "CROSS JOIN"
+        ]
+      },
+      "join_notes": "suppliers (supplier_id, supplier_name, country) and categories (category_id, category_name, parent_category_id) share no column name, so the NATURAL JOIN has no condition at all: 5 \u00d7 14 = 70 rows, every supplier paired with every category. Nothing is NULL and nothing is missing \u2014 it's all noise. There is no real key between these tables; the relationship goes through products.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "supplier_rows",
+        "category_rows",
+        "natural_rows"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "The extra shared column: region",
+      "question": "A customer report joins customers to a pre-built order-count table. The pre-built table carries region too, and the report is missing customers. Build it correctly.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "First build order_counts AS (SELECT o.customer_id, c.region, COUNT(*) AS order_count FROM orders o JOIN customers c USING (customer_id) GROUP BY o.customer_id, c.region). Then join customers to order_counts on customer_id ONLY and return customer_id, name, region (from customers) and order_count for every customer that has orders.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Write the CTE exactly as given, then join it to customers.",
+        "customers NATURAL JOIN order_counts would join on customer_id AND region. What happens to customers with a NULL region?",
+        "... FROM customers c JOIN order_counts oc USING (customer_id) \u2014 and select c.region (qualified, because both sides have region)."
+      ],
+      "why": "Denormalised summary tables often repeat descriptive columns (region, name, segment). With NATURAL JOIN each such column becomes a hidden join condition.",
+      "recall": {
+        "q": "Why does NATURAL JOIN on (customer_id, region) drop customers with a NULL region?",
+        "a": "Because NULL = NULL is not true, so the extra region condition fails for them."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": [
+          "order_counts",
+          "orders"
+        ],
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "JOIN USING"
+        ]
+      },
+      "join_notes": "order_counts has 17 rows (one per customer with orders; orphan customer 99 is already gone because the CTE inner-joins customers). Joining USING (customer_id) returns all 17. `customers NATURAL JOIN order_counts` returns only 15: it also requires customers.region = order_counts.region, and for customers 9 (David Kim) and 16 (Ava Thompson) both regions are NULL, so NULL = NULL fails \u2014 no error, two customers silently missing.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "region",
+        "order_count"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 5,
+      "title": "The extra shared column: name",
+      "question": "An analyst joined a product-sales summary to a product-supplier lookup with NATURAL JOIN and got an empty report. Both summaries use a column called `name`.",
+      "tables": [
+        "products",
+        "order_items",
+        "suppliers"
+      ],
+      "prompt": "Build sales AS (SELECT p.product_id, p.product_name AS name, SUM(i.quantity) AS units_sold FROM products p JOIN order_items i USING (product_id) GROUP BY p.product_id) and supplier_lookup AS (SELECT p.product_id, s.supplier_name AS name FROM products p JOIN suppliers s USING (supplier_id)). Join them on product_id only and return product_id, product_name, supplier_name and units_sold.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Both CTEs have product_id AND name. NATURAL JOIN would require the product name to equal the supplier name.",
+        "Join with USING (product_id) and disambiguate the two `name` columns with aliases.",
+        "SELECT product_id, sa.name AS product_name, sl.name AS supplier_name, sa.units_sold FROM sales sa JOIN supplier_lookup sl USING (product_id);"
+      ],
+      "why": "Generic column names (name, id, status, value, n) are everywhere in staging layers. NATURAL JOIN turns every such collision into a silent filter.",
+      "recall": {
+        "q": "Why did the NATURAL JOIN return 0 rows?",
+        "a": "It also joined on `name`, and no product name equals a supplier name."
+      },
+      "join_plan": {
+        "left_table": [
+          "sales",
+          "order_items"
+        ],
+        "right_table": [
+          "supplier_lookup",
+          "suppliers"
+        ],
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "JOIN USING"
+        ]
+      },
+      "join_notes": "sales has 22 rows (products that sold) and supplier_lookup 23 (products with an existing supplier); both are one row per product, so no multiplication. USING (product_id) returns 20 rows: product 21 and 22 sold but have no valid supplier, and products 23-25 have a supplier but never sold. sales NATURAL JOIN supplier_lookup returns 0 rows \u2014 it adds `sales.name = supplier_lookup.name`, i.e. product name = supplier name.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_name",
+        "units_sold"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 6,
+      "title": "Generic aliases collide: n and n",
+      "question": "Growth compares each customer's valid orders with their tracked purchase events. Both pre-aggregated tables call their count `n`.",
+      "tables": [
+        "orders",
+        "web_events"
+      ],
+      "prompt": "Pre-aggregate valid orders per customer (order_status IN ('completed','shipped','returned')) as (customer_id, n) and purchase web events per customer (event_type = 'purchase') as (customer_id, n). Join them on customer_id only and return customer_id, valid_orders and purchase_events for customers present in both.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two GROUP BY customer_id subqueries/CTEs, each with a COUNT(*) AS n.",
+        "NATURAL JOIN would match on customer_id AND n \u2014 keeping only customers whose two counts happen to be equal. Use USING (customer_id).",
+        "SELECT customer_id, vo.n AS valid_orders, pe.n AS purchase_events FROM vo JOIN pe USING (customer_id);"
+      ],
+      "why": "This bug is especially nasty because the result is not empty \u2014 it's a plausible-looking subset (only customers whose metrics coincide), so nobody notices.",
+      "recall": {
+        "q": "Which customers survive vo NATURAL JOIN pe?",
+        "a": "Only those whose valid-order count equals their purchase-event count."
+      },
+      "join_plan": {
+        "left_table": [
+          "vo",
+          "orders"
+        ],
+        "right_table": [
+          "pe",
+          "web_events"
+        ],
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "JOIN USING"
+        ]
+      },
+      "join_notes": "vo has one row per customer_id with a valid order (17 ids, including orphan 99) and pe one row per customer with a purchase event (12), so the join is one-to-one on customer_id: 11 customers appear in both \u2192 11 rows. The NATURAL JOIN version returns only 2 rows \u2014 customers 9 (2 and 2) and 13 (1 and 1) \u2014 because it also requires vo.n = pe.n. Pre-aggregating also avoided the orders \u00d7 events fan-out of Lesson 16.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "valid_orders",
+        "purchase_events"
+      ],
+      "expected_row_count": 11
+    }
+  ],
+  "worked_example": {
+    "question": "What does NATURAL JOIN do between orders and order_items?",
+    "sql": "SELECT order_id, order_status, product_id, quantity\nFROM orders\nNATURAL JOIN order_items\nLIMIT 5;",
+    "explanation": "The only shared column name is order_id, so this equals `JOIN order_items USING (order_id)`: 150 rows (order 60 has no items and drops, as with any inner join). Note `order_id` is written unqualified \u2014 NATURAL/USING merge the shared column into one.",
+    "columns": [
+      "order_id",
+      "order_status",
+      "product_id",
+      "quantity"
+    ],
+    "rows": [
+      [
+        1,
+        "completed",
+        3,
+        1
+      ],
+      [
+        2,
+        "completed",
+        17,
+        2
+      ],
+      [
+        2,
+        "completed",
+        4,
+        2
+      ],
+      [
+        2,
+        "completed",
+        6,
+        2
+      ],
+      [
+        3,
+        "returned",
+        1,
+        2
+      ]
+    ]
+  },
+  "recipe": "**Recipe: read (and replace) a NATURAL JOIN in 4 moves**\n\n1. **List the columns of both inputs** and find every name they share. NATURAL JOIN = INNER JOIN\n   with `ON a.c1 = b.c1 AND a.c2 = b.c2 \u2026` for *all* shared names.\n2. **Zero shared names** \u2192 it silently becomes a CROSS JOIN (every row \u00d7 every row).\n3. **An extra shared name** (`region`, `name`, `status`, `updated_at`, a generic `n`) \u2192 an extra\n   equality condition: rows where those differ \u2014 or are NULL \u2014 vanish.\n4. Rewrite explicitly: `JOIN \u2026 USING (customer_id)` (shared column output once, no alias needed) or\n   `JOIN \u2026 ON a.customer_id = b.customer_id` (most explicit; works when names differ).\n\n```sql\n-- risky: joins on customer_id AND region (if both sides have region)\nSELECT * FROM customers NATURAL JOIN order_counts;\n-- explicit:\nSELECT c.customer_id, c.name, c.region, oc.order_count\nFROM customers AS c\nJOIN order_counts AS oc USING (customer_id);\n```\n\n**USING vs ON:** `USING (k)` requires the same name on both sides and outputs one `k` column;\n`ON a.k = b.k` keeps both. Other same-named columns are NOT joined by USING \u2014 but you must qualify them\n(`c.region`) to avoid ambiguity.\n\n**Rule of thumb for production SQL:** never NATURAL JOIN. Your query's meaning should not change when\nsomeone adds a column to a table. Snowflake supports NATURAL JOIN and USING with identical semantics.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Assuming NATURAL JOIN uses 'the obvious key' \u2014 it uses every same-named column.",
+    "Not noticing that zero shared columns turns NATURAL JOIN into a CROSS JOIN.",
+    "Forgetting that an extra shared nullable column drops rows where it is NULL on both sides.",
+    "Giving pre-aggregated columns generic names (n, name, value) and then joining NATURALly.",
+    "With USING, selecting an unqualified column that exists on both sides but isn't in USING (e.g. region) \u2014 ambiguous."
+  ],
+  "recall": [
+    [
+      "What three outcomes can an unexpected shared column name cause in NATURAL JOIN?",
+      "Dropped rows (values differ or are NULL), an empty result, or \u2014 with no shared names \u2014 a cross join."
+    ],
+    [
+      "What's the safe short alternative to NATURAL JOIN?",
+      "JOIN \u2026 USING (key_column)."
+    ],
+    [
+      "Why is NATURAL JOIN dangerous in production code?",
+      "Its join condition changes silently whenever a column is added or renamed."
+    ]
+  ],
+  "review_next": "Next, Lesson 19 covers LATERAL joins: joining each row to a subquery that can see that row. Before that, re-run 18.4 with NATURAL JOIN and confirm customers 9 and 16 vanish."
+}

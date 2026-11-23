@@ -1,0 +1,319 @@
+{
+  "number": 2,
+  "slug": "filtering_where",
+  "title": "Filtering with WHERE, AND, OR, NOT, IN, BETWEEN, LIKE",
+  "module": 1,
+  "module_title": "SQL foundations",
+  "objective": "Keep only the rows you need by writing precise WHERE conditions, combining them safely with AND / OR / NOT and parentheses, and using IN, BETWEEN and LIKE as shorthands.",
+  "context": "Stakeholders almost never want 'all rows'. Merchandising wants one category, operations wants the stuck orders, customer success wants every 'Smith'-like account before a merge. A filter that is slightly wrong (one missing parenthesis, one inclusive bound) silently returns the wrong list \u2014 and nobody notices until the numbers disagree.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "One category",
+      "question": "Merchandising wants the electronics price list.",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name and list_price for every product whose category is exactly 'Electronics'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Filter rows with WHERE column = 'value'.",
+        "Text literals use single quotes: 'Electronics'.",
+        "SELECT product_id, product_name, list_price FROM products WHERE category = 'Electronics';"
+      ],
+      "why": "Most report requests are a single filter on a dimension. Getting the literal exactly right (spelling, case, quotes) is the whole job.",
+      "recall": {
+        "q": "Which quote style do you use around 'Electronics' in a WHERE clause?",
+        "a": "Single quotes \u2014 they mark a string literal."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "list_price"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 2,
+      "title": "Mid-range price band",
+      "question": "Marketing is planning a '$30\u2013$50 gift ideas' email. Which products fit?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name, category and list_price for products whose list_price is between 30 and 50, inclusive of both 30 and 50.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "BETWEEN is inclusive on both ends.",
+        "list_price BETWEEN low AND high",
+        "SELECT product_id, product_name, category, list_price FROM products WHERE list_price BETWEEN 30 AND 50;"
+      ],
+      "why": "Price bands, age bands and date ranges are everywhere. Knowing BETWEEN includes both endpoints prevents off-by-one errors (the Yoga Mat at exactly $30 must appear).",
+      "recall": {
+        "q": "Is `x BETWEEN 30 AND 50` true when x = 50?",
+        "a": "Yes. BETWEEN is inclusive: it means x >= 30 AND x <= 50."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "list_price"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 3,
+      "title": "Stuck orders this year",
+      "question": "Operations wants every 2025 order that was cancelled or is still pending.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return order_id, customer_id, order_date and order_status for orders whose order_status is 'cancelled' or 'pending' AND whose order_date is in 2025 (from '2025-01-01' to '2025-12-31' inclusive).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two requirements: a status list and a date range \u2014 combine them with AND.",
+        "order_status IN ('cancelled', 'pending') avoids an OR precedence trap.",
+        "WHERE order_status IN (...) AND order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      ],
+      "why": "Writing `status = 'cancelled' OR status = 'pending' AND date ...` without parentheses would return 2024 cancellations too. IN makes the intent impossible to misread.",
+      "recall": {
+        "q": "How does SQL read `a OR b AND c`?",
+        "a": "As `a OR (b AND c)` \u2014 AND binds tighter than OR."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 4,
+      "title": "Precedence trap: bulk headphone or monitor lines",
+      "question": "Which order lines sold 2 or more units of product 4 (headphones) or product 5 (monitor)?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Return order_item_id, order_id, product_id and quantity for order lines where product_id is 4 or 5 AND quantity is at least 2. (The quantity condition applies to both products.)",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The quantity rule must apply to BOTH products \u2014 think about precedence.",
+        "Either use product_id IN (4, 5) or wrap the OR in parentheses.",
+        "WHERE (product_id = 4 OR product_id = 5) AND quantity >= 2"
+      ],
+      "why": "Try it without parentheses: you get every single-unit product-4 line too. This is the most common silent filter bug in real reporting code.",
+      "recall": {
+        "q": "Rewrite `product_id = 4 OR product_id = 5` with a shorthand.",
+        "a": "product_id IN (4, 5)"
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "product_id",
+        "quantity"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 5,
+      "title": "Smith-like accounts with LIKE",
+      "question": "Customer success suspects duplicate accounts for 'John Smith' \u2014 including typo spellings like 'Jon Smith'. Find every candidate.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return customer_id, name, email and signup_date for customers whose name starts with 'J', ends with 'n Smith', and has anything (or nothing) in between \u2014 i.e. name LIKE 'J%n Smith'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "% matches any number of characters (including zero); _ matches exactly one.",
+        "The pattern is 'J' + anything + 'n Smith'.",
+        "WHERE name LIKE 'J%n Smith'"
+      ],
+      "why": "Pattern matching is how analysts hunt for dirty data: typo duplicates, test accounts ('%test%'), or email domains ('%@example.com'). Three accounts come back \u2014 two 'John Smith' with different emails and one 'Jon Smith'.",
+      "recall": {
+        "q": "What is the difference between % and _ in LIKE?",
+        "a": "% matches any number of characters (0 or more); _ matches exactly one character."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Snowflake's LIKE is case-sensitive; use ILIKE 'j%n smith' for a case-insensitive match. SQLite's LIKE is already case-insensitive for ASCII.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "email",
+        "signup_date"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 6,
+      "title": "NOT and NOT IN on a 2024 problem list",
+      "question": "Finance is closing the 2024 books and wants every 2024 order that did NOT end as a plain completed sale.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return order_id, customer_id, order_date and order_status for orders placed in 2024 (order_date from '2024-01-01' to '2024-12-31' inclusive) whose order_status is NOT 'completed'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two conditions joined with AND: a date range and a negated status.",
+        "Negation can be written NOT x = 'completed', x <> 'completed' or x != 'completed'.",
+        "WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31' AND order_status <> 'completed'"
+      ],
+      "why": "Exception lists ('everything that isn't normal') drive month-end reconciliation. Only three 2024 orders qualify \u2014 a short list finance can check by hand.",
+      "recall": {
+        "q": "Name three ways to write 'status is not completed'.",
+        "a": "status <> 'completed', status != 'completed', NOT status = 'completed'."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 7,
+      "title": "Cheap non-core products (and the NULL that vanishes)",
+      "question": "Which products outside our two core categories (Electronics and Home) cost under $40?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name, category and list_price for products whose category is NOT IN ('Electronics', 'Home') and whose list_price is below 40. Write it with NOT IN and do not add any NULL handling \u2014 products with a NULL category will (silently) not appear; Lesson 3 explains why.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "NOT IN is the negation of IN.",
+        "Combine NOT IN (...) with a price condition using AND.",
+        "WHERE category NOT IN ('Electronics', 'Home') AND list_price < 40"
+      ],
+      "why": "The 'Mystery Gift Box' (no category, $25) is arguably outside the core categories, yet NOT IN drops it because NULL NOT IN (...) is unknown, not true. Spotting what a filter silently removes is a core analyst skill.",
+      "recall": {
+        "q": "Does `NULL NOT IN ('Electronics', 'Home')` evaluate to true?",
+        "a": "No \u2014 it evaluates to NULL (unknown), so WHERE discards the row."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "list_price"
+      ],
+      "expected_row_count": 5
+    }
+  ],
+  "worked_example": {
+    "question": "Which Home or Apparel products cost less than $40?",
+    "sql": "SELECT product_id, product_name, category, list_price\nFROM products\nWHERE category IN ('Home', 'Apparel')\n  AND list_price < 40;",
+    "explanation": "`IN` replaces an `OR` chain, so there is no precedence trap. Written with OR you would need parentheses: `(category = 'Home' OR category = 'Apparel') AND list_price < 40`. Without them, every Home product would be returned regardless of price.",
+    "columns": [
+      "product_id",
+      "product_name",
+      "category",
+      "list_price"
+    ],
+    "rows": [
+      [
+        8,
+        "French Press",
+        "Home",
+        32
+      ],
+      [
+        9,
+        "Throw Blanket",
+        "Home",
+        38
+      ],
+      [
+        10,
+        "Desk Lamp",
+        "Home",
+        27.5
+      ],
+      [
+        13,
+        "Wool Socks (3-pack)",
+        "Apparel",
+        18
+      ],
+      [
+        14,
+        "Baseball Cap",
+        "Apparel",
+        22
+      ]
+    ]
+  },
+  "recipe": "**Recipe: build a filter in 4 moves**\n\n1. Write the condition for **one** requirement: `category = 'Electronics'`, `quantity >= 3`.\n2. Combine requirements: `AND` = all must hold, `OR` = at least one holds, `NOT` flips a condition.\n3. **Parenthesise every OR.** `AND` binds tighter than `OR`, so `a OR b AND c` means `a OR (b AND c)`.\n4. Use the shorthands:\n   - `col IN ('a', 'b', 'c')` \u2014 same as `col = 'a' OR col = 'b' OR col = 'c'`\n   - `col BETWEEN 10 AND 20` \u2014 **inclusive** on both ends (`col >= 10 AND col <= 20`)\n   - `col LIKE 'J%n Smith'` \u2014 `%` = any number of characters, `_` = exactly one character\n\n```sql\nSELECT order_id, order_date, order_status\nFROM   orders\nWHERE  order_status IN ('cancelled', 'pending')\n  AND  order_date BETWEEN '2025-01-01' AND '2025-12-31';\n```\n\n**Dates** here are ISO text (`'YYYY-MM-DD'`), so they compare correctly as strings.\n\n**Case sensitivity:** in SQLite, `=` is case-sensitive but `LIKE` is case-*insensitive* for ASCII letters.\nSnowflake is the opposite trap: `LIKE` is case-sensitive there; use `ILIKE` for case-insensitive matching.\n\n**NULL preview:** a comparison with NULL is never true, so `WHERE category <> 'Books'` silently drops rows\nwhose category is NULL. Lesson 3 is all about this.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Mixing AND and OR without parentheses \u2014 `a OR b AND c` is `a OR (b AND c)`.",
+    "Forgetting BETWEEN is inclusive (or using it on timestamps where '2025-12-31' means midnight only).",
+    "Using double quotes for strings: `\"Electronics\"` is an identifier in standard SQL, not text.",
+    "Assuming LIKE behaves the same everywhere: case-insensitive in SQLite, case-sensitive in Snowflake.",
+    "Forgetting that `<>`, `NOT IN` and `NOT LIKE` silently exclude NULLs."
+  ],
+  "recall": [
+    [
+      "Which binds tighter, AND or OR?",
+      "AND. Always parenthesise OR groups to make intent explicit."
+    ],
+    [
+      "What does `price BETWEEN 30 AND 50` expand to?",
+      "price >= 30 AND price <= 50."
+    ],
+    [
+      "Write a LIKE pattern for 'emails at example.com'.",
+      "email LIKE '%@example.com'"
+    ],
+    [
+      "Why can a filter on `category <> 'Books'` miss rows?",
+      "Rows with NULL category: NULL <> 'Books' is unknown, not true, so they are discarded."
+    ]
+  ],
+  "review_next": "Next, Lesson 3 tackles NULLs head-on. Re-run exercise 2.7 and look for product 20 \u2014 understanding why it vanished is the key to the next lesson."
+}

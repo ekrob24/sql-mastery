@@ -1,0 +1,4 @@
+supplier_id,product_id,issue
+5,,supplier has no products
+9,21,unknown supplier
+,22,product has no supplier_id

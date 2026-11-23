@@ -1,0 +1,15 @@
+-- Lesson 1 · Exercise 1.4 — Order line totals
+--
+-- BUSINESS QUESTION
+--   What is the value of every order line?
+-- TABLES: order_items
+-- TASK
+--   Return order_item_id, order_id, product_id, quantity, unit_price and line_total
+--   (quantity * unit_price) for all 150 order lines.
+-- REQUIRED COLUMNS: order_item_id, order_id, product_id, quantity, unit_price, line_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.4
+-- Grade it:              python3 sqlm.py submit 1.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 44 · Exercise 44.7 — Walk a whole document (RECURSIVE flatten)
+--
+-- BUSINESS QUESTION
+--   Platform team: list every leaf value in event 4's payload with its full path, to
+--   document the schema.
+-- TABLES: raw_order_events
+-- TASK
+--   Use json_tree on event 4's payload and return path (the fullkey column, e.g.
+--   $.customer.id) and leaf_value (the atom column) for every element that is NOT an
+--   object or array.
+-- REQUIRED COLUMNS: path, leaf_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.7
+-- Grade it:              python3 sqlm.py submit 44.7
+--
+-- Write your query below (from memory!):
+

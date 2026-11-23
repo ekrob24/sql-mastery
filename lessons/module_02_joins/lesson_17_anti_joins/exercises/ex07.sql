@@ -1,0 +1,25 @@
+-- Lesson 17 · Exercise 17.7 — Products never sold to the North region
+--
+-- BUSINESS QUESTION
+--   The North regional manager wants to know which catalog products have never been bought
+--   by a North customer in a valid order.
+-- TABLES: products, order_items, orders, customers
+-- TASK
+--   Return product_id and product_name for products with no order line in a valid order
+--   (order_status IN ('completed','shipped','returned')) placed by a customer whose region
+--   is 'North'. Products never sold at all also qualify.
+-- REQUIRED COLUMNS: product_id, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.7
+-- Grade it:              python3 sqlm.py submit 17.7
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

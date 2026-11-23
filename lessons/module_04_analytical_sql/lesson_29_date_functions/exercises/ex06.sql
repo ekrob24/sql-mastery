@@ -1,0 +1,18 @@
+-- Lesson 29 · Exercise 29.6 — Orders in the last week of the month
+--
+-- BUSINESS QUESTION
+--   Sales suspects a month-end rush. Which orders were placed in the final 7 days of their
+--   calendar month?
+-- TABLES: orders
+-- TASK
+--   For all orders (any status), compute month_end = last day of the order's month ('YYYY-
+--   MM-DD' text) and days_to_month_end = integer days from order_date to month_end (0 on
+--   the last day). Return order_id, order_date, month_end and days_to_month_end only for
+--   orders where days_to_month_end is between 0 and 6 inclusive.
+-- REQUIRED COLUMNS: order_id, order_date, month_end, days_to_month_end
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.6
+-- Grade it:              python3 sqlm.py submit 29.6
+--
+-- Write your query below (from memory!):
+

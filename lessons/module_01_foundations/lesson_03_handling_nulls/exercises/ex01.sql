@@ -1,0 +1,14 @@
+-- Lesson 3 · Exercise 3.1 — Who has no email?
+--
+-- BUSINESS QUESTION
+--   The CRM team needs to chase customers with no email on file.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name and signup_date for customers whose email is NULL.
+-- REQUIRED COLUMNS: customer_id, name, signup_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.1
+-- Grade it:              python3 sqlm.py submit 3.1
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,20 @@
+-- Lesson 36 · Exercise 36.3 — Customer cumulative spend
+--
+-- BUSINESS QUESTION
+--   Loyalty wants each order annotated with the customer's spend to date and how far along
+--   their lifetime spend that order put them.
+-- TABLES: orders, order_items
+-- TASK
+--   Order value = SUM(quantity * unit_price) of the order's lines, valid orders only
+--   (order_status IN ('completed','shipped','returned')). Return order_id, customer_id,
+--   order_date, order_value (rounded 2), cumulative_spend (the customer's running total of
+--   order_value up to and including this order, ordering by order_date then order_id;
+--   rounded 2) and pct_of_lifetime (cumulative_spend as a 0–100 percentage of the
+--   customer's total spend over all their valid orders, rounded to 1 decimal).
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_value, cumulative_spend, pct_of_lifetime
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 36.3
+-- Grade it:              python3 sqlm.py submit 36.3
+--
+-- Write your query below (from memory!):
+

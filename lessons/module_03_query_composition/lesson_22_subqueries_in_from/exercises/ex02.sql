@@ -1,0 +1,19 @@
+-- Lesson 22 · Exercise 22.2 — Customers who spent $1,000+
+--
+-- BUSINESS QUESTION
+--   The VIP program wants customers whose lifetime gross spend is at least $1,000.
+-- TABLES: orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), aggregate per
+--   orders.customer_id in a derived table, then filter it with WHERE. Return customer_id,
+--   order_count (number of valid orders), total_spend (rounded to 2 decimals) for
+--   customers with total_spend >= 1000.
+-- REQUIRED COLUMNS: customer_id, order_count, total_spend
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.2
+-- Grade it:              python3 sqlm.py submit 22.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,25 @@
+-- Lesson 50 · Exercise 50.7 — Customer lifetime value
+--
+-- BUSINESS QUESTION
+--   Finance: "What is each customer worth to us so far — including the ones who never
+--   bought?"
+-- TABLES: customers, orders, order_items, returns
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned') (cancelled and
+--   pending are excluded). Gross revenue = SUM(quantity * unit_price) over the order_items
+--   lines of valid orders (count every line as recorded — do not de-duplicate). Refunds =
+--   SUM(returns.refund_amount) for returned lines of valid orders. Net revenue = gross
+--   revenue − refunds. Customer lifetime value (lifetime_value) = the customer's net
+--   revenue over all their valid orders to date. Include EVERY customer in the customers
+--   table (customers with no valid orders show 0 orders and 0.00 money, not NULL); the
+--   orphan customer_id 99 is not a customer and is excluded. Return customer_id,
+--   customer_name (customers.name), valid_orders (distinct valid orders), gross_revenue,
+--   refunds, lifetime_value (money rounded to 2 decimals). Order by lifetime_value
+--   descending, then customer_id ascending.
+-- REQUIRED COLUMNS: customer_id, customer_name, valid_orders, gross_revenue, refunds, lifetime_value
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.7
+-- Grade it:              python3 sqlm.py submit 50.7
+--
+-- Write your query below (from memory!):
+

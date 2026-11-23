@@ -1,0 +1,17 @@
+-- Lesson 40 · Exercise 40.2 — Category performance
+--
+-- BUSINESS QUESTION
+--   Which categories generate the most gross margin?
+-- TABLES: orders, order_items, products, product_costs
+-- TASK
+--   Same definitions as 40.1 (valid orders; gross_margin = revenue - quantity*unit_cost).
+--   Return category ('Uncategorized' when NULL), products_sold (distinct products with
+--   sales), revenue, gross_margin (rounded to 2) and margin_pct (100.0 * gross_margin /
+--   revenue, rounded to 1 decimal). Order by gross_margin descending, then category.
+-- REQUIRED COLUMNS: category, products_sold, revenue, gross_margin, margin_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 40.2
+-- Grade it:              python3 sqlm.py submit 40.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 23 · Exercise 23.5 — Order sequence number per customer
+--
+-- BUSINESS QUESTION
+--   Lifecycle marketing wants to know whether each valid order was the customer's 1st,
+--   2nd, 3rd... purchase.
+-- TABLES: orders
+-- TASK
+--   For each valid order (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) return
+--   order_id, customer_id, order_date and order_seq = the number of valid orders by the
+--   same customer_id with an order_date on or before this one (so the first valid order is
+--   1).
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_seq
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.5
+-- Grade it:              python3 sqlm.py submit 23.5
+--
+-- Write your query below (from memory!):
+

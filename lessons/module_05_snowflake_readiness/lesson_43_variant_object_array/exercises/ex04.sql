@@ -1,0 +1,17 @@
+-- Lesson 43 · Exercise 43.4 — Build a JSON object per customer (OBJECT_CONSTRUCT)
+--
+-- BUSINESS QUESTION
+--   An API partner wants an East-region customer export where each customer is a JSON
+--   document.
+-- TABLES: customers
+-- TASK
+--   For customers in region 'East', return customer_id and profile = json_object('name',
+--   name, 'email', email, 'signup_date', signup_date) — exactly these three keys in this
+--   order (a NULL email becomes JSON null).
+-- REQUIRED COLUMNS: customer_id, profile
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.4
+-- Grade it:              python3 sqlm.py submit 43.4
+--
+-- Write your query below (from memory!):
+

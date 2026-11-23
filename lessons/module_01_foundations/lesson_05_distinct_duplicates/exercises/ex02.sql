@@ -1,0 +1,15 @@
+-- Lesson 5 · Exercise 5.2 — Which customer IDs have ordered?
+--
+-- BUSINESS QUESTION
+--   Which customer IDs appear on at least one order (any status)?
+-- TABLES: orders
+-- TASK
+--   Return one column, customer_id, listing each customer_id that appears in orders
+--   exactly once, sorted ascending.
+-- REQUIRED COLUMNS: customer_id
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 5.2
+-- Grade it:              python3 sqlm.py submit 5.2
+--
+-- Write your query below (from memory!):
+

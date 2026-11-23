@@ -1,0 +1,16 @@
+-- Lesson 44 · Exercise 44.4 — Units by category from JSON lines
+--
+-- BUSINESS QUESTION
+--   Merchandising wants units sold per category straight from the event feed.
+-- TABLES: raw_order_events, orders, products
+-- TASK
+--   Flatten $.items, keep only valid orders (join orders on order_id; order_status IN
+--   ('completed','shipped','returned')), join products on the item's product_id, and
+--   return category (NULL shown as 'Uncategorized') and units (sum of qty).
+-- REQUIRED COLUMNS: category, units
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.4
+-- Grade it:              python3 sqlm.py submit 44.4
+--
+-- Write your query below (from memory!):
+

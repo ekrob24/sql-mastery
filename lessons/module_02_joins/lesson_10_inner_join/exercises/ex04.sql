@@ -1,0 +1,25 @@
+-- Lesson 10 · Exercise 10.4 — Customers and orders by region
+--
+-- BUSINESS QUESTION
+--   Regional managers want to know, per region, how many distinct customers have ordered
+--   and how many orders they placed.
+-- TABLES: customers, orders
+-- TASK
+--   Return region, customers_with_orders (count of distinct customers who placed at least
+--   one order) and order_count (number of orders, any status), one row per region (NULL
+--   region is its own group). Only orders that match an existing customer count.
+-- REQUIRED COLUMNS: region, customers_with_orders, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.4
+-- Grade it:              python3 sqlm.py submit 10.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

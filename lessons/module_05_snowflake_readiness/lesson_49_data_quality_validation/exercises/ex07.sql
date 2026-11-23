@@ -1,0 +1,24 @@
+-- Lesson 49 · Exercise 49.7 — One summary-of-checks query
+--
+-- BUSINESS QUESTION
+--   The monitoring job needs one query: one row per check with its failing-row count and
+--   PASS/FAIL.
+-- TABLES: orders, customers, products, suppliers, order_items, returns
+-- TASK
+--   Return check_name, failing_rows and status ('PASS' if failing_rows = 0 else 'FAIL')
+--   for exactly these checks: 'orders_customer_fk' (orders whose customer_id is not in
+--   customers); 'products_supplier_fk' (products with a non-NULL supplier_id not in
+--   suppliers); 'customers_email_not_null' (customers with NULL email);
+--   'order_items_no_duplicates' (rows that duplicate an earlier line on order_id,
+--   product_id, quantity, unit_price — i.e. copies beyond the first);
+--   'orders_valid_status' (status NULL or not in the 5 known statuses);
+--   'orders_have_items' (orders without order_items rows); 'refund_not_above_line'
+--   (returns whose refund_amount > ROUND(quantity * unit_price, 2) of the line);
+--   'order_date_in_range' (order_date NULL or outside '2024-01-01'..'2025-12-31').
+-- REQUIRED COLUMNS: check_name, failing_rows, status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.7
+-- Grade it:              python3 sqlm.py submit 49.7
+--
+-- Write your query below (from memory!):
+

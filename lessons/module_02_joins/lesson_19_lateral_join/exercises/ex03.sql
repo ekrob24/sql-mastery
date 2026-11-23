@@ -1,0 +1,25 @@
+-- Lesson 19 · Exercise 19.3 — Most expensive product each customer bought
+--
+-- BUSINESS QUESTION
+--   Sales wants each paying customer's single most expensive purchase.
+-- TABLES: customers, orders, order_items, products
+-- TASK
+--   For customers with at least one valid order (order_status IN
+--   ('completed','shipped','returned')), return customer_id, name, product_name and
+--   unit_price of the order line with the highest unit_price among their valid orders
+--   (ties broken by the lower order_item_id).
+-- REQUIRED COLUMNS: customer_id, name, product_name, unit_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.3
+-- Grade it:              python3 sqlm.py submit 19.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

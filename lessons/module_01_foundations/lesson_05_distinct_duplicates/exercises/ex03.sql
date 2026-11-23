@@ -1,0 +1,16 @@
+-- Lesson 5 · Exercise 5.3 — Status by year combinations
+--
+-- BUSINESS QUESTION
+--   Which order statuses occurred in each year?
+-- TABLES: orders
+-- TASK
+--   Return the distinct combinations of order_year (the first 4 characters of order_date,
+--   i.e. substr(order_date, 1, 4)) and order_status, sorted by order_year then
+--   order_status.
+-- REQUIRED COLUMNS: order_year, order_status
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 5.3
+-- Grade it:              python3 sqlm.py submit 5.3
+--
+-- Write your query below (from memory!):
+

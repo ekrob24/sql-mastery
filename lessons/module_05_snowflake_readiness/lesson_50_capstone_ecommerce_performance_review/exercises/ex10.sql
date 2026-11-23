@@ -1,0 +1,27 @@
+-- Lesson 50 · Exercise 50.10 — Executive summary
+--
+-- BUSINESS QUESTION
+--   CEO: "One row for the first slide. Every number on it must match the detail tables."
+-- TABLES: customers, orders, order_items, returns
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned') (cancelled and
+--   pending are excluded). Gross revenue = SUM(quantity * unit_price) over the order_items
+--   lines of valid orders (count every line as recorded — do not de-duplicate). Refunds =
+--   SUM(returns.refund_amount) for returned lines of valid orders. Net revenue = gross
+--   revenue − refunds. Return ONE row with these columns: valid_orders (distinct valid
+--   orders); gross_revenue, refunds, net_revenue (rounded to 2 decimals); avg_order_value
+--   = gross revenue / valid_orders rounded to 2 decimals; net_revenue_yoy_growth_pct = 100
+--   * (net revenue of orders dated in 2025 − net revenue of orders dated in 2024) / net
+--   revenue of 2024, rounded to 1 decimal (refunds belong to the original order's year);
+--   active_customers = customers in the customers table with at least 1 valid order
+--   (orphan 99 excluded); repeat_purchase_rate_pct = 100 * customers with ≥2 valid orders
+--   / active_customers, rounded to 1 decimal; line_return_rate_pct = 100 * returned valid
+--   lines / all valid lines, rounded to 1 decimal; lapsed_customers = active customers
+--   whose latest valid order is more than 90 days before '2025-12-31'.
+-- REQUIRED COLUMNS: valid_orders, gross_revenue, refunds, net_revenue, avg_order_value, net_revenue_yoy_growth_pct, active_customers, repeat_purchase_rate_pct, line_return_rate_pct, lapsed_customers
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 50.10
+-- Grade it:              python3 sqlm.py submit 50.10
+--
+-- Write your query below (from memory!):
+

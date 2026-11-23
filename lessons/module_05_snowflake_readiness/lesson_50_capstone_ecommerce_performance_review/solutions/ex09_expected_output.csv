@@ -1,0 +1,14 @@
+customer_id,customer_name,region,last_order_date,days_since_last_order
+8,Priya Patel,North,2024-08-28,490
+9,David Kim,Unknown,2024-10-01,456
+5,Jon Smith,East,2024-12-21,375
+13,Noah Wilson,North,2025-01-15,350
+10,Emma Brown,East,2025-02-04,330
+1,Alice Johnson,North,2025-03-04,302
+6,Maria Garcia,South,2025-05-19,226
+11,Lucas Martin,West,2025-06-06,208
+14,Olivia Davis,East,2025-06-23,191
+17,Ethan Clark,South,2025-07-10,174
+4,John Smith,West,2025-07-24,160
+15,Liam O'Brien,West,2025-08-25,128
+3,John Smith,East,2025-09-21,101

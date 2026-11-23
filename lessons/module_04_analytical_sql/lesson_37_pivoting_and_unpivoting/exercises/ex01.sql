@@ -1,0 +1,18 @@
+-- Lesson 37 · Exercise 37.1 — Category × year revenue grid
+--
+-- BUSINESS QUESTION
+--   Finance wants a simple grid: categories down the side, 2024 and 2025 revenue across
+--   the top.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Return category ('Uncategorized'
+--   when NULL), revenue_2024, revenue_2025 (revenue of orders dated in that year; 0 when
+--   none) and total_revenue (both years), all rounded to 2 decimals. One row per category.
+-- REQUIRED COLUMNS: category, revenue_2024, revenue_2025, total_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 37.1
+-- Grade it:              python3 sqlm.py submit 37.1
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,27 @@
+-- Lesson 13 · Exercise 13.5 — 2024 vs. 2025 orders per customer (FULL JOIN of aggregates)
+--
+-- BUSINESS QUESTION
+--   Growth wants to compare each customer's order count in 2024 with 2025 — including
+--   customers active in only one of the years.
+-- TABLES: orders
+-- TASK
+--   Build two per-customer aggregates from orders (any status): orders in 2024 and orders
+--   in 2025 (use strftime('%Y', order_date)). FULL OUTER JOIN them on customer_id and
+--   return customer_id, orders_2024 and orders_2025 (0 when the customer had no orders
+--   that year), one row per customer_id that ordered in either year (include customer_id
+--   99 — it is in orders).
+-- REQUIRED COLUMNS: customer_id, orders_2024, orders_2025
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.5
+-- Grade it:              python3 sqlm.py submit 13.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

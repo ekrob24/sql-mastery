@@ -1,0 +1,16 @@
+-- Lesson 43 · Exercise 43.2 — Array sizes: items and tags
+--
+-- BUSINESS QUESTION
+--   Which events are big baskets (4+ items), and how many tags do they carry?
+-- TABLES: raw_order_events
+-- TASK
+--   Return event_id, order_id, item_count (number of elements in $.items) and tag_count
+--   (number of elements in $.tags, 0 when the tags key is absent) for events with
+--   item_count >= 4.
+-- REQUIRED COLUMNS: event_id, order_id, item_count, tag_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.2
+-- Grade it:              python3 sqlm.py submit 43.2
+--
+-- Write your query below (from memory!):
+

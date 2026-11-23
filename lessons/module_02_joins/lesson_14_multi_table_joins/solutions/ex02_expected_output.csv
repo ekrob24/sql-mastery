@@ -1,0 +1,13 @@
+order_id,order_date,customer_name,product_name,quantity,line_total
+56,2025-11-08,Brian Lee,Desk Lamp,3,82.5
+56,2025-11-08,Brian Lee,27in Monitor,1,251.99
+56,2025-11-08,Brian Lee,Throw Blanket,1,38
+57,2025-11-21,Chen Wei,Data Storytelling,3,105
+57,2025-11-21,Chen Wei,Desk Lamp,1,27.5
+58,2025-12-06,Sofia Rossi,Phone Stand,2,24
+58,2025-12-06,Sofia Rossi,Yoga Mat,2,51.0
+58,2025-12-06,Sofia Rossi,Mystery Gift Box,2,42.5
+58,2025-12-06,Sofia Rossi,Wool Socks (3-pack),1,15.3
+58,2025-12-06,Sofia Rossi,Adjustable Dumbbells,1,129
+59,2025-12-19,Noah Wilson,Data Storytelling,1,29.75
+59,2025-12-19,Noah Wilson,Adjustable Dumbbells,2,258

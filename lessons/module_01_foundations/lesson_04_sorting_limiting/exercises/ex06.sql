@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.6 — 2025 orders by status, newest first within status
+--
+-- BUSINESS QUESTION
+--   Operations reviews 2025 orders status by status, latest first.
+-- TABLES: orders
+-- TASK
+--   Return order_id, order_status and order_date for orders with order_date on or after
+--   '2025-01-01', sorted by order_status ascending (alphabetical), then order_date
+--   descending, then order_id descending.
+-- REQUIRED COLUMNS: order_id, order_status, order_date
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.6
+-- Grade it:              python3 sqlm.py submit 4.6
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,20 @@
+-- Lesson 31 · Exercise 31.2 — Month-over-month growth %
+--
+-- BUSINESS QUESTION
+--   The business review deck needs MoM change and growth % for every month.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_month ('YYYY-MM'), gross_revenue, prev_month_revenue,
+--   mom_change (gross_revenue − prev_month_revenue) — these three rounded to 2 decimals —
+--   and mom_growth_pct = 100 * (gross_revenue − prev_month_revenue) / prev_month_revenue
+--   rounded to 1 decimal, using NULLIF so a zero previous month gives NULL. Ordered by
+--   order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, prev_month_revenue, mom_change, mom_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.2
+-- Grade it:              python3 sqlm.py submit 31.2
+--
+-- Write your query below (from memory!):
+

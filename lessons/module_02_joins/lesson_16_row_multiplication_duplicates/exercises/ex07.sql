@@ -1,0 +1,26 @@
+-- Lesson 16 · Exercise 16.7 — Revenue with duplicate lines removed
+--
+-- BUSINESS QUESTION
+--   Finance wants to know how much the duplicate order lines distort order totals.
+-- TABLES: orders, order_items
+-- TASK
+--   For each order that contains duplicate-looking lines (same order_id, product_id,
+--   quantity, unit_price), return order_id, order_status, raw_gross (SUM(quantity *
+--   unit_price) over all lines, rounded to 2) and deduped_gross (the same sum after
+--   keeping only one copy of each distinct (order_id, product_id, quantity, unit_price),
+--   rounded to 2).
+-- REQUIRED COLUMNS: order_id, order_status, raw_gross, deduped_gross
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.7
+-- Grade it:              python3 sqlm.py submit 16.7
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,23 @@
+-- Lesson 18 · Exercise 18.1 — Line counts per status with NATURAL JOIN
+--
+-- BUSINESS QUESTION
+--   Operations wants the number of order lines per order status.
+-- TABLES: orders, order_items
+-- TASK
+--   Using NATURAL JOIN (or an equivalent explicit join), return order_status and
+--   line_count (number of order_items lines) per status.
+-- REQUIRED COLUMNS: order_status, line_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.1
+-- Grade it:              python3 sqlm.py submit 18.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

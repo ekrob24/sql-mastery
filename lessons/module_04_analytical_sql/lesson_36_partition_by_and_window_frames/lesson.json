@@ -1,0 +1,364 @@
+{
+  "number": 36,
+  "slug": "partition_by_and_window_frames",
+  "title": "PARTITION BY and window frames",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Control exactly which rows a window function sees: PARTITION BY for groups, ORDER BY for sequence, and ROWS/RANGE frames for running totals, moving averages and first/last values.",
+  "context": "Finance wants share-of-total and year-to-date revenue; merchandising wants each product's share of its category; the growth team wants 3-month moving averages that smooth noisy months. These are all 'aggregate over a sliding set of rows while keeping every row' \u2014 window frames.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Category share of total revenue",
+      "question": "The CEO asks: what share of our revenue does each category bring in?",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Return category (use 'Uncategorized' when products.category is NULL), revenue (rounded to 2) and pct_of_total (the category's revenue as a percentage of all revenue, 0\u2013100 scale, rounded to 1 decimal).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "An empty OVER () means 'all rows of the result'.",
+        "After GROUP BY, SUM(SUM(x)) OVER () is the grand total of the group sums.",
+        "ROUND(100.0 * SUM(qty*price) / SUM(SUM(qty*price)) OVER (), 1) AS pct_of_total ... GROUP BY COALESCE(p.category,'Uncategorized')"
+      ],
+      "why": "Share-of-total without a second query or a cross join to a totals CTE. The percentages always add up (to rounding) to 100.",
+      "recall": {
+        "q": "What does SUM(SUM(x)) OVER () compute in a GROUP BY query?",
+        "a": "The window SUM over all grouped rows of the per-group SUMs \u2014 i.e. the grand total, repeated on each row."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "RATIO_TO_REPORT(SUM(oi.quantity * oi.unit_price)) OVER () * 100 AS pct_of_total",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "revenue",
+        "pct_of_total"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 2,
+      "title": "Product share within its category",
+      "question": "Category managers want to know which products carry their category.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). For every product with revenue, return product_id, product_name, category ('Uncategorized' when NULL), product_revenue (rounded 2), category_revenue (total revenue of that category, rounded 2) and pct_of_category (product_revenue as a 0\u2013100 percentage of category_revenue, rounded to 1 decimal).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "One row per product first (CTE), then a window partitioned by category.",
+        "SUM(revenue) OVER (PARTITION BY category) puts the category total on each product row.",
+        "ROUND(100.0 * revenue / SUM(revenue) OVER (PARTITION BY category), 1) AS pct_of_category"
+      ],
+      "why": "PARTITION BY without ORDER BY gives a group total on every row \u2014 no join back to a category-totals table needed.",
+      "recall": {
+        "q": "What frame does SUM(x) OVER (PARTITION BY g) use when there is no ORDER BY?",
+        "a": "The whole partition \u2014 every row of the group."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "RATIO_TO_REPORT(revenue) OVER (PARTITION BY category) returns the 0\u20131 share directly.",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "product_revenue",
+        "category_revenue",
+        "pct_of_category"
+      ],
+      "expected_row_count": 22
+    },
+    {
+      "number": 3,
+      "title": "Customer cumulative spend",
+      "question": "Loyalty wants each order annotated with the customer's spend to date and how far along their lifetime spend that order put them.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Order value = SUM(quantity * unit_price) of the order's lines, valid orders only (order_status IN ('completed','shipped','returned')). Return order_id, customer_id, order_date, order_value (rounded 2), cumulative_spend (the customer's running total of order_value up to and including this order, ordering by order_date then order_id; rounded 2) and pct_of_lifetime (cumulative_spend as a 0\u2013100 percentage of the customer's total spend over all their valid orders, rounded to 1 decimal).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two windows on the same partition: one with ORDER BY + frame (running), one without (total).",
+        "SUM(order_value) OVER (PARTITION BY customer_id ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)",
+        "Put both windows in a CTE, then ROUND(100.0 * cumulative_spend / lifetime_spend, 1) outside."
+      ],
+      "why": "Running totals per entity drive loyalty tiers ('crossed $500 lifetime') and LTV curves.",
+      "recall": {
+        "q": "What's the difference between SUM(x) OVER (PARTITION BY c) and SUM(x) OVER (PARTITION BY c ORDER BY d)?",
+        "a": "Without ORDER BY you get the partition total on every row; with ORDER BY the default frame makes it a running total."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_value",
+        "cumulative_spend",
+        "pct_of_lifetime"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 4,
+      "title": "Year-to-date revenue by month",
+      "question": "Finance tracks revenue YTD: the running total must reset every January.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Return month ('YYYY-MM'), revenue (rounded 2) and ytd_revenue (running total of revenue within the same calendar year up to and including this month, rounded 2), for all months 2024-01\u20262025-12. Order by month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "The running total must restart each year: that's a PARTITION BY.",
+        "The year is substr(month, 1, 4) \u2014 you can partition by an expression.",
+        "SUM(revenue) OVER (PARTITION BY substr(month,1,4) ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"
+      ],
+      "why": "PARTITION BY resets the running total; that one clause turns 'cumulative since launch' into 'YTD'.",
+      "recall": {
+        "q": "Which clause makes a running total restart each year?",
+        "a": "PARTITION BY year \u2014 the window never crosses partition boundaries."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SUM(revenue) OVER (PARTITION BY YEAR(month) ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), with month = DATE_TRUNC('month', order_date).",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "month",
+        "revenue",
+        "ytd_revenue"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 5,
+      "title": "3-month moving average",
+      "question": "Monthly revenue is noisy (March 2025 was tiny). The growth team wants a trailing 3-month average.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Return month ('YYYY-MM'), revenue (rounded 2), moving_avg_3m (average revenue of this month and the two previous months, rounded 2 \u2014 for the first two months average whatever months exist) and months_in_window (how many months that average used: 1, 2 or 3). Order by month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "A sliding frame: ROWS BETWEEN 2 PRECEDING AND CURRENT ROW.",
+        "COUNT(*) over the same frame tells you how many rows were really averaged.",
+        "AVG(revenue) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg_3m, COUNT(*) OVER (same) AS months_in_window"
+      ],
+      "why": "Moving averages are how trends get shown to executives. months_in_window tells readers which early values are based on less data (many dashboards blank those out).",
+      "recall": {
+        "q": "What does ROWS BETWEEN 2 PRECEDING AND CURRENT ROW include?",
+        "a": "The current row plus up to two rows before it in the window order \u2014 at most 3 rows."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "month",
+        "revenue",
+        "moving_avg_3m",
+        "months_in_window"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 6,
+      "title": "ROWS vs RANGE on tied dates",
+      "question": "An analyst's running total 'jumps' several lines at once. Show Q4 2025 order lines with both frame types side by side.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Take order lines of valid orders (order_status IN ('completed','shipped','returned')) with order_date between '2025-10-01' and '2025-12-31'. Return order_item_id, order_id, order_date, line_revenue (quantity * unit_price, rounded 2), running_rows (running SUM of line revenue ordered by order_date, order_item_id with a ROWS frame from the first row to the current row, rounded 2) and running_range (running SUM of line revenue ordered by order_date ONLY, using RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, rounded 2). Order by order_date, order_item_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Same SUM, two different OVER clauses.",
+        "RANGE treats all rows with the same order_date as peers: they all get the total through the end of that date.",
+        "SUM(...) OVER (ORDER BY o.order_date, oi.order_item_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) vs SUM(...) OVER (ORDER BY o.order_date RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"
+      ],
+      "why": "The default frame with ORDER BY is RANGE. If your ORDER BY has ties, a 'running total' silently includes future peer rows \u2014 compare the two columns on multi-line orders.",
+      "recall": {
+        "q": "Two rows tie on the ORDER BY value. Under RANGE ... CURRENT ROW, does the first one include the second in its frame?",
+        "a": "Yes \u2014 RANGE includes all peers of the current row; ROWS stops at the physical current row."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "order_date",
+        "line_revenue",
+        "running_rows",
+        "running_range"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 7,
+      "title": "First and latest order value (LAST_VALUE pitfall)",
+      "question": "For every order, sales wants the customer's first-ever order value and their most recent order value side by side.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Order value = SUM(quantity * unit_price) of the order's lines, valid orders only (order_status IN ('completed','shipped','returned')). Return order_id, customer_id, order_date, order_value (rounded 2), first_order_value (order_value of the customer's earliest valid order) and latest_order_value (order_value of the customer's most recent valid order \u2014 the same value on all of that customer's rows). Order a customer's orders by order_date then order_id.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "FIRST_VALUE works with the default frame (it always starts at the first row). LAST_VALUE does not.",
+        "Default frame ends at CURRENT ROW, so LAST_VALUE would return the current order. Extend it to UNBOUNDED FOLLOWING.",
+        "LAST_VALUE(order_value) OVER (PARTITION BY customer_id ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)"
+      ],
+      "why": "This is the single most common window-function bug in production dashboards. An alternative that dodges it: FIRST_VALUE(...) OVER (... ORDER BY order_date DESC, order_id DESC).",
+      "recall": {
+        "q": "Why does LAST_VALUE(x) OVER (PARTITION BY c ORDER BY d) usually return the current row's x?",
+        "a": "Because with ORDER BY the default frame ends at the current row, so the 'last' row of the frame is the current one."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same frame fix in Snowflake; or use FIRST_VALUE(order_value) OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_value",
+        "first_order_value",
+        "latest_order_value"
+      ],
+      "expected_row_count": 53
+    }
+  ],
+  "worked_example": {
+    "question": "Show 2025 monthly revenue with a running total for the year.",
+    "sql": "WITH monthly AS (\n    SELECT strftime('%Y-%m', o.order_date) AS month,\n           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue\n    FROM orders AS o\n    JOIN order_items AS oi ON oi.order_id = o.order_id\n    WHERE o.order_status IN ('completed','shipped','returned')\n      AND o.order_date >= '2025-01-01'\n    GROUP BY 1\n)\nSELECT month,\n       revenue,\n       ROUND(SUM(revenue) OVER (ORDER BY month\n                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), 2) AS running_revenue\nFROM monthly\nORDER BY month;",
+    "explanation": "The frame starts at the first month and ends at the current one, so each row adds its month to everything before it. Here the 2025 filter is fine *before* the window because we want the running total to start in January 2025.",
+    "columns": [
+      "month",
+      "revenue",
+      "running_revenue"
+    ],
+    "rows": [
+      [
+        "2025-01",
+        613.06,
+        613.06
+      ],
+      [
+        "2025-02",
+        1016.65,
+        1629.71
+      ],
+      [
+        "2025-03",
+        21.24,
+        1650.95
+      ],
+      [
+        "2025-04",
+        874.5,
+        2525.45
+      ],
+      [
+        "2025-05",
+        40.0,
+        2565.45
+      ],
+      [
+        "2025-06",
+        920.64,
+        3486.09
+      ],
+      [
+        "2025-07",
+        581.2,
+        4067.29
+      ],
+      [
+        "2025-08",
+        781.97,
+        4849.26
+      ],
+      [
+        "2025-09",
+        669.7,
+        5518.96
+      ],
+      [
+        "2025-10",
+        218.05,
+        5737.01
+      ],
+      [
+        "2025-11",
+        504.99,
+        6242.0
+      ],
+      [
+        "2025-12",
+        261.8,
+        6503.8
+      ]
+    ]
+  },
+  "recipe": "**Recipe: a window = partition + order + frame**\n\n1. `SUM(x) OVER ()` \u2014 the whole result set. Great for **share of total**: `x / SUM(x) OVER ()`.\n2. `SUM(x) OVER (PARTITION BY g)` \u2014 total of the row's group, repeated on every row (share within group).\n3. Add `ORDER BY` and the default frame becomes `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`\n   \u2192 a **running total**. RANGE includes all *peers* (rows with the same ORDER BY value).\n4. Say exactly what you mean with an explicit frame:\n\n```sql\nSUM(revenue) OVER (PARTITION BY yr ORDER BY month\n                   ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)   -- running / YTD\nAVG(revenue) OVER (ORDER BY month\n                   ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)           -- 3-period moving avg\nLAST_VALUE(x) OVER (PARTITION BY g ORDER BY t\n                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) -- true last value\n```\n\n**ROWS vs RANGE:** ROWS counts physical rows; RANGE groups rows with equal ORDER BY values. With ties\n(several lines on the same date) a RANGE running total jumps by the whole day at once.\n\n**FIRST_VALUE / LAST_VALUE pitfall:** with ORDER BY and the default frame, the frame ends at the current\nrow \u2014 so LAST_VALUE just returns the current row. Always widen the frame to UNBOUNDED FOLLOWING.\n\n**Windows over aggregates:** `SUM(SUM(x)) OVER ()` is legal \u2014 the inner SUM is the GROUP BY aggregate,\nthe outer one is the window over the grouped rows.",
+  "snowflake_notes": "Window frames are identical in Snowflake (`ROWS`/`RANGE BETWEEN ... PRECEDING/FOLLOWING`), plus:\n\n- `RATIO_TO_REPORT(revenue) OVER (PARTITION BY category)` = share of total as a 0\u20131 fraction, in one call.\n- `DATE_TRUNC('month', order_date)` / `YEAR(order_date)` for buckets and partitions:\n\n```sql\nSELECT DATE_TRUNC('month', o.order_date) AS month,\n       SUM(oi.quantity * oi.unit_price)  AS revenue,\n       SUM(SUM(oi.quantity * oi.unit_price)) OVER (\n           PARTITION BY YEAR(month) ORDER BY month\n           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ytd_revenue\nFROM orders o JOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY 1;\n```\n\n- `RANGE BETWEEN INTERVAL '30 days' PRECEDING AND CURRENT ROW` (value-based frames on dates) is supported in\n  Snowflake; SQLite supports numeric RANGE offsets only (e.g. on `julianday(order_date)`).\n- `FIRST_VALUE/LAST_VALUE/NTH_VALUE` have the same default-frame pitfall in Snowflake. `IGNORE NULLS` is available.",
+  "common_mistakes": [
+    "Relying on the default frame: with ORDER BY it is RANGE ... CURRENT ROW, which includes tied peers.",
+    "LAST_VALUE without ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING \u2014 returns the current row.",
+    "Computing share of total with a window over line-level rows but grouping later \u2014 aggregate first or use SUM(SUM(x)) OVER ().",
+    "Forgetting PARTITION BY year for YTD, so the running total never resets.",
+    "Assuming ROWS BETWEEN 2 PRECEDING means '3 months' when months can be missing \u2014 it means 3 rows."
+  ],
+  "recall": [
+    [
+      "What is the default window frame when ORDER BY is present? And when it is absent?",
+      "With ORDER BY: RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Without: the whole partition."
+    ],
+    [
+      "Write the frame for a 3-row trailing moving average.",
+      "ROWS BETWEEN 2 PRECEDING AND CURRENT ROW."
+    ],
+    [
+      "How do you compute each row's share of its group total in one pass?",
+      "x / SUM(x) OVER (PARTITION BY group) \u2014 or RATIO_TO_REPORT(x) OVER (PARTITION BY group) in Snowflake."
+    ],
+    [
+      "ROWS vs RANGE in one sentence?",
+      "ROWS counts physical rows; RANGE treats rows with equal ORDER BY values as one block (peers)."
+    ]
+  ],
+  "review_next": "Next, Lesson 37 reshapes results with pivots. Re-run 36.6 and find an order whose lines show running_rows \u2260 running_range \u2014 explain the difference out loud."
+}

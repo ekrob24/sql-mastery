@@ -1,0 +1,11 @@
+return_id,return_date,transaction_type,signed_amount
+1,2024-02-06,refund,-44.98
+2,2024-07-10,refund,-96
+3,2024-07-08,refund,-12
+4,2024-07-24,refund,-28.8
+5,2024-09-07,refund,-23.38
+6,2024-12-15,refund,-267
+7,2025-03-14,refund,-21.24
+8,2025-04-18,refund,-96.9
+9,2025-05-15,refund,-85.5
+10,2025-05-31,refund,-15

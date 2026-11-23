@@ -1,0 +1,27 @@
+-- Lesson 13 · Exercise 13.6 — Category tree vs. product categories
+--
+-- BUSINESS QUESTION
+--   The catalogue team maintains a category tree; merchandising tags products with a
+--   category text. Do they agree?
+-- TABLES: categories, products
+-- TASK
+--   Aggregate products by category (product count per category value, NULL category
+--   included as its own group). FULL OUTER JOIN that to categories on category_name =
+--   category and return category_id (from categories; NULL if not in the tree),
+--   category_name (COALESCE of the tree name and the product category) and product_count
+--   (0 when no product uses that category).
+-- REQUIRED COLUMNS: category_id, category_name, product_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.6
+-- Grade it:              python3 sqlm.py submit 13.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

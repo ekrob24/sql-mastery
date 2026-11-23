@@ -1,0 +1,23 @@
+-- Lesson 31 · Exercise 31.7 — Sports MoM with a calendar spine
+--
+-- BUSINESS QUESTION
+--   The Sports buyer says 'some months we sell nothing'. Show every month, including empty
+--   ones, with MoM growth.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Consider only products with category = 'Sports'. Build a calendar of all 24
+--   months 2024-01..2025-12 (recursive CTE), so months with no Sports sales show 0. Return
+--   order_month ('YYYY-MM'), sports_revenue (0 when none), prev_month_revenue (previous
+--   *calendar* month's sports_revenue; NULL for 2024-01) — both rounded to 2 decimals —
+--   and mom_growth_pct = 100 * (sports_revenue − prev_month_revenue) / prev_month_revenue
+--   rounded to 1 decimal, NULL when the previous month is 0 (use NULLIF). Ordered by
+--   order_month; 24 rows.
+-- REQUIRED COLUMNS: order_month, sports_revenue, prev_month_revenue, mom_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.7
+-- Grade it:              python3 sqlm.py submit 31.7
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 36 · Exercise 36.5 — 3-month moving average
+--
+-- BUSINESS QUESTION
+--   Monthly revenue is noisy (March 2025 was tiny). The growth team wants a trailing
+--   3-month average.
+-- TABLES: orders, order_items
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Return month ('YYYY-MM'),
+--   revenue (rounded 2), moving_avg_3m (average revenue of this month and the two previous
+--   months, rounded 2 — for the first two months average whatever months exist) and
+--   months_in_window (how many months that average used: 1, 2 or 3). Order by month.
+-- REQUIRED COLUMNS: month, revenue, moving_avg_3m, months_in_window
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 36.5
+-- Grade it:              python3 sqlm.py submit 36.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,23 @@
+product_id,product_name,units_sold,revenue,total_cost,gross_margin,margin_pct
+1,Wireless Mouse,9,208.66,121.59,87.07,41.7
+2,Mechanical Keyboard,7,614.1,432.74,181.36,29.5
+3,USB-C Hub,10,359.43,274.3,85.13,23.7
+4,Noise-Cancelling Headphones,14,2577.05,1727.74,849.31,33.0
+5,27in Monitor,4,1007.96,694.64,313.32,31.1
+6,Chef Knife,7,413.0,256.55,156.45,37.9
+7,Cast Iron Skillet,11,443.25,329.89,113.36,25.6
+8,French Press,5,153.6,81.9,71.7,46.7
+9,Throw Blanket,28,989.9,593.32,396.58,40.1
+10,Desk Lamp,14,372.64,252.14,120.5,32.3
+11,Running Shoes,3,360.0,229.08,130.92,36.4
+12,Rain Jacket,3,275.5,162.57,112.93,41.0
+13,Wool Socks (3-pack),4,61.2,43.36,17.84,29.2
+14,Baseball Cap,6,126.5,89.76,36.74,29.0
+15,SQL for Analysts,19,760.2,543.97,216.23,28.4
+16,Data Storytelling,6,204.75,105.84,98.91,48.3
+17,The Pragmatic Warehouse,16,727.2,455.68,271.52,37.3
+18,Yoga Mat,8,231.0,154.48,76.52,33.1
+19,Adjustable Dumbbells,19,2451.0,1615.76,835.24,34.1
+20,Mystery Gift Box,21,503.75,365.4,138.35,27.5
+21,Water Bottle,6,87.0,46.86,40.14,46.1
+22,Phone Stand,9,108.0,57.51,50.49,46.8

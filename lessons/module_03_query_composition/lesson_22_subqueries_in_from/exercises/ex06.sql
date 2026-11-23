@@ -1,0 +1,18 @@
+-- Lesson 22 · Exercise 22.6 — Each customer's biggest order
+--
+-- BUSINESS QUESTION
+--   Account managers want each customer's single largest valid order.
+-- TABLES: orders, order_items
+-- TASK
+--   Using valid orders (valid orders = order_status IN ('completed','shipped','returned');
+--   cancelled and pending are excluded) and order_total = SUM(quantity * unit_price),
+--   return customer_id (orders.customer_id, so the orphan 99 is included), order_id and
+--   order_total (rounded to 2 decimals) for the order with the highest total per customer.
+--   Join a derived table of order totals to a derived table of each customer's maximum.
+-- REQUIRED COLUMNS: customer_id, order_id, order_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.6
+-- Grade it:              python3 sqlm.py submit 22.6
+--
+-- Write your query below (from memory!):
+

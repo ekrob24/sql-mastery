@@ -1,0 +1,312 @@
+{
+  "number": 49,
+  "slug": "data_quality_validation",
+  "title": "Data-quality validation queries",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Write validation queries for referential integrity, completeness (NULLs), uniqueness, allowed values, business rules and date ranges \u2014 and combine them into a single summary-of-checks query.",
+  "context": "Before the Snowflake cut-over the data team wants a test suite: a set of queries that return the offending rows (for investigation) and one summary query (for the daily monitoring job) that says PASS or FAIL per check.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Orphan foreign keys across the model",
+      "question": "Which child rows point at parents that don't exist?",
+      "tables": [
+        "orders",
+        "customers",
+        "products",
+        "suppliers",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Check these relationships: orders.customer_id \u2192 customers, products.supplier_id \u2192 suppliers (only non-NULL supplier_id values count as violations), order_items.order_id \u2192 orders, order_items.product_id \u2192 products, returns.order_item_id \u2192 order_items. Return relationship (exactly e.g. 'orders.customer_id'), child_id (primary key of the violating child row) and missing_parent_id (the foreign-key value) for every violation.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "One NOT EXISTS (anti-join) per relationship, labelled with a literal column.",
+        "Exclude NULL supplier_id from the products check \u2014 NULL is 'unknown', not 'orphan' (that's a completeness check).",
+        "SELECT 'orders.customer_id' AS relationship, o.order_id AS child_id, o.customer_id AS missing_parent_id FROM orders o WHERE NOT EXISTS (...) UNION ALL SELECT 'products.supplier_id', ... UNION ALL ..."
+      ],
+      "why": "Two real violations: order 31 \u2192 customer 99 and product 21 \u2192 supplier 9. Three checks return nothing \u2014 and that's information too.",
+      "recall": {
+        "q": "dbt test that checks a foreign key?",
+        "a": "relationships (to: ref('customers'), field: customer_id)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same UNION ALL of anti-joins; in dbt, five `relationships` tests.",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "relationship",
+        "child_id",
+        "missing_parent_id"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 2,
+      "title": "Completeness: NULL counts per column",
+      "question": "How complete is the customer table?",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return column_name and null_count for the customers columns name, email, signup_date and region (one row per column, column_name exactly the column's name).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "COUNT(col) skips NULLs; COUNT(*) doesn't. Their difference is the NULL count.",
+        "One SELECT per column, stacked with UNION ALL.",
+        "SELECT 'name' AS column_name, COUNT(*) - COUNT(name) AS null_count FROM customers UNION ALL SELECT 'email', COUNT(*) - COUNT(email) FROM customers ..."
+      ],
+      "why": "NULL emails block marketing sends; NULL regions fall out of regional reports. Quantify before deciding what to fix.",
+      "recall": {
+        "q": "Fastest way to count NULLs in a column?",
+        "a": "COUNT(*) - COUNT(col)  (Snowflake: COUNT_IF(col IS NULL))."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT 'email' AS column_name, COUNT_IF(email IS NULL) AS null_count FROM customers UNION ALL ...  -- or UNPIVOT a single row of COUNT_IFs.",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "column_name",
+        "null_count"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 3,
+      "title": "Uniqueness: duplicate order lines",
+      "question": "Find order lines that duplicate another line's natural key.",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Group order_items by (order_id, product_id, quantity, unit_price) and for every group with more than one row return order_id, product_id, copies (rows in the group), keep_item_id (lowest order_item_id) and drop_item_id (highest order_item_id).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Uniqueness test = GROUP BY the key, HAVING COUNT(*) > 1.",
+        "MIN/MAX of the surrogate id show which copy to keep and which to drop.",
+        "SELECT order_id, product_id, COUNT(*) AS copies, MIN(order_item_id) AS keep_item_id, MAX(order_item_id) AS drop_item_id FROM order_items GROUP BY order_id, product_id, quantity, unit_price HAVING COUNT(*) > 1;"
+      ],
+      "why": "The surrogate key (order_item_id) is unique by construction \u2014 duplicates hide in the natural key. Note that return 8 points at line 96 (the keeper), so dropping 150 is safe.",
+      "recall": {
+        "q": "Why test the natural key and not just the primary key?",
+        "a": "A surrogate PK is always unique; re-sent records get new ids, so duplicates only show up on business columns."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same GROUP BY/HAVING; or SELECT * FROM order_items QUALIFY COUNT(*) OVER (PARTITION BY order_id, product_id, quantity, unit_price) > 1.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "product_id",
+        "copies",
+        "keep_item_id",
+        "drop_item_id"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 4,
+      "title": "Possible duplicate customers",
+      "question": "CRM suspects duplicate accounts that differ only in letter case or spacing.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Group customers by name_key = LOWER(TRIM(name)) and for groups with more than one customer return name_key, customers (count) and customer_ids (the ids as a comma-separated list in ascending order, e.g. '3,4').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Normalise before grouping: LOWER(TRIM(name)).",
+        "group_concat(x, ',' ORDER BY x) builds an ordered list (Snowflake: LISTAGG ... WITHIN GROUP).",
+        "SELECT LOWER(TRIM(name)) AS name_key, COUNT(*) AS customers, group_concat(customer_id, ',' ORDER BY customer_id) AS customer_ids FROM customers GROUP BY 1 HAVING COUNT(*) > 1;"
+      ],
+      "why": "Two candidates: 1/19 (Alice Johnson, different emails and sign-up dates \u2014 likely the same person) and 3/4 (John Smith, different emails and regions \u2014 likely different people). DQ queries find candidates; humans decide.",
+      "recall": {
+        "q": "Snowflake equivalent of group_concat(x, ',' ORDER BY x)?",
+        "a": "LISTAGG(x, ',') WITHIN GROUP (ORDER BY x)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT LOWER(TRIM(name)) AS name_key, COUNT(*) AS customers, LISTAGG(customer_id, ',') WITHIN GROUP (ORDER BY customer_id) AS customer_ids FROM customers GROUP BY 1 HAVING COUNT(*) > 1;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "name_key",
+        "customers",
+        "customer_ids"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 5,
+      "title": "Order-level rule violations",
+      "question": "Which orders break a basic rule: unknown status, date outside the business range, missing customer, or no lines?",
+      "tables": [
+        "orders",
+        "customers",
+        "order_items"
+      ],
+      "prompt": "Return order_id and issue for every violation of these rules (an order can appear once per rule it breaks): 'invalid_status' \u2014 order_status NULL or not in ('completed','shipped','returned','cancelled','pending'); 'date_out_of_range' \u2014 order_date NULL or outside '2024-01-01'..'2025-12-31'; 'orphan_customer' \u2014 customer_id not found in customers; 'no_items' \u2014 the order has no order_items rows.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "One SELECT per rule, each returning (order_id, '<issue label>'), stacked with UNION ALL.",
+        "NOT IN (...) is not true for NULL \u2014 test IS NULL explicitly in the status and date rules.",
+        "... UNION ALL SELECT o.order_id, 'no_items' FROM orders o WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id);"
+      ],
+      "why": "Result: order 31 (orphan customer) and order 60 (pending, no items). Order 60 may be legitimate (still being built) \u2014 a rule violation is a question to the business, not automatically an error.",
+      "recall": {
+        "q": "Why add `OR order_status IS NULL` to a NOT IN check?",
+        "a": "NULL NOT IN (...) evaluates to NULL, not TRUE, so NULL statuses would slip through."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same; in dbt the status rule is an `accepted_values` test and the date rule a `dbt_utils.accepted_range` test.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "issue"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 6,
+      "title": "Refunds vs. line value",
+      "question": "Finance rule: a refund may never exceed the value of the returned line. Classify every return.",
+      "tables": [
+        "returns",
+        "order_items"
+      ],
+      "prompt": "For every return, return return_id, line_value (quantity * unit_price of the returned line, rounded to 2 decimals), refund_amount and refund_check: 'exceeds' if refund_amount > line_value (the ROUNDED value), 'partial' if refund_amount < line_value, otherwise 'full'.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Join returns to the returned line and compute its value.",
+        "Round the line value BEFORE comparing: 3 \u00d7 32.3 is 96.8999999\u2026 in floating point, which would make return 8 look like it 'exceeds'.",
+        "WITH r AS (SELECT r.return_id, ROUND(oi.quantity*oi.unit_price,2) AS line_value, r.refund_amount FROM returns r JOIN order_items oi ...) SELECT ..., CASE WHEN refund_amount > line_value THEN 'exceeds' WHEN refund_amount < line_value THEN 'partial' ELSE 'full' END AS refund_check FROM r;"
+      ],
+      "why": "Floating-point noise creates false alarms in money checks. Compare rounded values (or use NUMBER(p,s) types, as Snowflake does for decimals). Only return 4 is partial; nothing exceeds.",
+      "recall": {
+        "q": "Why can 3 * 32.3 > 96.9 be false-but-surprising in SQLite?",
+        "a": "Binary floating point stores 32.3 approximately, so 3 * 32.3 = 96.89999999999999; round money before comparing."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "With NUMBER(10,2) columns Snowflake does exact decimal arithmetic, so the rounding step is a safeguard rather than a necessity. IFF/CASE for the label is identical.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "return_id",
+        "line_value",
+        "refund_amount",
+        "refund_check"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 7,
+      "title": "One summary-of-checks query",
+      "question": "The monitoring job needs one query: one row per check with its failing-row count and PASS/FAIL.",
+      "tables": [
+        "orders",
+        "customers",
+        "products",
+        "suppliers",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Return check_name, failing_rows and status ('PASS' if failing_rows = 0 else 'FAIL') for exactly these checks: 'orders_customer_fk' (orders whose customer_id is not in customers); 'products_supplier_fk' (products with a non-NULL supplier_id not in suppliers); 'customers_email_not_null' (customers with NULL email); 'order_items_no_duplicates' (rows that duplicate an earlier line on order_id, product_id, quantity, unit_price \u2014 i.e. copies beyond the first); 'orders_valid_status' (status NULL or not in the 5 known statuses); 'orders_have_items' (orders without order_items rows); 'refund_not_above_line' (returns whose refund_amount > ROUND(quantity * unit_price, 2) of the line); 'order_date_in_range' (order_date NULL or outside '2024-01-01'..'2025-12-31').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Each check is a SELECT '<name>' AS check_name, COUNT(*) AS failing_rows ... \u2014 stack them with UNION ALL in a CTE.",
+        "Duplicates beyond the first = COUNT(*) \u2212 COUNT(DISTINCT natural key) (or count rows with ROW_NUMBER() > 1).",
+        "WITH checks AS (SELECT 'orders_customer_fk' AS check_name, COUNT(*) AS failing_rows FROM orders o WHERE NOT EXISTS (...) UNION ALL ...) SELECT check_name, failing_rows, CASE WHEN failing_rows = 0 THEN 'PASS' ELSE 'FAIL' END AS status FROM checks;"
+      ],
+      "why": "COUNT(*) always returns a row, so every check reports \u2014 even passing ones. That's what makes the summary usable for monitoring: a missing row would be ambiguous.",
+      "recall": {
+        "q": "Why does each check use COUNT(*) instead of returning the violating rows?",
+        "a": "So every check yields exactly one row (0 when passing) and the summary has a fixed shape for alerting."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same structure; use COUNT_IF for the simple ones, QUALIFY ROW_NUMBER() > 1 for duplicates, and INSERT the result with CURRENT_TIMESTAMP() into a dq_results table (or use Data Metric Functions).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "check_name",
+        "failing_rows",
+        "status"
+      ],
+      "expected_row_count": 8
+    }
+  ],
+  "worked_example": {
+    "question": "Profile the date columns: what is the min and max of each, and is anything after the as-of date '2025-12-31'?",
+    "sql": "SELECT 'orders.order_date' AS column_name, MIN(order_date) AS min_value, MAX(order_date) AS max_value,\n       SUM(order_date > '2025-12-31') AS after_as_of\nFROM orders\nUNION ALL\nSELECT 'customers.signup_date', MIN(signup_date), MAX(signup_date), SUM(signup_date > '2025-12-31') FROM customers\nUNION ALL\nSELECT 'returns.return_date', MIN(return_date), MAX(return_date), SUM(return_date > '2025-12-31') FROM returns;",
+    "explanation": "Profiling (min/max/counts) before writing rules tells you what 'normal' looks like. In SQLite a comparison is 1/0, so SUM(condition) counts matching rows (Snowflake: COUNT_IF(condition)).",
+    "columns": [
+      "column_name",
+      "min_value",
+      "max_value",
+      "after_as_of"
+    ],
+    "rows": [
+      [
+        "orders.order_date",
+        "2024-01-05",
+        "2025-12-27",
+        0
+      ],
+      [
+        "customers.signup_date",
+        "2024-01-03",
+        "2025-12-01",
+        0
+      ],
+      [
+        "returns.return_date",
+        "2024-02-06",
+        "2025-05-31",
+        0
+      ]
+    ]
+  },
+  "recipe": "**Recipe: a data-quality check in 4 moves**\n\n1. **State the rule** in one sentence: \"every order's customer_id exists in customers\".\n2. **Write the query that returns VIOLATIONS** (zero rows = pass):\n   - orphan FK \u2192 `LEFT JOIN parent ... WHERE parent.key IS NULL AND child.fk IS NOT NULL` / `NOT EXISTS`\n   - completeness \u2192 `WHERE col IS NULL`\n   - uniqueness \u2192 `GROUP BY key HAVING COUNT(*) > 1`\n   - allowed values \u2192 `WHERE col NOT IN (...) OR col IS NULL`\n   - business rule \u2192 `WHERE refund_amount > ROUND(quantity * unit_price, 2)`\n   - date range \u2192 `WHERE d < '2024-01-01' OR d > '2025-12-31'`\n3. **Count** the violations and label the check: `SELECT 'orphan_orders' AS check_name, COUNT(*) AS failing_rows ...`\n4. **Stack** all checks with `UNION ALL` and derive `CASE WHEN failing_rows = 0 THEN 'PASS' ELSE 'FAIL' END`.\n\n```sql\nSELECT 'orders_customer_fk' AS check_name, COUNT(*) AS failing_rows\nFROM orders o WHERE NOT EXISTS (SELECT 1 FROM customers c WHERE c.customer_id = o.customer_id)\nUNION ALL\nSELECT 'customers_email_not_null', COUNT(*) FROM customers WHERE email IS NULL;\n```",
+  "snowflake_notes": "```sql\n-- Same checks, Snowflake flavour\nSELECT 'orders_customer_fk' AS check_name, COUNT(*) AS failing_rows\nFROM orders o LEFT JOIN customers c ON c.customer_id = o.customer_id\nWHERE c.customer_id IS NULL\nUNION ALL\nSELECT 'customer_email_null', COUNT_IF(email IS NULL) FROM customers\nUNION ALL\nSELECT 'order_items_natural_key_dup', COUNT(*) FROM (\n    SELECT 1 FROM order_items\n    QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, product_id, quantity, unit_price ORDER BY order_item_id) > 1);\n```\n\n- Snowflake **does not enforce** PRIMARY KEY, UNIQUE or FOREIGN KEY constraints (only NOT NULL), so these checks\n  are your real enforcement. In dbt they become tests: `unique`, `not_null`, `relationships`, `accepted_values`,\n  and custom singular tests (a SQL file that must return zero rows).\n- **Data Metric Functions** (Enterprise edition) schedule checks natively:\n  `ALTER TABLE customers ADD DATA METRIC FUNCTION SNOWFLAKE.CORE.NULL_COUNT ON (email);`\n  (also `DUPLICATE_COUNT`, `UNIQUE_COUNT`, `FRESHNESS`, `ROW_COUNT`, custom DMFs).\n- Freshness: `SELECT DATEDIFF(hour, MAX(received_at), CURRENT_TIMESTAMP()) FROM raw_order_events`.\n- Use `TRY_TO_NUMBER` / `TRY_TO_DATE` in checks on raw text columns to count unparseable values without the\n  query failing.\n- Store results: `INSERT INTO dq_results SELECT CURRENT_TIMESTAMP(), * FROM (<summary query>)` and alert on FAIL.",
+  "common_mistakes": [
+    "Writing checks that return 'good' rows instead of violations \u2014 a passing check should return 0.",
+    "Treating NULL foreign keys as orphans (or forgetting NULLs entirely in NOT IN checks).",
+    "Comparing floating-point money without rounding and raising false alarms.",
+    "Testing uniqueness only on the surrogate key, never on the natural key.",
+    "Summary queries that drop passing checks (no row instead of a 0 row) \u2014 use COUNT(*) per check.",
+    "Assuming Snowflake enforces PRIMARY KEY / FOREIGN KEY \u2014 it doesn't; your checks are the enforcement."
+  ],
+  "recall": [
+    [
+      "Five classic data-quality dimensions to test?",
+      "Referential integrity, completeness (NULLs), uniqueness, validity (allowed values/ranges), business rules/consistency."
+    ],
+    [
+      "What should a violation query return when the data is clean?",
+      "Zero rows (or a count of 0 in a summary)."
+    ],
+    [
+      "The four built-in dbt generic tests?",
+      "unique, not_null, accepted_values, relationships."
+    ]
+  ],
+  "review_next": "Lesson 50 is the capstone: a full analysis that combines everything \u2014 validated inputs, CTE pipelines, window functions and Snowflake-ready SQL. Re-run your summary-of-checks query first; every capstone answer should be built on data you've just validated."
+}

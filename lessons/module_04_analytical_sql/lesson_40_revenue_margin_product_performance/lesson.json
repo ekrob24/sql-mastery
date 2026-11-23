@@ -1,0 +1,287 @@
+{
+  "number": 40,
+  "slug": "revenue_margin_product_performance",
+  "title": "Revenue, margin, and product-performance analysis",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Compute revenue, cost of goods, gross margin ($ and %) and refund-adjusted figures by product, category and year, find dead stock, and rank products by their contribution to total margin.",
+  "context": "Revenue is vanity, margin is sanity. Finance has loaded unit costs (product_costs) and wants to know which products and categories actually make money after costs and refunds, which catalog items have never sold, and how concentrated margin is in a few hero products.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Product gross margin",
+      "question": "Finance wants revenue, cost and margin for every product that sold.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "product_costs"
+      ],
+      "prompt": "Use lines of valid orders (order_status IN ('completed','shipped','returned')). Revenue = SUM(quantity * unit_price); cogs = SUM(quantity * unit_cost) with unit_cost from product_costs; gross_margin = revenue - cogs. Return product_id, product_name, units_sold (SUM(quantity)), revenue, cogs, gross_margin (each rounded to 2) and margin_pct (100.0 * gross_margin / revenue, 0\u2013100 scale, rounded to 1 decimal). One row per product with sales.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Join order lines to product_costs on product_id; cost is quantity * unit_cost.",
+        "Compute margin_pct from the summed revenue and summed margin \u2014 not as AVG of line percentages.",
+        "SELECT p.product_id, p.product_name, SUM(oi.quantity), ROUND(SUM(qty*price),2), ROUND(SUM(qty*unit_cost),2), ROUND(SUM(qty*price) - SUM(qty*unit_cost),2), ROUND(100.0*(...)/SUM(qty*price),1) ... GROUP BY p.product_id, p.product_name;"
+      ],
+      "why": "The product P&L is the foundation of pricing and assortment decisions \u2014 high revenue with thin margin is a different problem from low revenue with fat margin.",
+      "recall": {
+        "q": "Why compute margin % as SUM(margin)/SUM(revenue) rather than AVG(line margin %)?",
+        "a": "AVG of ratios weights a $5 line the same as a $500 line; the ratio of sums is revenue-weighted, which is what finance means."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "units_sold",
+        "revenue",
+        "cogs",
+        "gross_margin",
+        "margin_pct"
+      ],
+      "expected_row_count": 22
+    },
+    {
+      "number": 2,
+      "title": "Category performance",
+      "question": "Which categories generate the most gross margin?",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "product_costs"
+      ],
+      "prompt": "Same definitions as 40.1 (valid orders; gross_margin = revenue - quantity*unit_cost). Return category ('Uncategorized' when NULL), products_sold (distinct products with sales), revenue, gross_margin (rounded to 2) and margin_pct (100.0 * gross_margin / revenue, rounded to 1 decimal). Order by gross_margin descending, then category.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Same joins as 40.1, but GROUP BY category.",
+        "Line margin = quantity * (unit_price - unit_cost); COUNT(DISTINCT product_id) for products_sold.",
+        "... GROUP BY COALESCE(p.category, 'Uncategorized') ORDER BY gross_margin DESC, category;"
+      ],
+      "why": "Category managers are measured on margin dollars; margin % tells you whether growth there is healthy.",
+      "recall": {
+        "q": "Is quantity*(unit_price - unit_cost) summed the same as SUM(revenue) - SUM(cost)?",
+        "a": "Yes \u2014 summation distributes over subtraction, so both give the same margin."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "products_sold",
+        "revenue",
+        "gross_margin",
+        "margin_pct"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 3,
+      "title": "Net of refunds",
+      "question": "Returns eat into margin. Show each product's refunds and margin after refunds.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns",
+        "product_costs"
+      ],
+      "prompt": "Valid orders only (order_status IN ('completed','shipped','returned')). Per product with sales: revenue = SUM(quantity * unit_price), refunds = SUM(returns.refund_amount) for that product's returned lines (0 if none), net_revenue = revenue - refunds, cogs = SUM(quantity * unit_cost), net_margin = net_revenue - cogs (we assume returned goods are written off, so cost stays). Return product_id, revenue, refunds, net_revenue, net_margin (all rounded to 2) for products that had at least one refund. Order by refunds descending, then product_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Refunds attach to order lines (order_item_id). LEFT JOIN them so lines without a return keep their revenue.",
+        "Pre-aggregate returns per order_item_id so a line can never be duplicated by the join; COALESCE missing refunds to 0.",
+        "lines CTE (order_item_id, product_id, revenue, cogs) LEFT JOIN refunds CTE ON order_item_id, GROUP BY product_id HAVING SUM(COALESCE(refund,0)) > 0 ORDER BY refunds DESC, product_id;"
+      ],
+      "why": "A product with great gross margin can be a loser after returns. Pre-aggregating the 'many' side before joining is the habit that prevents fan-out double counting.",
+      "recall": {
+        "q": "Why LEFT JOIN returns rather than INNER JOIN when computing net revenue per product?",
+        "a": "An inner join would keep only returned lines and drop all the revenue from lines that weren't returned."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "revenue",
+        "refunds",
+        "net_revenue",
+        "net_margin"
+      ],
+      "expected_row_count": 9
+    },
+    {
+      "number": 4,
+      "title": "Products never sold",
+      "question": "Merchandising wants the catalog items that have never sold, with the margin they would make at list price.",
+      "tables": [
+        "products",
+        "product_costs",
+        "order_items",
+        "orders"
+      ],
+      "prompt": "A product is 'never sold' if it appears on no line of a valid order (order_status IN ('completed','shipped','returned')). Return product_id, product_name, category, list_price, unit_cost and potential_unit_margin (list_price - unit_cost, rounded to 2). Order by product_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "'Never sold' is an anti-join: products with no matching valid sale.",
+        "Put the status filter INSIDE the NOT EXISTS subquery (join order_items to orders there).",
+        "SELECT ... FROM products p JOIN product_costs pc ... WHERE NOT EXISTS (SELECT 1 FROM order_items oi JOIN orders o ON ... WHERE oi.product_id = p.product_id AND o.order_status IN (...)) ORDER BY p.product_id;"
+      ],
+      "why": "Dead stock ties up cash and shelf space. Note the Smart Watch would carry the biggest unit margin of all \u2014 maybe it's a merchandising problem, not a product problem.",
+      "recall": {
+        "q": "If you use LEFT JOIN ... WHERE oi.order_item_id IS NULL for 'never sold', where must the status filter go?",
+        "a": "Into the ON clause (or a pre-filtered subquery) \u2014 in WHERE it would turn the anti-join back into an inner join."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "list_price",
+        "unit_cost",
+        "potential_unit_margin"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 5,
+      "title": "Margin contribution (Pareto)",
+      "question": "How concentrated is our margin? Do 20% of products make 80% of the margin?",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "product_costs"
+      ],
+      "prompt": "Gross margin per product = SUM(quantity * (unit_price - unit_cost)) over lines of valid orders (order_status IN ('completed','shipped','returned')). Return product_id, product_name, gross_margin (rounded 2), pct_of_total_margin (product margin as a 0\u2013100 percentage of total gross margin, rounded to 1) and cumulative_pct (running total of the percentage, products taken in order of gross_margin descending then product_id, computed from unrounded values and rounded to 1). Order by gross_margin descending, then product_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Per-product margin in a CTE; then two windows: the grand total and a running total.",
+        "Grand total: SUM(gross_margin) OVER (). Running: SUM(gross_margin) OVER (ORDER BY gross_margin DESC, product_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW).",
+        "ROUND(100.0 * gross_margin / SUM(gross_margin) OVER (), 1) AS pct_of_total_margin, ROUND(100.0 * <running sum> / SUM(gross_margin) OVER (), 1) AS cumulative_pct"
+      ],
+      "why": "Pareto curves decide where to focus: protect the top contributors' availability and price, rationalise the long tail.",
+      "recall": {
+        "q": "Why compute cumulative_pct from unrounded values?",
+        "a": "Summing rounded percentages accumulates rounding error, so the curve may not end exactly at 100."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "RATIO_TO_REPORT(gross_margin) OVER () * 100 AS pct_of_total_margin; the running share uses the same SUM ... OVER (ORDER BY ... ROWS ...) frame.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "gross_margin",
+        "pct_of_total_margin",
+        "cumulative_pct"
+      ],
+      "expected_row_count": 22
+    },
+    {
+      "number": 6,
+      "title": "Yearly P&L after refunds",
+      "question": "The CFO wants a two-line P&L: 2024 vs 2025 revenue, refunds, cost and net margin.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns",
+        "product_costs"
+      ],
+      "prompt": "Valid orders only (order_status IN ('completed','shipped','returned')); attribute everything to the year of the ORDER date (not the return date). Return order_year ('YYYY'), revenue (SUM(quantity * unit_price)), refunds (SUM(refund_amount) of returned lines, 0 if none), cogs (SUM(quantity * unit_cost)), net_margin (revenue - refunds - cogs), all rounded to 2, and net_margin_pct (100.0 * net_margin / (revenue - refunds), rounded to 1 decimal). Order by order_year.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Line-level CTE with order_year, revenue and cogs; refunds pre-aggregated per order_item_id.",
+        "LEFT JOIN refunds to lines, GROUP BY order_year, then compute margin and % in an outer SELECT from the unrounded sums.",
+        "yearly CTE: SUM(revenue), SUM(COALESCE(refund,0)), SUM(cogs) GROUP BY order_year; final: ROUND(revenue - refunds - cogs, 2), ROUND(100.0*(revenue - refunds - cogs)/(revenue - refunds), 1)."
+      ],
+      "why": "Attribution choices (order date vs return date) change the numbers; stating them explicitly is part of the deliverable.",
+      "recall": {
+        "q": "Name two ways to attribute a refund to a period.",
+        "a": "By the original order date (cohort-style, used here) or by the return/refund date (cash/accounting view)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "YEAR(o.order_date) AS order_year; DIV0(net_margin, revenue - refunds) * 100 for the percentage.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "revenue",
+        "refunds",
+        "cogs",
+        "net_margin",
+        "net_margin_pct"
+      ],
+      "expected_row_count": 2
+    }
+  ],
+  "worked_example": {
+    "question": "What were total revenue, cost and gross margin across all valid orders?",
+    "sql": "SELECT ROUND(SUM(oi.quantity * oi.unit_price), 2)                  AS revenue,\n       ROUND(SUM(oi.quantity * pc.unit_cost), 2)                    AS cogs,\n       ROUND(SUM(oi.quantity * (oi.unit_price - pc.unit_cost)), 2)  AS gross_margin,\n       ROUND(100.0 * SUM(oi.quantity * (oi.unit_price - pc.unit_cost))\n             / SUM(oi.quantity * oi.unit_price), 1)                 AS margin_pct\nFROM orders AS o\nJOIN order_items AS oi ON oi.order_id = o.order_id\nJOIN product_costs AS pc ON pc.product_id = oi.product_id\nWHERE o.order_status IN ('completed','shipped','returned');",
+    "explanation": "Every product has a cost row, so the inner join to product_costs loses nothing. margin_pct is computed from the two sums \u2014 the revenue-weighted margin \u2014 not as an average of per-line percentages.",
+    "columns": [
+      "revenue",
+      "cogs",
+      "gross_margin",
+      "margin_pct"
+    ],
+    "rows": [
+      [
+        13035.69,
+        8635.08,
+        4400.61,
+        33.8
+      ]
+    ]
+  },
+  "recipe": "**Recipe: margin analysis in 5 moves**\n\n1. **Line-level facts** (valid orders only, `order_status IN ('completed','shipped','returned')`):\n   revenue = `quantity * unit_price`; cost (COGS) = `quantity * unit_cost` from `product_costs`.\n2. **Gross margin** = revenue \u2212 cost; **margin %** = 100.0 \u00d7 margin / revenue (0\u2013100 scale).\n3. **Refunds** live in `returns` (one row per returned order line). Aggregate them separately and join on\n   `order_item_id` \u2014 or pre-aggregate per product \u2014 so the join cannot multiply line rows.\n   Net revenue = revenue \u2212 refunds.\n4. **Roll up** with GROUP BY product / category / year. Compute percentages *from the sums*, never by\n   averaging line-level percentages.\n5. **Contribution:** share of total = `margin / SUM(margin) OVER ()`; Pareto curve = running sum of that\n   share ordered by margin DESC.\n\n```sql\nSELECT p.category,\n       SUM(oi.quantity * oi.unit_price)                     AS revenue,\n       SUM(oi.quantity * (oi.unit_price - pc.unit_cost))    AS gross_margin\nFROM orders o\nJOIN order_items  oi ON oi.order_id   = o.order_id\nJOIN products     p  ON p.product_id  = oi.product_id\nJOIN product_costs pc ON pc.product_id = oi.product_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY p.category;\n```",
+  "snowflake_notes": "The SQL is the same in Snowflake; useful additions:\n\n- `DIV0(margin, revenue)` returns 0 instead of an error when revenue is 0 (`DIV0NULL` also treats NULL as 0).\n- `RATIO_TO_REPORT(gross_margin) OVER ()` for contribution share (0\u20131).\n- `QUALIFY` for \"top N products per category\":\n\n```sql\nSELECT p.category, p.product_name,\n       SUM(oi.quantity * (oi.unit_price - pc.unit_cost)) AS gross_margin\nFROM orders o\nJOIN order_items oi   ON oi.order_id = o.order_id\nJOIN products p       ON p.product_id = oi.product_id\nJOIN product_costs pc ON pc.product_id = oi.product_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY 1, 2\nQUALIFY ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY gross_margin DESC, p.product_name) <= 3;\n```\n\n- Use `NUMBER(38,2)` (fixed-point) for money in Snowflake tables; floating-point sums like 96.89999999 are\n  a SQLite/FLOAT artifact \u2014 round at the end, not in the middle.",
+  "common_mistakes": [
+    "Using products.list_price instead of order_items.unit_price for revenue.",
+    "Averaging line-level margin percentages instead of dividing summed margin by summed revenue.",
+    "Joining returns without pre-aggregation or with an INNER JOIN \u2014 losing or duplicating revenue.",
+    "Putting the valid-status filter in the WHERE of a LEFT JOIN anti-join, which silently turns it into an inner join.",
+    "Rounding intermediate values and then summing them; round only the final outputs.",
+    "Forgetting the NULL category (product 20) \u2014 it vanishes or shows as NULL unless you COALESCE it."
+  ],
+  "recall": [
+    [
+      "Define gross margin and margin % as used in this lesson.",
+      "Gross margin = revenue \u2212 quantity \u00d7 unit_cost; margin % = 100 \u00d7 gross margin / revenue."
+    ],
+    [
+      "How do you compute each product's share of total margin in one pass?",
+      "gross_margin / SUM(gross_margin) OVER () (\u00d7 100), or RATIO_TO_REPORT in Snowflake."
+    ],
+    [
+      "Which products have never sold, and how do you find them?",
+      "Products 23, 24, 25 \u2014 via NOT EXISTS (or LEFT JOIN ... IS NULL) against lines of valid orders."
+    ]
+  ],
+  "review_next": "Module 4 is complete. Before Module 5, rebuild 40.5 from memory and add a QUALIFY-style filter (CTE + WHERE) that keeps only products inside the first 80% of cumulative margin."
+}

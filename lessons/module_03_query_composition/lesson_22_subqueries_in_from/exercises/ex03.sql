@@ -1,0 +1,17 @@
+-- Lesson 22 · Exercise 22.3 — Orders and web events per customer, without fan-out
+--
+-- BUSINESS QUESTION
+--   Growth wants, for every customer, how many orders they placed and how many site events
+--   they generated.
+-- TABLES: customers, orders, web_events
+-- TASK
+--   Return customer_id, name, order_count (all orders, any status) and event_count (rows
+--   in web_events) for all 20 customers, showing 0 (not NULL) when there are none. Pre-
+--   aggregate each table in its own derived table before joining.
+-- REQUIRED COLUMNS: customer_id, name, order_count, event_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.3
+-- Grade it:              python3 sqlm.py submit 22.3
+--
+-- Write your query below (from memory!):
+

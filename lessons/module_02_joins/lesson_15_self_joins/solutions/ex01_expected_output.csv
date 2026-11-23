@@ -1,0 +1,3 @@
+customer_id_a,name_a,email_a,customer_id_b,name_b,email_b
+1,Alice Johnson,alice.johnson@example.com,19,alice johnson,alice.j@example.com
+3,John Smith,john.smith@example.com,4,John Smith,jsmith88@example.com

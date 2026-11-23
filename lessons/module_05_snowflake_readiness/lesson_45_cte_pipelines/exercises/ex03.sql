@@ -1,0 +1,25 @@
+-- Lesson 45 · Exercise 45.3 — Net revenue by category
+--
+-- BUSINESS QUESTION
+--   Refactor this three-level query that finance can't read:
+--   SELECT cat, g, IFNULL(rf,0), g-IFNULL(rf,0) FROM (SELECT
+--   IFNULL(p.category,'Uncategorized') cat, SUM(oi.quantity*oi.unit_price) g, SUM((SELECT
+--   SUM(r.refund_amount) FROM returns r WHERE r.order_item_id=oi.order_item_id)) rf FROM
+--   order_items oi JOIN products p ON p.product_id=oi.product_id WHERE oi.order_id IN
+--   (SELECT order_id FROM orders WHERE order_status IN ('completed','shipped','returned'))
+--   GROUP BY 1)
+-- TABLES: orders, order_items, products, returns
+-- TASK
+--   Return category (NULL as 'Uncategorized'), gross_revenue, refunds (sum of
+--   returns.refund_amount on those lines, 0 if none) and net_revenue (gross_revenue −
+--   refunds), all rounded to 2 decimals. Valid orders = order_status IN
+--   ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over
+--   those orders' order_items lines (never products.list_price). Net revenue = gross −
+--   refunds.
+-- REQUIRED COLUMNS: category, gross_revenue, refunds, net_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 45.3
+-- Grade it:              python3 sqlm.py submit 45.3
+--
+-- Write your query below (from memory!):
+

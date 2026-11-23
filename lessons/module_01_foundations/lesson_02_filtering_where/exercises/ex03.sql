@@ -1,0 +1,16 @@
+-- Lesson 2 · Exercise 2.3 — Stuck orders this year
+--
+-- BUSINESS QUESTION
+--   Operations wants every 2025 order that was cancelled or is still pending.
+-- TABLES: orders
+-- TASK
+--   Return order_id, customer_id, order_date and order_status for orders whose
+--   order_status is 'cancelled' or 'pending' AND whose order_date is in 2025 (from
+--   '2025-01-01' to '2025-12-31' inclusive).
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.3
+-- Grade it:              python3 sqlm.py submit 2.3
+--
+-- Write your query below (from memory!):
+

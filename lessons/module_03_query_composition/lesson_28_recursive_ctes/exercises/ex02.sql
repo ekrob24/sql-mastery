@@ -1,0 +1,15 @@
+-- Lesson 28 · Exercise 28.2 — Category depth
+--
+-- BUSINESS QUESTION
+--   The site team needs each category's depth in the navigation tree.
+-- TABLES: categories
+-- TASK
+--   Return category_id, category_name and depth for all 14 categories, where the root
+--   ('All Products', parent NULL) has depth 0, its children depth 1, and so on.
+-- REQUIRED COLUMNS: category_id, category_name, depth
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 28.2
+-- Grade it:              python3 sqlm.py submit 28.2
+--
+-- Write your query below (from memory!):
+

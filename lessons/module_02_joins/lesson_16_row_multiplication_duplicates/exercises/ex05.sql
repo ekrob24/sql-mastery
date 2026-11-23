@@ -1,0 +1,25 @@
+-- Lesson 16 · Exercise 16.5 — Two one-to-many tables: the inflation
+--
+-- BUSINESS QUESTION
+--   A dashboard joins customers to both orders and web_events in one query. How badly does
+--   that multiply rows?
+-- TABLES: customers, orders, web_events
+-- TASK
+--   Join customers → orders (inner, on customer_id) and customers → web_events (inner, on
+--   customer_id) in ONE query. Per customer return customer_id, joined_rows (COUNT(*)),
+--   order_count (distinct orders) and event_count (distinct web events).
+-- REQUIRED COLUMNS: customer_id, joined_rows, order_count, event_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.5
+-- Grade it:              python3 sqlm.py submit 16.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

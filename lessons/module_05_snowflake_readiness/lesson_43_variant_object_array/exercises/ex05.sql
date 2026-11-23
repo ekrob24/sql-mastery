@@ -1,0 +1,17 @@
+-- Lesson 43 · Exercise 43.5 — Aggregate rows into an array (ARRAY_AGG)
+--
+-- BUSINESS QUESTION
+--   For customer 7's orders, the support tool wants the list of product ids per order in
+--   line order.
+-- TABLES: orders, order_items
+-- TASK
+--   For every order of customer_id 7 that has at least one line, return order_id and
+--   product_ids = a JSON array of the order's product_id values ordered by order_item_id
+--   (e.g. [16,10]).
+-- REQUIRED COLUMNS: order_id, product_ids
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.5
+-- Grade it:              python3 sqlm.py submit 43.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,26 @@
+-- Lesson 15 · Exercise 15.4 — Cheaper products in the same category
+--
+-- BUSINESS QUESTION
+--   Merchandising builds price ladders: for each product, how many products in the same
+--   category are cheaper?
+-- TABLES: products
+-- TASK
+--   Return every product (all 25) with columns product_id, product_name, category and
+--   cheaper_in_category = the number of OTHER products with the same category and a
+--   strictly lower list_price. Products with no cheaper peer (or a NULL category / NULL
+--   price) get 0.
+-- REQUIRED COLUMNS: product_id, product_name, category, cheaper_in_category
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.4
+-- Grade it:              python3 sqlm.py submit 15.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,18 @@
+-- Lesson 22 · Exercise 22.4 — Average basket size by region
+--
+-- BUSINESS QUESTION
+--   Ops wants to know how many units a typical valid order contains, by customer region.
+-- TABLES: orders, order_items, customers
+-- TASK
+--   First build one row per valid order (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) with units =
+--   SUM(quantity). Then join to customers (orders whose customer doesn't exist, i.e. order
+--   31, drop out) and return region (NULL shown as 'Unknown'), order_count and
+--   avg_units_per_order rounded to 2 decimals.
+-- REQUIRED COLUMNS: region, order_count, avg_units_per_order
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.4
+-- Grade it:              python3 sqlm.py submit 22.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 49 · Exercise 49.5 — Order-level rule violations
+--
+-- BUSINESS QUESTION
+--   Which orders break a basic rule: unknown status, date outside the business range,
+--   missing customer, or no lines?
+-- TABLES: orders, customers, order_items
+-- TASK
+--   Return order_id and issue for every violation of these rules (an order can appear once
+--   per rule it breaks): 'invalid_status' — order_status NULL or not in
+--   ('completed','shipped','returned','cancelled','pending'); 'date_out_of_range' —
+--   order_date NULL or outside '2024-01-01'..'2025-12-31'; 'orphan_customer' — customer_id
+--   not found in customers; 'no_items' — the order has no order_items rows.
+-- REQUIRED COLUMNS: order_id, issue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.5
+-- Grade it:              python3 sqlm.py submit 49.5
+--
+-- Write your query below (from memory!):
+

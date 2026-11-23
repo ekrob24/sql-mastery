@@ -1,0 +1,25 @@
+-- Lesson 19 · Exercise 19.4 — Two most recent valid orders per customer (top-N)
+--
+-- BUSINESS QUESTION
+--   The CRM card should show each customer's two most recent valid orders.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name, order_id and order_date for each customer's (up to) 2 most
+--   recent valid orders (order_status IN ('completed','shipped','returned')); ties on
+--   order_date broken by the higher order_id. Customers without a valid order don't
+--   appear.
+-- REQUIRED COLUMNS: customer_id, name, order_id, order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.4
+-- Grade it:              python3 sqlm.py submit 19.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

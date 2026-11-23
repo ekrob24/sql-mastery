@@ -1,0 +1,18 @@
+-- Lesson 30 · Exercise 30.2 — Monthly gross revenue
+--
+-- BUSINESS QUESTION
+--   Finance needs monthly revenue and the number of revenue-generating orders.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_month ('YYYY-MM'), valid_orders (distinct valid orders in the
+--   month) and gross_revenue (rounded to 2 decimals), one row per month, ordered by
+--   order_month.
+-- REQUIRED COLUMNS: order_month, valid_orders, gross_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.2
+-- Grade it:              python3 sqlm.py submit 30.2
+--
+-- Write your query below (from memory!):
+

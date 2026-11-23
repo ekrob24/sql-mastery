@@ -1,0 +1,21 @@
+-- Lesson 26 · Exercise 26.6 — Region revenue vs the company average
+--
+-- BUSINESS QUESTION
+--   Sales leadership wants each region's revenue and how far it is from the average
+--   region.
+-- TABLES: orders, order_items, customers
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) and only
+--   orders whose customer exists in customers, return region (NULL → 'Unknown'), revenue
+--   (rounded to 2 decimals) and diff_from_avg = region revenue minus the average of the
+--   region revenues (rounded to 2 decimals). Use one CTE for region revenue and another
+--   for the average.
+-- REQUIRED COLUMNS: region, revenue, diff_from_avg
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.6
+-- Grade it:              python3 sqlm.py submit 26.6
+--
+-- Write your query below (from memory!):
+

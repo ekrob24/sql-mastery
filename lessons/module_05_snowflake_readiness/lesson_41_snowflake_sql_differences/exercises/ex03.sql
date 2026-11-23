@@ -1,0 +1,18 @@
+-- Lesson 41 · Exercise 41.3 — DATEADD and DATEDIFF for 2025 sign-ups
+--
+-- BUSINESS QUESTION
+--   Growth sent: `SELECT customer_id, signup_date, DATEADD(day, 30, signup_date) AS
+--   trial_end, DATEDIFF(day, signup_date, '2025-12-31'::DATE) AS days_since_signup FROM
+--   customers WHERE signup_date >= '2025-01-01'`.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, signup_date, trial_end (signup_date + 30 days, as 'YYYY-MM-DD')
+--   and days_since_signup (whole days from signup_date to the as-of date '2025-12-31', an
+--   integer) for customers who signed up on or after '2025-01-01'.
+-- REQUIRED COLUMNS: customer_id, signup_date, trial_end, days_since_signup
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.3
+-- Grade it:              python3 sqlm.py submit 41.3
+--
+-- Write your query below (from memory!):
+

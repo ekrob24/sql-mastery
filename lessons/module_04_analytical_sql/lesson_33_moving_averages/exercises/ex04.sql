@@ -1,0 +1,20 @@
+-- Lesson 33 · Exercise 33.4 — Trailing 30-day revenue (calendar-based)
+--
+-- BUSINESS QUESTION
+--   Ops wants, for each valid order, revenue booked in the 30 calendar days ending on that
+--   order's date.
+-- TABLES: orders, order_items
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'); order_total =
+--   SUM(quantity * unit_price) of the order's items. For every valid order, return
+--   order_id, order_date, order_total and revenue_30d = sum of order_total of all valid
+--   orders whose order_date is between (order_date − 29 days) and order_date inclusive (a
+--   calendar window, not a row count), both rounded to 2 decimals. Ordered by order_date,
+--   order_id.
+-- REQUIRED COLUMNS: order_id, order_date, order_total, revenue_30d
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.4
+-- Grade it:              python3 sqlm.py submit 33.4
+--
+-- Write your query below (from memory!):
+

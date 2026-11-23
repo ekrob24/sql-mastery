@@ -1,0 +1,20 @@
+-- Lesson 35 · Exercise 35.6 — Year-over-year growth by quarter
+--
+-- BUSINESS QUESTION
+--   The board wants each 2025 quarter's revenue compared with the same quarter of 2024.
+-- TABLES: orders, order_items
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Aggregate revenue by quarter
+--   (label year_quarter like '2025-Q1'). For the 2025 quarters only, return year_quarter,
+--   revenue (rounded to 2), revenue_year_ago (the same quarter one year earlier, i.e. 4
+--   quarters back) and yoy_growth_pct (100.0 * (revenue - revenue_year_ago) /
+--   revenue_year_ago, rounded to 1 decimal). Order by year_quarter. Careful: the 2024
+--   quarters must still be visible to the window even though they are not in the output.
+-- REQUIRED COLUMNS: year_quarter, revenue, revenue_year_ago, yoy_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 35.6
+-- Grade it:              python3 sqlm.py submit 35.6
+--
+-- Write your query below (from memory!):
+

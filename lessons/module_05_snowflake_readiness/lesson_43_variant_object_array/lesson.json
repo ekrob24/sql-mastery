@@ -1,0 +1,266 @@
+{
+  "number": 43,
+  "slug": "variant_object_array",
+  "title": "VARIANT, OBJECT, ARRAY concepts",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Tell objects, arrays and scalars apart, measure arrays, detect optional keys, and build JSON objects and arrays from relational rows.",
+  "context": "The platform team is designing the next version of the order event and wants facts: how often are the optional fields present, how big do item arrays get, and can the warehouse produce JSON documents for an API export? You are the person who answers with queries, not guesses.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "How often are the optional keys present?",
+      "question": "Platform team: what share of events carry a customer tier and/or tags?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return has_tier (1 if $.customer.tier exists, else 0), has_tags (1 if $.tags exists, else 0) and events (count) for each combination that occurs.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_type(payload, path) IS NOT NULL \u21d4 the key exists.",
+        "Turn each test into 1/0 with CASE, then GROUP BY both flags.",
+        "SELECT CASE WHEN json_type(payload,'$.customer.tier') IS NOT NULL THEN 1 ELSE 0 END AS has_tier, CASE WHEN json_type(payload,'$.tags') IS NOT NULL THEN 1 ELSE 0 END AS has_tags, COUNT(*) AS events ... GROUP BY 1, 2;"
+      ],
+      "why": "Field-presence profiling is the first thing to do with any new semi-structured source; it tells you which columns of the future model must be nullable.",
+      "recall": {
+        "q": "Snowflake function listing the keys of an OBJECT?",
+        "a": "OBJECT_KEYS(obj) \u2014 returns an ARRAY of key names."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT IFF(payload:customer:tier IS NOT NULL, 1, 0) AS has_tier, IFF(payload:tags IS NOT NULL, 1, 0) AS has_tags, COUNT(*) AS events FROM raw_order_events GROUP BY 1, 2;",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "has_tier",
+        "has_tags",
+        "events"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 2,
+      "title": "Array sizes: items and tags",
+      "question": "Which events are big baskets (4+ items), and how many tags do they carry?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return event_id, order_id, item_count (number of elements in $.items) and tag_count (number of elements in $.tags, 0 when the tags key is absent) for events with item_count >= 4.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_array_length(doc, path) counts array elements.",
+        "For a missing path it returns NULL, not 0 \u2014 wrap it in COALESCE.",
+        "SELECT event_id, payload ->> '$.order_id' AS order_id, json_array_length(payload,'$.items') AS item_count, COALESCE(json_array_length(payload,'$.tags'),0) AS tag_count FROM raw_order_events WHERE json_array_length(payload,'$.items') >= 4;"
+      ],
+      "why": "Array size is a cheap proxy for basket size without flattening. NULL-vs-0 matters as soon as you average it.",
+      "recall": {
+        "q": "What does ARRAY_SIZE(payload:tags) return when the tags key is missing?",
+        "a": "NULL (wrap with NVL/COALESCE for 0)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT event_id, payload:order_id::INT AS order_id, ARRAY_SIZE(payload:items) AS item_count, NVL(ARRAY_SIZE(payload:tags), 0) AS tag_count FROM raw_order_events WHERE ARRAY_SIZE(payload:items) >= 4;",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "event_id",
+        "order_id",
+        "item_count",
+        "tag_count"
+      ],
+      "expected_row_count": 11
+    },
+    {
+      "number": 3,
+      "title": "Basket-size distribution",
+      "question": "Product wants the distribution of items per order event \u2014 including empty baskets.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Return item_count (length of $.items) and events (number of events with that many items) for every item_count that occurs, including 0.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "An empty array [] has length 0 (it exists), unlike a missing key.",
+        "GROUP BY the json_array_length expression.",
+        "SELECT json_array_length(payload,'$.items') AS item_count, COUNT(*) AS events FROM raw_order_events GROUP BY 1;"
+      ],
+      "why": "The item_count = 0 bucket is order 60 \u2014 a pending order with no lines. Distribution checks like this surface edge cases before they break a FLATTEN-based model.",
+      "recall": {
+        "q": "json_array_length('[]') returns?",
+        "a": "0 \u2014 an empty array exists but has no elements."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT ARRAY_SIZE(payload:items) AS item_count, COUNT(*) AS events FROM raw_order_events GROUP BY 1;",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "item_count",
+        "events"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 4,
+      "title": "Build a JSON object per customer (OBJECT_CONSTRUCT)",
+      "question": "An API partner wants an East-region customer export where each customer is a JSON document.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "For customers in region 'East', return customer_id and profile = json_object('name', name, 'email', email, 'signup_date', signup_date) \u2014 exactly these three keys in this order (a NULL email becomes JSON null).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_object takes alternating key, value arguments.",
+        "Key order in the output follows the argument order.",
+        "SELECT customer_id, json_object('name', name, 'email', email, 'signup_date', signup_date) AS profile FROM customers WHERE region = 'East';"
+      ],
+      "why": "Reverse ETL and API exports need JSON out of the warehouse. Notice customer 20's \"email\":null \u2014 Snowflake's OBJECT_CONSTRUCT would drop the key entirely.",
+      "recall": {
+        "q": "Does OBJECT_CONSTRUCT keep keys whose value is NULL?",
+        "a": "No \u2014 it omits them. Use OBJECT_CONSTRUCT_KEEP_NULL to keep them."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT customer_id, OBJECT_CONSTRUCT_KEEP_NULL('name', name, 'email', email, 'signup_date', signup_date) AS profile FROM customers WHERE region = 'East';",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "profile"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Aggregate rows into an array (ARRAY_AGG)",
+      "question": "For customer 7's orders, the support tool wants the list of product ids per order in line order.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "For every order of customer_id 7 that has at least one line, return order_id and product_ids = a JSON array of the order's product_id values ordered by order_item_id (e.g. [16,10]).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_group_array(x) is SQLite's ARRAY_AGG.",
+        "Put ORDER BY inside the aggregate call: json_group_array(product_id ORDER BY order_item_id).",
+        "SELECT o.order_id, json_group_array(oi.product_id ORDER BY oi.order_item_id) AS product_ids FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.customer_id = 7 GROUP BY o.order_id;"
+      ],
+      "why": "Without an explicit order inside the aggregate, array element order is not guaranteed \u2014 and two runs can produce different JSON strings that break diff-based tests.",
+      "recall": {
+        "q": "How do you order the elements of ARRAY_AGG in Snowflake?",
+        "a": "ARRAY_AGG(x) WITHIN GROUP (ORDER BY y)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT o.order_id, ARRAY_AGG(oi.product_id) WITHIN GROUP (ORDER BY oi.order_item_id) AS product_ids FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.customer_id = 7 GROUP BY o.order_id;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "product_ids"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 6,
+      "title": "Nest an array inside an object",
+      "question": "Rebuild compact order documents for customer 1 from the clean tables, so they can be diffed against the raw feed.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "For each order of customer_id 1 that has at least one line, return order_id and order_doc = json_object('order_id', order_id, 'status', order_status, 'product_ids', <JSON array of the order's product_id values ordered by order_item_id>) \u2014 keys exactly in that order.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "An aggregate can be an argument of json_object \u2014 the array is nested as real JSON, not as a quoted string.",
+        "GROUP BY the order columns you use outside the aggregate (order_id, order_status).",
+        "json_object('order_id', o.order_id, 'status', o.order_status, 'product_ids', json_group_array(oi.product_id ORDER BY oi.order_item_id)) AS order_doc ... GROUP BY o.order_id, o.order_status"
+      ],
+      "why": "Nesting is how you produce API-shaped output (one document per entity) from normalised tables \u2014 the inverse of FLATTEN.",
+      "recall": {
+        "q": "Snowflake equivalent of json_object(..., 'product_ids', json_group_array(...))?",
+        "a": "OBJECT_CONSTRUCT(..., 'product_ids', ARRAY_AGG(...) WITHIN GROUP (ORDER BY ...))."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT o.order_id, OBJECT_CONSTRUCT('order_id', o.order_id, 'status', o.order_status, 'product_ids', ARRAY_AGG(oi.product_id) WITHIN GROUP (ORDER BY oi.order_item_id)) AS order_doc FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.customer_id = 1 GROUP BY o.order_id, o.order_status;",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_doc"
+      ],
+      "expected_row_count": 9
+    }
+  ],
+  "worked_example": {
+    "question": "For event 4, what type is each top-level part of the payload, and how many items/tags does it hold?",
+    "sql": "SELECT event_id,\n       json_type(payload, '$.customer')        AS customer_type,\n       json_type(payload, '$.items')           AS items_type,\n       json_type(payload, '$.items[0].price')  AS price_type,\n       json_type(payload, '$.tags')            AS tags_type,\n       json_array_length(payload, '$.items')   AS item_count,\n       json_array_length(payload, '$.tags')    AS tag_count\nFROM raw_order_events\nWHERE event_id IN (1, 4);",
+    "explanation": "customer is an OBJECT (key \u2192 value), items and tags are ARRAYs (ordered lists). Event 1 has no tags key at all, so tags_type and tag_count are NULL \u2014 not 0. That NULL-vs-0 distinction is the trap in the exercises below.",
+    "columns": [
+      "event_id",
+      "customer_type",
+      "items_type",
+      "price_type",
+      "tags_type",
+      "item_count",
+      "tag_count"
+    ],
+    "rows": [
+      [
+        1,
+        "object",
+        "array",
+        "real",
+        null,
+        1,
+        null
+      ],
+      [
+        4,
+        "object",
+        "array",
+        "real",
+        "array",
+        3,
+        1
+      ]
+    ]
+  },
+  "recipe": "**Recipe: reason about JSON values in 4 moves**\n\n1. **Classify the value:** `json_type(doc, path)` \u2192 `'object'` (`{...}`), `'array'` (`[...]`), `'text'`,\n   `'integer'`, `'real'`, `'true'/'false'`, `'null'`, or SQL NULL (path absent).\n2. **Measure arrays:** `json_array_length(doc, path)` \u2192 number of elements (0 for `[]`, NULL if absent!).\n   Wrap in `COALESCE(..., 0)` when \"absent\" should count as \"empty\".\n3. **Test presence of optional keys:** `json_type(doc, '$.customer.tier') IS NOT NULL`.\n4. **Build JSON from rows:** `json_object('k1', v1, 'k2', v2)` builds an object; `json_group_array(x ORDER BY y)`\n   aggregates rows into an array; nest them to produce documents.\n\n```sql\nSELECT o.order_id,\n       json_object('order_id', o.order_id,\n                   'product_ids', json_group_array(oi.product_id ORDER BY oi.order_item_id)) AS order_doc\nFROM orders o JOIN order_items oi ON oi.order_id = o.order_id\nGROUP BY o.order_id;\n```",
+  "snowflake_notes": "**Snowflake's three semi-structured types**\n\n- **VARIANT** \u2014 holds *any* JSON value (object, array, string, number, null) up to 16 MB. Raw event columns are VARIANT.\n- **OBJECT** \u2014 key/value pairs (a JSON `{}`); **ARRAY** \u2014 an ordered list (a JSON `[]`). Both can also live inside a VARIANT.\n\n```sql\nSELECT TYPEOF(payload:customer)            AS customer_type,   -- 'OBJECT'\n       TYPEOF(payload:items)               AS items_type,      -- 'ARRAY'\n       IS_ARRAY(payload:tags)              AS tags_is_array,   -- NULL if key absent\n       ARRAY_SIZE(payload:items)           AS item_count,      -- \u2248 json_array_length\n       ARRAY_SIZE(payload:tags)            AS tag_count,       -- NULL if absent\n       ARRAY_CONTAINS('promo'::VARIANT, payload:tags) AS is_promo,\n       OBJECT_KEYS(payload:customer)       AS customer_keys,   -- ['id','region','tier']\n       payload:customer:tier IS NOT NULL   AS has_tier\nFROM raw_order_events;\n\n-- Building JSON\nSELECT OBJECT_CONSTRUCT('name', name, 'email', email)          AS profile,  -- drops NULL-valued keys!\n       OBJECT_CONSTRUCT_KEEP_NULL('name', name, 'email', email) AS profile_all\nFROM customers;\n\nSELECT order_id,\n       ARRAY_AGG(product_id) WITHIN GROUP (ORDER BY order_item_id) AS product_ids,\n       OBJECT_AGG(product_id::STRING, quantity)                    AS qty_by_product\nFROM order_items GROUP BY order_id;\n\nSELECT ARRAY_CONSTRUCT(1, 2, 3), PARSE_JSON('{\"a\": 1}'), TO_JSON(OBJECT_CONSTRUCT('a', 1));\n```\n\nKey difference: `OBJECT_CONSTRUCT` **omits** keys whose value is NULL, while SQLite's `json_object` writes\n`\"email\":null`. Use `OBJECT_CONSTRUCT_KEEP_NULL` when consumers expect every key. `ARRAY_AGG` also skips NULLs\n(SQLite's `json_group_array` keeps them as `null`).",
+  "common_mistakes": [
+    "Treating json_array_length / ARRAY_SIZE of a missing key as 0 \u2014 it is NULL.",
+    "Confusing an empty array (present, length 0) with an absent key (NULL).",
+    "Building arrays without an ORDER BY inside the aggregate and getting non-deterministic JSON.",
+    "Expecting OBJECT_CONSTRUCT to keep NULL-valued keys (it drops them; SQLite's json_object keeps them).",
+    "Comparing JSON documents as strings when key order or spacing differs \u2014 compare extracted fields instead."
+  ],
+  "recall": [
+    [
+      "Name Snowflake's three semi-structured data types.",
+      "VARIANT (any value), OBJECT (key/value), ARRAY (ordered list)."
+    ],
+    [
+      "SQLite equivalents of OBJECT_CONSTRUCT and ARRAY_AGG?",
+      "json_object(...) and json_group_array(...)."
+    ],
+    [
+      "How do you test that an optional key exists?",
+      "json_type(doc, path) IS NOT NULL (Snowflake: doc:path IS NOT NULL)."
+    ]
+  ],
+  "review_next": "Lesson 44 turns arrays into rows with json_each \u2014 Snowflake's LATERAL FLATTEN \u2014 and reconciles the JSON items against order_items."
+}

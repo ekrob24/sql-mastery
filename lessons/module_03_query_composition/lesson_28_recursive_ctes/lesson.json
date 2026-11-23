@@ -1,0 +1,289 @@
+{
+  "number": 28,
+  "slug": "recursive_ctes",
+  "title": "Recursive CTEs",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Write WITH RECURSIVE queries to generate sequences (numbers, days, months) and walk hierarchies (category trees) to get depth, paths and all descendants.",
+  "context": "Two everyday problems need recursion. First, reports must show every month, including months with zero revenue, so you need a calendar (a 'spine') to LEFT JOIN onto. Second, the category tree (All Products \u2192 Electronics \u2192 Audio) has unknown depth, so a fixed number of self-joins won't do.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Count from 1 to 12",
+      "question": "You need a helper list of month numbers 1\u201312 for a report template.",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Using a recursive CTE (no tables needed), return one column month_number with the integers 1 through 12.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Anchor: SELECT 1. Recursive step: previous value + 1.",
+        "The stop condition goes in the recursive part's WHERE.",
+        "WITH RECURSIVE nums(month_number) AS (SELECT 1 UNION ALL SELECT month_number + 1 FROM nums WHERE month_number < 12) SELECT month_number FROM nums;"
+      ],
+      "why": "Number generators are the building block of every spine, bucket list and test-data generator.",
+      "recall": {
+        "q": "What happens if a recursive CTE has no stop condition?",
+        "a": "It recurses forever (or until the engine's recursion limit errors out)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) AS month_number FROM TABLE(GENERATOR(ROWCOUNT => 12));",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "month_number"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 2,
+      "title": "Category depth",
+      "question": "The site team needs each category's depth in the navigation tree.",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return category_id, category_name and depth for all 14 categories, where the root ('All Products', parent NULL) has depth 0, its children depth 1, and so on.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Anchor: the root, WHERE parent_category_id IS NULL, with depth 0.",
+        "Recursive step: categories whose parent is a row already in the CTE; depth = parent's depth + 1.",
+        "... UNION ALL SELECT c.category_id, c.category_name, t.depth + 1 FROM categories c JOIN tree t ON c.parent_category_id = t.category_id"
+      ],
+      "why": "Depth drives indentation in menus and lets you report 'at level 1' consistently, however deep the tree grows. Strength Training sits at depth 3.",
+      "recall": {
+        "q": "In a parent\u2192child tree walk, what does the recursive JOIN condition look like?",
+        "a": "child.parent_id = cte.id (find rows whose parent was found in the previous step)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name",
+        "depth"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 3,
+      "title": "Breadcrumb paths",
+      "question": "The website needs breadcrumb text like 'All Products > Sports > Fitness'.",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return category_id and path for all 14 categories, where path is the chain of category names from the root down to that category joined with ' > ' (the root's path is just 'All Products'). Sort by path.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Carry a text column through the recursion and extend it at each step.",
+        "Recursive part: t.path || ' > ' || c.category_name",
+        "Anchor: SELECT category_id, category_name AS path FROM categories WHERE parent_category_id IS NULL; finish with ORDER BY path."
+      ],
+      "why": "Paths make hierarchies readable in flat reports, and sorting by path lists every category directly under its parent: a tree view for free.",
+      "recall": {
+        "q": "How do you build a path string in a recursive CTE?",
+        "a": "Carry it as a column: anchor = root name; step = parent_path || ' > ' || child_name."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT category_id, SYS_CONNECT_BY_PATH(category_name, ' > ') FROM categories START WITH parent_category_id IS NULL CONNECT BY PRIOR category_id = parent_category_id; (path starts with the separator).",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "path"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 4,
+      "title": "Everything under Electronics",
+      "question": "A promotion applies to 'Electronics and all its sub-categories'. Which categories are in scope?",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return category_id, category_name for 'Electronics' itself and all of its descendants (children, grandchildren, ...). Start the anchor from the name 'Electronics', not a hard-coded id.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Same tree walk, but the anchor is the Electronics row instead of the root.",
+        "Anchor: WHERE category_name = 'Electronics'.",
+        "WITH RECURSIVE sub AS (SELECT ... WHERE category_name = 'Electronics' UNION ALL SELECT c.category_id, c.category_name FROM categories c JOIN sub s ON c.parent_category_id = s.category_id) SELECT ... FROM sub;"
+      ],
+      "why": "'X and everything below it' is the standard question for org charts, product trees and geographies. Recursion keeps working when someone adds a sub-sub-category next quarter.",
+      "recall": {
+        "q": "How do you change a full-tree walk into a 'subtree of X' walk?",
+        "a": "Change the anchor to select X instead of the root."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 5,
+      "title": "Descendant counts for every category",
+      "question": "Navigation design wants to know how many categories sit beneath each node (at any depth).",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return category_id, category_name and descendant_count (the number of categories strictly below it at any depth; 0 for leaves) for all 14 categories.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Build (ancestor_id, descendant_id) pairs: anchor = every direct parent/child pair.",
+        "Recursive step: extend each pair one level down: join categories whose parent is the pair's descendant, keeping the ancestor.",
+        "Then LEFT JOIN categories to the pairs on ancestor_id and COUNT(descendant_id) (leaves get 0)."
+      ],
+      "why": "An ancestor/descendant 'closure table' answers every roll-up question about a hierarchy (counts, revenue under a node) with an ordinary join and GROUP BY.",
+      "recall": {
+        "q": "What is a closure table?",
+        "a": "A table of every (ancestor, descendant) pair in a hierarchy, at any distance."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name",
+        "descendant_count"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 6,
+      "title": "Monthly Books revenue with zero months",
+      "question": "The Books manager's chart skips months with no sales, which makes the trend look better than it is.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Generate every month from 2024-01 to 2025-12 with a recursive CTE, then return month ('YYYY-MM') and books_revenue = SUM(quantity * unit_price) for products with category 'Books' on valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), rounded to 2 decimals, showing 0 for months without Books sales. Sort by month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Spine: anchor date('2024-01-01'), step date(month_start, '+1 month'), stop at '2025-12-01'.",
+        "Aggregate Books revenue per 'YYYY-MM' in a second CTE (you can list it after the recursive one).",
+        "FROM months m LEFT JOIN books_monthly b ON b.month = strftime('%Y-%m', m.month_start), COALESCE(b.revenue, 0), ORDER BY month."
+      ],
+      "why": "Eight of the 24 months have no Books sales. Without a spine they vanish from the chart and any moving average or month-over-month calculation silently skips them.",
+      "recall": {
+        "q": "Why LEFT JOIN facts onto a date spine instead of grouping the facts alone?",
+        "a": "Grouping facts only produces months that have data; the spine guarantees every month appears (with 0)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT DATEADD('month', ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1, '2024-01-01'::date) AS month_start FROM TABLE(GENERATOR(ROWCOUNT => 24)); then LEFT JOIN on DATE_TRUNC('month', order_date) = month_start.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "month",
+        "books_revenue"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 7,
+      "title": "Daily orders in December 2025",
+      "question": "Ops wants a day-by-day order count for December 2025, including the quiet days.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Generate every day from 2025-12-01 to 2025-12-31 and return order_day ('YYYY-MM-DD') and orders_placed (number of orders of any status with that order_date, 0 if none). Sort by order_day.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Same spine pattern with '+1 day'.",
+        "LEFT JOIN orders on order_date = order_day and COUNT(o.order_id), not COUNT(*).",
+        "WITH RECURSIVE days(order_day) AS (SELECT date('2025-12-01') UNION ALL SELECT date(order_day, '+1 day') FROM days WHERE order_day < '2025-12-31') SELECT d.order_day, COUNT(o.order_id) AS orders_placed FROM days d LEFT JOIN orders o ON o.order_date = d.order_day GROUP BY d.order_day ORDER BY d.order_day;"
+      ],
+      "why": "Only 3 of 31 days have orders. Daily spines are what make 'orders per day' averages honest (3/31, not 3/3).",
+      "recall": {
+        "q": "After a LEFT JOIN onto a spine, why COUNT(o.order_id) and not COUNT(*)?",
+        "a": "COUNT(*) would count the NULL-extended row on empty days as 1; COUNT(column) gives 0."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "order_day",
+        "orders_placed"
+      ],
+      "expected_row_count": 31
+    }
+  ],
+  "worked_example": {
+    "question": "List the direct and indirect sub-categories of 'Home', with their depth below Home.",
+    "sql": "WITH RECURSIVE sub AS (\n    SELECT category_id, category_name, 0 AS levels_below\n    FROM categories\n    WHERE category_name = 'Home'\n    UNION ALL\n    SELECT c.category_id, c.category_name, s.levels_below + 1\n    FROM categories AS c\n    JOIN sub AS s ON c.parent_category_id = s.category_id\n)\nSELECT * FROM sub;",
+    "explanation": "The anchor finds Home. Each recursive pass finds the children of the rows found in the previous pass (Kitchen, Decor). When a pass finds no new rows, recursion stops on its own, because a finite tree is its own stop condition.",
+    "columns": [
+      "category_id",
+      "category_name",
+      "levels_below"
+    ],
+    "rows": [
+      [
+        3,
+        "Home",
+        0
+      ],
+      [
+        10,
+        "Decor",
+        1
+      ],
+      [
+        9,
+        "Kitchen",
+        1
+      ]
+    ]
+  },
+  "recipe": "**Recipe: anchor + recursive step + stop condition**\n\n```sql\nWITH RECURSIVE seq(n) AS (\n    SELECT 1                 -- 1. anchor: the starting row(s)\n    UNION ALL\n    SELECT n + 1 FROM seq    -- 2. recursive step: build the next row from the previous one\n    WHERE n < 10             -- 3. stop condition: without it the query never ends\n)\nSELECT n FROM seq;\n```\n\n**Walking a tree (parent \u2192 children):**\n```sql\nWITH RECURSIVE tree AS (\n    SELECT category_id, category_name, 0 AS depth, category_name AS path\n    FROM categories WHERE parent_category_id IS NULL                  -- root(s)\n    UNION ALL\n    SELECT c.category_id, c.category_name, t.depth + 1, t.path || ' > ' || c.category_name\n    FROM categories c JOIN tree t ON c.parent_category_id = t.category_id   -- children of rows found so far\n)\nSELECT * FROM tree;\n```\n\n**Date spine:** anchor `SELECT date('2024-01-01') AS month_start`, step `date(month_start, '+1 month')`,\nstop `WHERE month_start < '2025-12-01'`. Then `spine LEFT JOIN facts` + `COALESCE(revenue, 0)`.\n\nRules: anchor and recursive parts are joined with `UNION ALL`; the recursive part references the CTE **once**;\nalways have a stop condition (or a depth limit to defend against cycles).",
+  "snowflake_notes": "- Snowflake accepts `WITH RECURSIVE` (the RECURSIVE keyword is optional there). It also has the Oracle-style\n  `CONNECT BY PRIOR category_id = parent_category_id START WITH parent_category_id IS NULL`, with\n  `SYS_CONNECT_BY_PATH(category_name, ' > ')` and `LEVEL`.\n- For number/date spines Snowflake developers usually skip recursion:\n  `SELECT DATEADD('month', SEQ4(), '2024-01-01'::date) AS month_start FROM TABLE(GENERATOR(ROWCOUNT => 24))`.\n  (Note SEQ4 can have gaps in theory; `ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1` is the safe version.)\n- `DATE_TRUNC('month', order_date)` replaces SQLite's `date(order_date, 'start of month')`.",
+  "common_mistakes": [
+    "Missing or wrong stop condition: infinite recursion (or a spine one month too long/short; check the endpoints).",
+    "Using UNION instead of UNION ALL in the recursive CTE. It is allowed in SQLite but slower, and hides cycle bugs.",
+    "Reversing the tree join (c.category_id = t.parent_category_id walks *up* the tree, not down).",
+    "Joining facts to the spine with a mismatched key format ('2024-01-01' vs '2024-01'). Format both sides the same way.",
+    "COUNT(*) instead of COUNT(fact_column) after a LEFT JOIN onto a spine: empty periods show 1 instead of 0."
+  ],
+  "recall": [
+    [
+      "What are the three parts of a recursive CTE?",
+      "Anchor member, recursive member (referencing the CTE), and a stop condition; joined with UNION ALL."
+    ],
+    [
+      "How do you make empty months appear with 0 revenue?",
+      "Generate a month spine, LEFT JOIN the aggregated facts to it, COALESCE(revenue, 0)."
+    ],
+    [
+      "How do you defend against cycles in hierarchical data?",
+      "Carry a depth (or path) column and stop at a maximum depth / when the id already appears in the path."
+    ]
+  ],
+  "review_next": "That completes Module 3. Module 4 (Lesson 29+) introduces window functions, which replace many correlated subqueries from Lesson 23. The month spine from 28.6 returns there for running totals and month-over-month growth."
+}

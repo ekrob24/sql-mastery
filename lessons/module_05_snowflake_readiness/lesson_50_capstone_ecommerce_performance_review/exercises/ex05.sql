@@ -1,0 +1,22 @@
+-- Lesson 50 · Exercise 50.5 — Product return rate
+--
+-- BUSINESS QUESTION
+--   Operations: "Which products come back most often, and what do those returns cost us?"
+-- TABLES: orders, order_items, returns, products
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned'). Work at order-line
+--   level (returns has no quantity): lines_sold = number of order_items lines of the
+--   product in valid orders (every line as recorded); lines_returned = how many of those
+--   lines have a row in returns; return_rate_pct = 100 * lines_returned / lines_sold
+--   rounded to 1 decimal; refund_amount = SUM(returns.refund_amount) for the product,
+--   rounded to 2 decimals. Return only products with at least one returned line, with
+--   columns product_id, product_name, lines_sold, lines_returned, return_rate_pct,
+--   refund_amount. Order by return_rate_pct descending, then refund_amount descending,
+--   then product_id ascending.
+-- REQUIRED COLUMNS: product_id, product_name, lines_sold, lines_returned, return_rate_pct, refund_amount
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.5
+-- Grade it:              python3 sqlm.py submit 50.5
+--
+-- Write your query below (from memory!):
+

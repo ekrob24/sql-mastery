@@ -1,0 +1,17 @@
+customer_id,last_order_date,days_since_last_order,recency_status
+1,2025-03-04,302,lapsed
+2,2025-11-08,53,active
+3,2025-09-21,101,active
+4,2025-07-24,160,active
+5,2024-12-21,375,lapsed
+6,2025-05-19,226,lapsed
+7,2025-11-21,40,active
+8,2024-08-28,490,lapsed
+9,2024-10-01,456,lapsed
+10,2025-02-04,330,lapsed
+11,2025-06-06,208,lapsed
+12,2025-12-06,25,active
+13,2025-01-15,350,lapsed
+14,2025-06-23,191,lapsed
+15,2025-08-25,128,active
+17,2025-07-10,174,active

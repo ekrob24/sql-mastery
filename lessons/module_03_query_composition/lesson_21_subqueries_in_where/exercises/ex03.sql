@@ -1,0 +1,15 @@
+-- Lesson 21 · Exercise 21.3 — Products that have never been sold
+--
+-- BUSINESS QUESTION
+--   Inventory wants to know which catalog items have never appeared on any order.
+-- TABLES: products, order_items
+-- TASK
+--   Return product_id, product_name for products whose product_id does NOT appear in
+--   order_items at all (any order status).
+-- REQUIRED COLUMNS: product_id, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.3
+-- Grade it:              python3 sqlm.py submit 21.3
+--
+-- Write your query below (from memory!):
+

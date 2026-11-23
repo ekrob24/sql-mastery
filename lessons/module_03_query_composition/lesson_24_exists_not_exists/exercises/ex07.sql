@@ -1,0 +1,18 @@
+-- Lesson 24 · Exercise 24.7 — Buyers who never needed a refund
+--
+-- BUSINESS QUESTION
+--   The reviews team wants to invite happy customers: those with valid orders and no
+--   refunded items, ever.
+-- TABLES: customers, orders, order_items, returns
+-- TASK
+--   Return customer_id, name for customers who have at least one valid order (valid orders
+--   = order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) and for whom no order (any status) contains an order_item that appears in
+--   returns.
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.7
+-- Grade it:              python3 sqlm.py submit 24.7
+--
+-- Write your query below (from memory!):
+

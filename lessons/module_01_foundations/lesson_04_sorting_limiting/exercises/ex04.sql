@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.4 — Top 3 order lines by value
+--
+-- BUSINESS QUESTION
+--   Which three individual order lines were worth the most?
+-- TABLES: order_items
+-- TASK
+--   Return order_item_id, order_id, product_id and line_total (quantity * unit_price) for
+--   the 3 order lines with the highest line_total. Sort by line_total descending, then
+--   order_item_id ascending.
+-- REQUIRED COLUMNS: order_item_id, order_id, product_id, line_total
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.4
+-- Grade it:              python3 sqlm.py submit 4.4
+--
+-- Write your query below (from memory!):
+

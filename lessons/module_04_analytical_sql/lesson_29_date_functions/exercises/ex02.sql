@@ -1,0 +1,17 @@
+-- Lesson 29 · Exercise 29.2 — Breaking dates into parts
+--
+-- BUSINESS QUESTION
+--   The BI team wants 2025 orders tagged with year, quarter, month and weekday so they can
+--   slice them in a dashboard.
+-- TABLES: orders
+-- TASK
+--   For all orders (any status) placed in calendar year 2025, return order_id, order_date,
+--   order_year (integer), order_quarter (integer 1–4), order_month (integer 1–12) and
+--   day_of_week (integer, 0 = Sunday … 6 = Saturday, as returned by strftime('%w')).
+-- REQUIRED COLUMNS: order_id, order_date, order_year, order_quarter, order_month, day_of_week
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.2
+-- Grade it:              python3 sqlm.py submit 29.2
+--
+-- Write your query below (from memory!):
+

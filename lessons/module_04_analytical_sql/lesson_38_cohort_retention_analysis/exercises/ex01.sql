@@ -1,0 +1,17 @@
+-- Lesson 38 · Exercise 38.1 — Assign each customer a cohort month
+--
+-- BUSINESS QUESTION
+--   Growth needs every customer tagged with their acquisition month.
+-- TABLES: orders, customers
+-- TASK
+--   Use valid orders (order_status IN ('completed','shipped','returned')) of known
+--   customers (INNER JOIN customers — the orphan order 31 is excluded). Return
+--   customer_id, first_order_date (their earliest valid order date) and cohort_month
+--   ('YYYY-MM' of first_order_date). One row per customer.
+-- REQUIRED COLUMNS: customer_id, first_order_date, cohort_month
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 38.1
+-- Grade it:              python3 sqlm.py submit 38.1
+--
+-- Write your query below (from memory!):
+

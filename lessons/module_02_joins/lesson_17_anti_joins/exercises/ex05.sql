@@ -1,0 +1,25 @@
+-- Lesson 17 · Exercise 17.5 — Customers with no valid order
+--
+-- BUSINESS QUESTION
+--   Finance asks: which customers have never generated revenue — no completed, shipped or
+--   returned order (cancelled/pending ones don't count)?
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id and name for customers with no valid order (valid = order_status IN
+--   ('completed','shipped','returned')). Customers with only cancelled/pending orders, or
+--   no orders at all, qualify.
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.5
+-- Grade it:              python3 sqlm.py submit 17.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

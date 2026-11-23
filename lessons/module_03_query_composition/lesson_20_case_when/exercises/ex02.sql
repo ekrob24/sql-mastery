@@ -1,0 +1,16 @@
+-- Lesson 20 · Exercise 20.2 — Revenue vs excluded orders
+--
+-- BUSINESS QUESTION
+--   Finance wants a quick count of orders that count for revenue versus those that don't.
+-- TABLES: orders
+-- TASK
+--   Return status_group and order_count. status_group is 'Revenue' for valid orders
+--   (order_status IN ('completed','shipped','returned')) and 'Excluded' for every other
+--   status. Count all orders in the table (including the orphan order 31).
+-- REQUIRED COLUMNS: status_group, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.2
+-- Grade it:              python3 sqlm.py submit 20.2
+--
+-- Write your query below (from memory!):
+

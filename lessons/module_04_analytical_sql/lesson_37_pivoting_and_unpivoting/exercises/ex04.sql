@@ -1,0 +1,19 @@
+-- Lesson 37 · Exercise 37.4 — Regional growth table
+--
+-- BUSINESS QUESTION
+--   Sales leadership wants revenue by region for 2024 and 2025 with the growth rate.
+-- TABLES: orders, order_items, customers
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Attribute revenue to the
+--   customer's region (INNER JOIN customers, so the orphan order 31 is excluded; label
+--   NULL regions 'Unknown'). Return region, revenue_2024, revenue_2025 (rounded 2, 0 when
+--   none) and growth_pct (100.0 * (revenue_2025 - revenue_2024) / revenue_2024 using
+--   unrounded sums, rounded to 1 decimal; NULL when revenue_2024 is 0). Order by region.
+-- REQUIRED COLUMNS: region, revenue_2024, revenue_2025, growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 37.4
+-- Grade it:              python3 sqlm.py submit 37.4
+--
+-- Write your query below (from memory!):
+

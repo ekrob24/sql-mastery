@@ -1,0 +1,17 @@
+-- Lesson 29 · Exercise 29.4 — How long until a return?
+--
+-- BUSINESS QUESTION
+--   The returns team suspects late returns are abused. How many days after the order did
+--   each return arrive?
+-- TABLES: returns, order_items, orders
+-- TASK
+--   For each of the 10 returns, return return_id, order_id, order_date, return_date and
+--   days_to_return (integer days from order_date to return_date). Link returns →
+--   order_items (order_item_id) → orders (order_id).
+-- REQUIRED COLUMNS: return_id, order_id, order_date, return_date, days_to_return
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.4
+-- Grade it:              python3 sqlm.py submit 29.4
+--
+-- Write your query below (from memory!):
+

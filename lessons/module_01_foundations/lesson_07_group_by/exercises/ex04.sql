@@ -1,0 +1,17 @@
+-- Lesson 7 · Exercise 7.4 — Top 5 orders by line value
+--
+-- BUSINESS QUESTION
+--   Which five orders have the highest total line value?
+-- TABLES: order_items
+-- TASK
+--   Return order_id, line_count (number of lines) and order_value (SUM of quantity *
+--   unit_price, rounded to 2 decimals) for the 5 orders with the highest order_value,
+--   sorted by order_value descending, then order_id ascending. Use all order_items rows
+--   (no status filter).
+-- REQUIRED COLUMNS: order_id, line_count, order_value
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 7.4
+-- Grade it:              python3 sqlm.py submit 7.4
+--
+-- Write your query below (from memory!):
+

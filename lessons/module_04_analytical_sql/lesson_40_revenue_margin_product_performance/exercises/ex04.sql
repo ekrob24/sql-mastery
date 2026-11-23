@@ -1,0 +1,18 @@
+-- Lesson 40 · Exercise 40.4 — Products never sold
+--
+-- BUSINESS QUESTION
+--   Merchandising wants the catalog items that have never sold, with the margin they would
+--   make at list price.
+-- TABLES: products, product_costs, order_items, orders
+-- TASK
+--   A product is 'never sold' if it appears on no line of a valid order (order_status IN
+--   ('completed','shipped','returned')). Return product_id, product_name, category,
+--   list_price, unit_cost and potential_unit_margin (list_price - unit_cost, rounded to
+--   2). Order by product_id.
+-- REQUIRED COLUMNS: product_id, product_name, category, list_price, unit_cost, potential_unit_margin
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 40.4
+-- Grade it:              python3 sqlm.py submit 40.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,25 @@
+-- Lesson 10 · Exercise 10.5 — Deeply discounted order lines
+--
+-- BUSINESS QUESTION
+--   Pricing wants every order line sold at least 15% below the catalogue list price.
+-- TABLES: order_items, products
+-- TASK
+--   Return order_item_id, product_name, list_price, unit_price and discount_pct = 100.0 *
+--   (list_price - unit_price) / list_price rounded to 1 decimal, for lines whose ROUNDED
+--   discount_pct is at least 15 (round before comparing — floating-point division gives
+--   values like 14.9999…).
+-- REQUIRED COLUMNS: order_item_id, product_name, list_price, unit_price, discount_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.5
+-- Grade it:              python3 sqlm.py submit 10.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

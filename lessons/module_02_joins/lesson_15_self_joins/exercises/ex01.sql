@@ -1,0 +1,25 @@
+-- Lesson 15 · Exercise 15.1 — Case-insensitive duplicate names
+--
+-- BUSINESS QUESTION
+--   Data quality suspects duplicate customer records whose names only differ in
+--   capitalisation. Which pairs of customers share a name, ignoring case?
+-- TABLES: customers
+-- TASK
+--   Return one row per pair of different customers whose names are equal when compared
+--   case-insensitively (LOWER). Columns: customer_id_a (the smaller id), name_a, email_a,
+--   customer_id_b (the larger id), name_b, email_b. Each pair appears exactly once.
+-- REQUIRED COLUMNS: customer_id_a, name_a, email_a, customer_id_b, name_b, email_b
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.1
+-- Grade it:              python3 sqlm.py submit 15.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

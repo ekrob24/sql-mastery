@@ -1,0 +1,263 @@
+{
+  "number": 45,
+  "slug": "cte_pipelines",
+  "title": "Query readability and CTE pipelines",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Refactor nested, repetitive queries into a pipeline of named CTE steps (filter \u2192 enrich \u2192 aggregate \u2192 rank/compare \u2192 present) that returns exactly the same, well-defined result.",
+  "context": "You inherited a folder of 'working' queries written as five-level-deep subqueries. Nobody dares touch them. Your lead asks you to rewrite each one as a readable CTE pipeline before the Snowflake migration \u2014 same output, but reviewable.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "High-value customers, untangled",
+      "question": "Refactor this query (it lists high-value customers):\nSELECT c.customer_id, c.name, x.rev FROM customers c JOIN (SELECT customer_id, SUM(q*p) rev FROM (SELECT o.customer_id, oi.quantity q, oi.unit_price p FROM orders o, order_items oi WHERE o.order_id = oi.order_id AND o.order_status IN ('completed','shipped','returned')) GROUP BY customer_id) x ON x.customer_id = c.customer_id WHERE x.rev >= 1000",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Write it as a CTE pipeline returning customer_id, name, gross_revenue (rounded to 2 decimals) for existing customers whose gross revenue is at least 1000. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Innermost first: the subquery with the status filter becomes CTE #1 (valid_lines).",
+        "CTE #2 aggregates per customer; the final SELECT joins customers and applies the >= 1000 filter.",
+        "WITH valid_lines AS (...), customer_revenue AS (SELECT customer_id, SUM(line_revenue) AS gross_revenue FROM valid_lines GROUP BY customer_id) SELECT c.customer_id, c.name, ROUND(cr.gross_revenue,2) AS gross_revenue FROM customer_revenue cr JOIN customers c ... WHERE cr.gross_revenue >= 1000;"
+      ],
+      "why": "The old version hid the business rule inside the deepest subquery and used comma joins. The pipeline makes the rule visible on line 4.",
+      "recall": {
+        "q": "In which order should CTEs appear?",
+        "a": "In data-flow order: each CTE only references CTEs defined above it."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical in Snowflake; you could also write `GROUP BY ALL` in customer_revenue.",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "gross_revenue"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 2,
+      "title": "Monthly revenue with month-over-month change",
+      "question": "Refactor: SELECT m, r, r - (SELECT SUM(oi2.quantity*oi2.unit_price) FROM orders o2 JOIN order_items oi2 ON oi2.order_id=o2.order_id WHERE o2.order_status IN ('completed','shipped','returned') AND strftime('%Y-%m', o2.order_date) = strftime('%Y-%m', date(m || '-01', '-1 month'))) FROM (SELECT strftime('%Y-%m', o.order_date) m, SUM(oi.quantity*oi.unit_price) r FROM orders o JOIN order_items oi ON oi.order_id=o.order_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1) WHERE m LIKE '2025%'",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return order_month ('YYYY-MM'), gross_revenue, prev_month_revenue (the previous calendar month's gross revenue; for 2025-01 that is 2024-12) and mom_change (gross_revenue \u2212 prev_month_revenue), all rounded to 2 decimals, for each 2025 month that has valid orders. Every month from 2024-12 to 2025-12 has valid orders, so LAG over the monthly rows gives the previous calendar month. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Replace the correlated subquery with LAG() over a monthly CTE.",
+        "Filter to 2025 AFTER computing LAG, otherwise January loses its December 2024 comparison.",
+        "WITH valid_lines AS (...), monthly AS (... GROUP BY order_month), with_prev AS (SELECT ..., LAG(gross_revenue) OVER (ORDER BY order_month) AS prev_month_revenue FROM monthly) SELECT ... FROM with_prev WHERE order_month LIKE '2025%';"
+      ],
+      "why": "Correlated subqueries that recompute an aggregate per row are slow and hard to read; a window over a small monthly CTE is both faster and clearer.",
+      "recall": {
+        "q": "Why must the 2025 filter come after the LAG step?",
+        "a": "Because WHERE runs before window functions in the same SELECT; filtering first removes 2024-12, so January's LAG would be NULL."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same pipeline with DATE_TRUNC('month', order_date); the final filter can be a QUALIFY on the LAG step.",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "prev_month_revenue",
+        "mom_change"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 3,
+      "title": "Net revenue by category",
+      "question": "Refactor this three-level query that finance can't read:\nSELECT cat, g, IFNULL(rf,0), g-IFNULL(rf,0) FROM (SELECT IFNULL(p.category,'Uncategorized') cat, SUM(oi.quantity*oi.unit_price) g, SUM((SELECT SUM(r.refund_amount) FROM returns r WHERE r.order_item_id=oi.order_item_id)) rf FROM order_items oi JOIN products p ON p.product_id=oi.product_id WHERE oi.order_id IN (SELECT order_id FROM orders WHERE order_status IN ('completed','shipped','returned')) GROUP BY 1)",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "returns"
+      ],
+      "prompt": "Return category (NULL as 'Uncategorized'), gross_revenue, refunds (sum of returns.refund_amount on those lines, 0 if none) and net_revenue (gross_revenue \u2212 refunds), all rounded to 2 decimals. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price). Net revenue = gross \u2212 refunds.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Steps: valid lines \u2192 refunds per line (pre-aggregated) \u2192 enrich with category \u2192 aggregate.",
+        "LEFT JOIN the refunds CTE so lines without returns keep refund 0.",
+        "WITH valid_lines AS (...), line_refunds AS (SELECT order_item_id, SUM(refund_amount) AS refund FROM returns GROUP BY order_item_id), enriched AS (... LEFT JOIN line_refunds ...) SELECT category, ROUND(SUM(line_revenue),2) AS gross_revenue, ..."
+      ],
+      "why": "Pre-aggregating refunds to the line grain in its own CTE makes it obvious that the join can't fan out.",
+      "recall": {
+        "q": "Why pre-aggregate returns before joining them to lines?",
+        "a": "To guarantee at most one row per line, so line revenue is never duplicated even if a line had several returns."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical; NVL(p.category, 'Uncategorized') and ZEROIFNULL(lr.refund) are the Snowflake spellings.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "gross_revenue",
+        "refunds",
+        "net_revenue"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 4,
+      "title": "Cohorts and repeat customers",
+      "question": "Refactor: SELECT f, COUNT(*), SUM(CASE WHEN n > 1 THEN 1 ELSE 0 END) FROM (SELECT customer_id, (SELECT strftime('%Y-%m', MIN(order_date)) FROM orders o2 WHERE o2.customer_id=o.customer_id AND o2.order_status IN ('completed','shipped','returned')) f, COUNT(*) n FROM orders o WHERE order_status IN ('completed','shipped','returned') AND customer_id IN (SELECT customer_id FROM customers) GROUP BY customer_id) GROUP BY f",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Return cohort_month (the 'YYYY-MM' of each customer's first valid order), customers (number of customers in the cohort) and repeat_customers (how many of them have 2 or more valid orders). Only existing customers (present in customers); valid = order_status IN ('completed','shipped','returned').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The correlated MIN subquery and the COUNT(*) both describe one customer \u2014 compute them together in one GROUP BY.",
+        "valid_orders CTE \u2192 per_customer CTE (cohort_month + order count) \u2192 group by cohort.",
+        "per_customer AS (SELECT customer_id, strftime('%Y-%m', MIN(order_date)) AS cohort_month, COUNT(*) AS valid_orders FROM valid_orders GROUP BY customer_id) SELECT cohort_month, COUNT(*) AS customers, SUM(CASE WHEN valid_orders >= 2 THEN 1 ELSE 0 END) AS repeat_customers ..."
+      ],
+      "why": "Two passes over the same table collapse into one aggregate once each step has a name.",
+      "recall": {
+        "q": "What is the grain of the per_customer CTE?",
+        "a": "One row per customer."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "per_customer: SELECT customer_id, DATE_TRUNC('month', MIN(order_date)) AS cohort_month, COUNT(*) AS valid_orders ... final: COUNT_IF(valid_orders >= 2) AS repeat_customers.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "cohort_month",
+        "customers",
+        "repeat_customers"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 5,
+      "title": "Best-selling product per category",
+      "question": "Refactor: SELECT cat, pn, u FROM (SELECT IFNULL(p.category,'Uncategorized') cat, p.product_name pn, SUM(oi.quantity) u FROM order_items oi JOIN products p ON p.product_id=oi.product_id JOIN orders o ON o.order_id=oi.order_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1,2) t WHERE u = (SELECT MAX(u2) FROM (SELECT IFNULL(p2.category,'Uncategorized') c2, SUM(oi2.quantity) u2 FROM order_items oi2 JOIN products p2 ON p2.product_id=oi2.product_id JOIN orders o2 ON o2.order_id=oi2.order_id WHERE o2.order_status IN ('completed','shipped','returned') GROUP BY 1, p2.product_id) WHERE c2 = t.cat)",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return category (NULL as 'Uncategorized'), product_name and units_sold (sum of quantity on valid orders, order_status IN ('completed','shipped','returned')) for the top-selling product of each category (there are no ties at the top).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The same aggregation is written twice in the old query \u2014 write it once as a CTE.",
+        "Rank inside each category with ROW_NUMBER() and keep rn = 1.",
+        "WITH product_units AS (...GROUP BY category, product_id, product_name), ranked AS (SELECT ..., ROW_NUMBER() OVER (PARTITION BY category ORDER BY units_sold DESC, product_id) AS rn FROM product_units) SELECT ... WHERE rn = 1;"
+      ],
+      "why": "Duplicated subqueries drift apart over time (someone fixes one copy). One CTE = one definition.",
+      "recall": {
+        "q": "What replaces 'WHERE x = (SELECT MAX(x) ... correlated)' in a pipeline?",
+        "a": "A window function (ROW_NUMBER/RANK) in a CTE, filtered with WHERE rn = 1 (QUALIFY in Snowflake)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "... FROM product_units QUALIFY ROW_NUMBER() OVER (PARTITION BY category ORDER BY units_sold DESC, product_id) = 1;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "product_name",
+        "units_sold"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 6,
+      "title": "Year-over-year customer growth",
+      "question": "Refactor: SELECT c.customer_id, c.name, (SELECT SUM(oi.quantity*oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id=o.order_id WHERE o.customer_id=c.customer_id AND o.order_status IN ('completed','shipped','returned') AND o.order_date LIKE '2024%') a, (SELECT SUM(oi.quantity*oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id=o.order_id WHERE o.customer_id=c.customer_id AND o.order_status IN ('completed','shipped','returned') AND o.order_date LIKE '2025%') b FROM customers c WHERE b > a",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return customer_id, name, revenue_2024, revenue_2025 and growth (revenue_2025 \u2212 revenue_2024), all money rounded to 2 decimals, ordered by growth descending then customer_id \u2014 only for customers whose 2025 gross revenue is strictly greater than their 2024 gross revenue AND who had revenue in both years. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Two near-identical correlated subqueries \u2192 one CTE with conditional aggregation (SUM(CASE WHEN year ...)).",
+        "A customer with no 2024 revenue has revenue_2024 NULL, and NULL comparisons are not true \u2014 so they drop out, as required.",
+        "yearly AS (SELECT customer_id, SUM(CASE WHEN order_year='2024' THEN line_revenue END) AS revenue_2024, ... GROUP BY customer_id) SELECT ... FROM yearly y JOIN customers c ... WHERE y.revenue_2025 > y.revenue_2024 ORDER BY growth DESC, c.customer_id;"
+      ],
+      "why": "Conditional aggregation in one pass replaces N correlated subqueries \u2014 the classic readability *and* performance win in pipeline refactors.",
+      "recall": {
+        "q": "Why use SUM(CASE WHEN ... THEN x END) without ELSE 0 here?",
+        "a": "So a year with no revenue stays NULL and fails the > comparison \u2014 'had revenue in both years' comes for free."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "yearly: SUM(IFF(YEAR(order_date) = 2024, line_revenue, NULL)) AS revenue_2024, ... (or PIVOT).",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "revenue_2024",
+        "revenue_2025",
+        "growth"
+      ],
+      "expected_row_count": 3
+    }
+  ],
+  "worked_example": {
+    "question": "Rewrite `SELECT customer_id, total FROM (SELECT customer_id, SUM(v) AS total FROM (SELECT o.customer_id, oi.quantity*oi.unit_price AS v FROM orders o JOIN order_items oi ON oi.order_id=o.order_id WHERE o.order_status IN ('completed','shipped','returned')) GROUP BY customer_id) WHERE total > 1500` as a pipeline.",
+    "sql": "WITH valid_lines AS (\n    SELECT o.customer_id, oi.quantity * oi.unit_price AS line_revenue\n    FROM orders AS o\n    JOIN order_items AS oi ON oi.order_id = o.order_id\n    WHERE o.order_status IN ('completed','shipped','returned')\n), customer_revenue AS (\n    SELECT customer_id, ROUND(SUM(line_revenue), 2) AS gross_revenue\n    FROM valid_lines\n    GROUP BY customer_id\n)\nSELECT customer_id, gross_revenue\nFROM customer_revenue\nWHERE gross_revenue > 1500;",
+    "explanation": "Same logic, but each step has a name a reviewer can check on its own (you can even `SELECT * FROM valid_lines` while debugging). The innermost subquery became the first CTE.",
+    "columns": [
+      "customer_id",
+      "gross_revenue"
+    ],
+    "rows": [
+      [
+        1,
+        1937.02
+      ]
+    ]
+  },
+  "recipe": "**Recipe: from nested soup to a CTE pipeline in 5 moves**\n\n1. **Read inside-out** and write down what each subquery *means* in one phrase (\"valid orders\", \"line revenue\").\n2. **Name each step** as a CTE, in the order data flows: `valid_orders \u2192 order_lines \u2192 customer_revenue \u2192 ranked`.\n3. **One responsibility per CTE:** filter, *or* join, *or* aggregate. Define business rules (valid statuses,\n   revenue) exactly once, in the first CTE that needs them.\n4. **Finish with a thin final SELECT** that only picks, renames and orders columns.\n5. **Prove equivalence:** same row count and totals as the old query (`EXCEPT` both ways should return nothing).\n\n```sql\nWITH valid_orders AS (      -- 1. filter\n    SELECT order_id, customer_id, order_date FROM orders\n    WHERE order_status IN ('completed','shipped','returned')\n), lines AS (               -- 2. enrich\n    SELECT vo.customer_id, oi.quantity * oi.unit_price AS line_revenue\n    FROM valid_orders vo JOIN order_items oi ON oi.order_id = vo.order_id\n), per_customer AS (        -- 3. aggregate\n    SELECT customer_id, SUM(line_revenue) AS gross_revenue FROM lines GROUP BY customer_id\n)\nSELECT * FROM per_customer;  -- 4. present\n```",
+  "snowflake_notes": "CTEs work identically in Snowflake, and they're the backbone of dbt models (each model is usually a chain of\n`import \u2192 logical \u2192 final` CTEs).\n\n```sql\nWITH valid_orders AS (\n    SELECT * FROM orders WHERE order_status IN ('completed','shipped','returned')\n),\nmonthly AS (\n    SELECT DATE_TRUNC('month', order_date) AS order_month, SUM(quantity * unit_price) AS gross_revenue\n    FROM valid_orders JOIN order_items USING (order_id)\n    GROUP BY 1\n)\nSELECT order_month, gross_revenue,\n       gross_revenue - LAG(gross_revenue) OVER (ORDER BY order_month) AS mom_change\nFROM monthly\nQUALIFY order_month >= '2025-01-01'           -- QUALIFY can filter after LAG has seen 2024 rows\nORDER BY order_month;\n```\n\n- Snowflake's optimizer inlines CTEs (or materialises ones referenced several times), so readability usually costs nothing.\n- Snowflake allows **lateral column aliases**: `SELECT a + b AS total, total * 0.1 AS tax` \u2014 handy, but not portable.\n- `SELECT * EXCLUDE (col)` and `GROUP BY ALL` keep final SELECTs short.\n- For very long pipelines prefer **views / dbt models** for reusable steps, and temporary tables\n  (`CREATE TEMPORARY TABLE ... AS`) only when an intermediate result is reused by many queries.",
+  "common_mistakes": [
+    "Copy-pasting the business rule (valid statuses) into several CTEs instead of defining it once at the top.",
+    "Filtering too early in a pipeline that later needs the filtered rows (e.g. LAG across a year boundary).",
+    "CTEs named cte1, cte2, t, x \u2014 the name should say what the rows ARE.",
+    "Mixing grains in one CTE (some columns per line, some per order) \u2014 keep one grain per step.",
+    "Not proving the refactor: compare row counts and totals against the old query before replacing it."
+  ],
+  "recall": [
+    [
+      "What does each CTE in a good pipeline do?",
+      "Exactly one job (filter, join, aggregate or rank) at a clear grain."
+    ],
+    [
+      "How do you prove a refactor returns the same rows?",
+      "(old EXCEPT new) and (new EXCEPT old) both return zero rows; also compare counts/totals."
+    ],
+    [
+      "Can a CTE reference a CTE defined below it?",
+      "No (except a recursive CTE referencing itself); define them in data-flow order."
+    ]
+  ],
+  "review_next": "Lesson 46 asks whether a readable query is also an efficient one: sargable predicates, filtering early, pre-aggregation \u2014 and how Snowflake prunes micro-partitions."
+}

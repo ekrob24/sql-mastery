@@ -1,0 +1,18 @@
+-- Lesson 32 · Exercise 32.1 — Cumulative revenue through 2025
+--
+-- BUSINESS QUESTION
+--   Finance wants to watch 2025 revenue accumulate month by month.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For the months of 2025, return order_month ('YYYY-MM'), gross_revenue and
+--   running_revenue (sum of gross_revenue from 2025-01 through the current month), both
+--   rounded to 2 decimals, ordered by order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, running_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.1
+-- Grade it:              python3 sqlm.py submit 32.1
+--
+-- Write your query below (from memory!):
+

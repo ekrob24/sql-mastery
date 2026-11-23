@@ -1,0 +1,15 @@
+category_id,category_name,parent_name
+1,All Products,
+2,Electronics,All Products
+3,Home,All Products
+4,Apparel,All Products
+5,Books,All Products
+6,Sports,All Products
+7,Audio,Electronics
+8,Computer Accessories,Electronics
+9,Kitchen,Home
+10,Decor,Home
+11,Footwear,Apparel
+12,Outerwear,Apparel
+13,Fitness,Sports
+14,Strength Training,Fitness

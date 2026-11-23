@@ -1,0 +1,16 @@
+-- Lesson 6 · Exercise 6.3 — Refund summary
+--
+-- BUSINESS QUESTION
+--   Finance wants a one-line summary of all refunds.
+-- TABLES: returns
+-- TASK
+--   Return one row with columns return_count (all returns), returns_with_reason (returns
+--   whose return_reason is not NULL), total_refunded (SUM of refund_amount, rounded to 2
+--   decimals) and avg_refund (AVG of refund_amount, rounded to 2 decimals).
+-- REQUIRED COLUMNS: return_count, returns_with_reason, total_refunded, avg_refund
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.3
+-- Grade it:              python3 sqlm.py submit 6.3
+--
+-- Write your query below (from memory!):
+

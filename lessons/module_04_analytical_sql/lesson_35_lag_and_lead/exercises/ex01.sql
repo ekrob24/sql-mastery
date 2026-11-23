@@ -1,0 +1,20 @@
+-- Lesson 35 · Exercise 35.1 — Days since previous order
+--
+-- BUSINESS QUESTION
+--   Retention wants to know, for every order, how long the customer had waited since their
+--   previous order.
+-- TABLES: orders
+-- TASK
+--   Consider only valid orders (order_status IN ('completed','shipped','returned')). For
+--   each, return order_id, customer_id, order_date, prev_order_date (the same customer's
+--   previous valid order date, ordering a customer's orders by order_date then order_id)
+--   and days_since_prev_order (whole days between prev_order_date and order_date as an
+--   integer; NULL for a customer's first order). Keep every valid order, including the
+--   orphan order 31.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, prev_order_date, days_since_prev_order
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 35.1
+-- Grade it:              python3 sqlm.py submit 35.1
+--
+-- Write your query below (from memory!):
+

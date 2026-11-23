@@ -1,0 +1,23 @@
+-- Lesson 9 · Exercise 9.1 — Look up the order behind each return
+--
+-- BUSINESS QUESTION
+--   Customer care wants each return shown next to the order and product it came from.
+-- TABLES: returns, order_items
+-- TASK
+--   Return one row per return with columns return_id, order_item_id, order_id, product_id,
+--   quantity and refund_amount (order_id, product_id and quantity come from order_items).
+-- REQUIRED COLUMNS: return_id, order_item_id, order_id, product_id, quantity, refund_amount
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.1
+-- Grade it:              python3 sqlm.py submit 9.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

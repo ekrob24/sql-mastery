@@ -1,0 +1,16 @@
+-- Lesson 1 · Exercise 1.5 — Table alias and a combined label
+--
+-- BUSINESS QUESTION
+--   The CRM import needs one text label per customer like 'Alice Johnson (North)'.
+-- TABLES: customers
+-- TASK
+--   Using the table alias c, return c.customer_id as customer_id and a column
+--   customer_label built as name || ' (' || region || ')'. (Customers with a NULL region
+--   will get a NULL label — that is expected here; Lesson 3 fixes it.)
+-- REQUIRED COLUMNS: customer_id, customer_label
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.5
+-- Grade it:              python3 sqlm.py submit 1.5
+--
+-- Write your query below (from memory!):
+

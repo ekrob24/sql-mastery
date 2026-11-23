@@ -1,0 +1,26 @@
+-- Lesson 18 · Exercise 18.4 — The extra shared column: region
+--
+-- BUSINESS QUESTION
+--   A customer report joins customers to a pre-built order-count table. The pre-built
+--   table carries region too, and the report is missing customers. Build it correctly.
+-- TABLES: customers, orders
+-- TASK
+--   First build order_counts AS (SELECT o.customer_id, c.region, COUNT(*) AS order_count
+--   FROM orders o JOIN customers c USING (customer_id) GROUP BY o.customer_id, c.region).
+--   Then join customers to order_counts on customer_id ONLY and return customer_id, name,
+--   region (from customers) and order_count for every customer that has orders.
+-- REQUIRED COLUMNS: customer_id, name, region, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.4
+-- Grade it:              python3 sqlm.py submit 18.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

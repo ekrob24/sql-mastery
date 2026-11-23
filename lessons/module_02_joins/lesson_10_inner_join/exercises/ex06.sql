@@ -1,0 +1,25 @@
+-- Lesson 10 · Exercise 10.6 — Self-join: possible duplicate customers
+--
+-- BUSINESS QUESTION
+--   The CRM team suspects duplicate customer records whose names differ only by
+--   upper/lower case.
+-- TABLES: customers
+-- TASK
+--   Join customers to itself and return customer_id_1, name_1, customer_id_2, name_2 for
+--   every pair of different customers whose names are equal ignoring case (LOWER), listing
+--   each pair once with customer_id_1 < customer_id_2.
+-- REQUIRED COLUMNS: customer_id_1, name_1, customer_id_2, name_2
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.6
+-- Grade it:              python3 sqlm.py submit 10.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,25 @@
+-- Lesson 19 · Exercise 19.6 — Item count per event, keeping empty orders
+--
+-- BUSINESS QUESTION
+--   Data quality wants every event with its item count and payload value — including
+--   events whose items array is empty.
+-- TABLES: raw_order_events
+-- TASK
+--   Return all 60 events with columns event_id, order_id (payload $.order_id), item_count
+--   (number of elements in $.items, 0 if empty) and payload_gross (SUM(qty * price) over
+--   the items, rounded to 2 decimals, 0 if no items). Use LEFT JOIN json_each(...) ON 1.
+-- REQUIRED COLUMNS: event_id, order_id, item_count, payload_gross
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.6
+-- Grade it:              python3 sqlm.py submit 19.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

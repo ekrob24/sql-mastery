@@ -1,0 +1,21 @@
+product_id,product_name,supplier_name,units_sold
+1,Wireless Mouse,Northwind Traders,16
+2,Mechanical Keyboard,Northwind Traders,7
+3,USB-C Hub,Sakura Imports,10
+4,Noise-Cancelling Headphones,Sakura Imports,14
+5,27in Monitor,Sakura Imports,6
+6,Chef Knife,EuroSupply GmbH,7
+7,Cast Iron Skillet,Northwind Traders,11
+8,French Press,EuroSupply GmbH,5
+9,Throw Blanket,Pacific Goods Co,28
+10,Desk Lamp,Pacific Goods Co,19
+11,Running Shoes,Pacific Goods Co,7
+12,Rain Jacket,EuroSupply GmbH,5
+13,Wool Socks (3-pack),Pacific Goods Co,4
+14,Baseball Cap,Northwind Traders,8
+15,SQL for Analysts,Northwind Traders,20
+16,Data Storytelling,EuroSupply GmbH,10
+17,The Pragmatic Warehouse,EuroSupply GmbH,16
+18,Yoga Mat,Pacific Goods Co,8
+19,Adjustable Dumbbells,Sakura Imports,23
+20,Mystery Gift Box,Northwind Traders,21

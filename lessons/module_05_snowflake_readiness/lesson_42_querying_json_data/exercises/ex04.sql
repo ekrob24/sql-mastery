@@ -1,0 +1,18 @@
+-- Lesson 42 · Exercise 42.4 — Absent key vs JSON null
+--
+-- BUSINESS QUESTION
+--   Some events have no region. Is the region key missing, or present with a null value?
+--   The answer decides whether the bug is in the producer or in the CRM.
+-- TABLES: raw_order_events
+-- TASK
+--   For events whose $.customer.region does not extract as a text value, return event_id,
+--   customer_id ($.customer.id), region_type = json_type of $.customer.region and
+--   tier_type = json_type of $.customer.tier (json_type returns NULL when the key is
+--   absent and the text 'null' when the key holds a JSON null).
+-- REQUIRED COLUMNS: event_id, customer_id, region_type, tier_type
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.4
+-- Grade it:              python3 sqlm.py submit 42.4
+--
+-- Write your query below (from memory!):
+

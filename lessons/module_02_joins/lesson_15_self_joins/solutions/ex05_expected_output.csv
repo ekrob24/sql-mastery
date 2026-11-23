@@ -1,0 +1,9 @@
+category_name,parent_name,grandparent_name
+Audio,Electronics,All Products
+Computer Accessories,Electronics,All Products
+Kitchen,Home,All Products
+Decor,Home,All Products
+Footwear,Apparel,All Products
+Outerwear,Apparel,All Products
+Fitness,Sports,All Products
+Strength Training,Fitness,Sports

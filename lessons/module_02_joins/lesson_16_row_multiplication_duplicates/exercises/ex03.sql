@@ -1,0 +1,25 @@
+-- Lesson 16 · Exercise 16.3 — Fan-out through orders → items → returns
+--
+-- BUSINESS QUESTION
+--   Customer service wants every order that had a return: how many lines it had, how many
+--   were returned and how much was refunded.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   For each order with at least one returned line, return order_id, line_count (number of
+--   order_items lines in the order), returned_lines (number of returns) and total_refund
+--   (SUM of refund_amount).
+-- REQUIRED COLUMNS: order_id, line_count, returned_lines, total_refund
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.3
+-- Grade it:              python3 sqlm.py submit 16.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

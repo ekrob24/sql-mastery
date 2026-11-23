@@ -1,0 +1,16 @@
+-- Lesson 39 · Exercise 39.3 — One-row funnel summary
+--
+-- BUSINESS QUESTION
+--   The weekly email needs the whole funnel in one line.
+-- TABLES: web_events
+-- TASK
+--   Return a single row with visits, product_views, add_to_carts, checkouts, purchases
+--   (number of distinct sessions reaching each stage) and visit_to_purchase_pct (100.0 *
+--   purchases / visits, rounded to 1 decimal).
+-- REQUIRED COLUMNS: visits, product_views, add_to_carts, checkouts, purchases, visit_to_purchase_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 39.3
+-- Grade it:              python3 sqlm.py submit 39.3
+--
+-- Write your query below (from memory!):
+

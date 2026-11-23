@@ -1,0 +1,3 @@
+order_id,order_status,raw_gross,deduped_gross
+9,cancelled,966.98,686.99
+38,completed,298.3,201.4

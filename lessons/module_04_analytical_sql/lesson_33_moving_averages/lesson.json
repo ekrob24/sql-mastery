@@ -1,0 +1,291 @@
+{
+  "number": 33,
+  "slug": "moving_averages",
+  "title": "Moving averages",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Smooth noisy series with sliding window frames (ROWS BETWEEN n PRECEDING AND CURRENT ROW), know when a row-based window is not a calendar window, and handle partial windows and gaps.",
+  "context": "Monthly revenue in this shop jumps between $21 and $1,000. Nobody can read a trend from that, so the dashboard shows a 3-month moving average, and ops tracks trailing-30-day revenue. Both are window frames \u2014 but only one of them is really 'calendar' based.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "3-month moving average of revenue",
+      "question": "The exec dashboard wants a smoothed revenue line: the average of the current and two previous months.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Return order_month ('YYYY-MM'), gross_revenue and moving_avg_3m (average gross_revenue of the current month row and the 2 preceding month rows; the first two months average over the 1\u20132 rows available), both rounded to 2 decimals, ordered by order_month. (All 24 months have valid orders.)",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Monthly CTE first, then a window AVG.",
+        "The frame is ROWS BETWEEN 2 PRECEDING AND CURRENT ROW.",
+        "ROUND(AVG(gross_revenue) OVER (ORDER BY order_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg_3m"
+      ],
+      "why": "A trailing moving average is the default smoothing on time-series dashboards.",
+      "recall": {
+        "q": "How many rows does ROWS BETWEEN 2 PRECEDING AND CURRENT ROW include?",
+        "a": "Up to 3: the current row and the two before it."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "moving_avg_3m"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 2,
+      "title": "Only report full windows",
+      "question": "Finance objects that the first two months' 'averages' aren't really 3-month averages. Show NULL there.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Return order_month ('YYYY-MM'), gross_revenue (rounded to 2 decimals), months_in_window (number of rows in the 2-preceding-to-current frame) and moving_avg_3m (rounded to 2 decimals; NULL unless months_in_window = 3). Ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "COUNT(*) over the same frame tells you how many rows the average used.",
+        "Wrap the AVG in CASE WHEN that count = 3 THEN ... END (no ELSE \u2192 NULL).",
+        "CASE WHEN COUNT(*) OVER (ORDER BY order_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) = 3 THEN ROUND(AVG(...) OVER (...same frame...), 2) END AS moving_avg_3m"
+      ],
+      "why": "Partial windows understate or overstate the start of a series. Making them explicit avoids a misleading first point on the chart.",
+      "recall": {
+        "q": "How do you detect a partial window?",
+        "a": "COUNT(*) over the same frame is less than the window size."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SQLite and Snowflake both support a named window: ... WINDOW w AS (ORDER BY order_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), then IFF(COUNT(*) OVER w = 3, AVG(gross_revenue) OVER w, NULL).",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "months_in_window",
+        "moving_avg_3m"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 3,
+      "title": "Average of the last 5 orders",
+      "question": "Ops monitors basket size: what's the average value of the last 5 valid orders at each point in time?",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'); order_total = SUM(quantity * unit_price) of the order's items. For every valid order, return order_id, order_date, order_total and avg_last_5_orders (average order_total of this order and the 4 preceding valid orders, in order_date then order_id order; fewer at the start), both rounded to 2 decimals. Ordered by order_date, order_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "One row per order first (GROUP BY order).",
+        "The last 5 orders = 4 PRECEDING plus CURRENT ROW; order_id is the tie-breaker.",
+        "ROUND(AVG(order_total) OVER (ORDER BY order_date, order_id ROWS BETWEEN 4 PRECEDING AND CURRENT ROW), 2) AS avg_last_5_orders"
+      ],
+      "why": "When the question is about the last N *events* (orders, tickets, games), a row-based frame is exactly right \u2014 no calendar needed.",
+      "recall": {
+        "q": "Which frame covers 'the last 5 rows including this one'?",
+        "a": "ROWS BETWEEN 4 PRECEDING AND CURRENT ROW."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_total",
+        "avg_last_5_orders"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 4,
+      "title": "Trailing 30-day revenue (calendar-based)",
+      "question": "Ops wants, for each valid order, revenue booked in the 30 calendar days ending on that order's date.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'); order_total = SUM(quantity * unit_price) of the order's items. For every valid order, return order_id, order_date, order_total and revenue_30d = sum of order_total of all valid orders whose order_date is between (order_date \u2212 29 days) and order_date inclusive (a calendar window, not a row count), both rounded to 2 decimals. Ordered by order_date, order_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Orders are irregularly spaced, so 'n PRECEDING rows' can't express '30 days'.",
+        "RANGE frames measure distance in the ORDER BY *value*; julianday(order_date) turns dates into day numbers.",
+        "SUM(order_total) OVER (ORDER BY julianday(order_date) RANGE BETWEEN 29 PRECEDING AND CURRENT ROW) AS revenue_30d"
+      ],
+      "why": "Trailing-N-day metrics are everywhere (30-day revenue, 7-day active users). A RANGE frame over a numeric date is the cleanest way; a self-join on a date range is the universal fallback. (RANGE treats same-date orders as peers \u2014 here that's exactly what a calendar window should do.)",
+      "recall": {
+        "q": "Difference between ROWS 29 PRECEDING and RANGE 29 PRECEDING on julianday(order_date)?",
+        "a": "ROWS = previous 29 rows regardless of dates; RANGE = rows whose day number is within 29 of the current one."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SUM(order_total) OVER (ORDER BY order_date RANGE BETWEEN INTERVAL '29 days' PRECEDING AND CURRENT ROW) where supported; otherwise self-join: ON t2.order_date BETWEEN DATEADD(day, -29, t1.order_date) AND t1.order_date.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_total",
+        "revenue_30d"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 5,
+      "title": "Moving average over a gappy series",
+      "question": "The Sports buyer wants a 3-month moving average \u2014 but some months have no Sports sales at all.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Consider only products with category = 'Sports'. Build a calendar of all 24 months 2024-01..2025-12 so months with no Sports sales count as 0. Return order_month ('YYYY-MM'), sports_revenue (0 when none) and moving_avg_3m (average sports_revenue over the current and 2 previous *calendar* months; partial at the start), both rounded to 2 decimals, ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Without a spine, ROWS 2 PRECEDING would reach back over empty months, and empty months wouldn't count as 0.",
+        "Recursive CTE of month starts \u2192 LEFT JOIN monthly Sports revenue \u2192 COALESCE(revenue, 0).",
+        "... FROM filled: ROUND(AVG(sports_revenue) OVER (ORDER BY order_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg_3m"
+      ],
+      "why": "Once the series has exactly one row per calendar period, row-based frames become calendar-based. This is the most portable fix for gaps.",
+      "recall": {
+        "q": "Two ways to make a moving window calendar-correct when periods are missing?",
+        "a": "Fill a calendar spine (one row per period, zeros) and use ROWS; or use a RANGE frame on a numeric date."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Spine: TABLE(GENERATOR(ROWCOUNT => 24)) with DATEADD(month, ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1, '2024-01-01'::DATE); ZEROIFNULL(s.revenue) for the fill.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "sports_revenue",
+        "moving_avg_3m"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 6,
+      "title": "Centered average and deviation from trend",
+      "question": "Analysts want to spot unusual months: compare each month to the average of itself and its two neighbours.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Compute centered_avg_3m = average gross_revenue of the previous, current and next month rows. Return order_month ('YYYY-MM'), gross_revenue, centered_avg_3m and deviation (gross_revenue \u2212 centered_avg_3m), all rounded to 2 decimals, only for months whose centered window has all 3 months (i.e. exclude the first and last month). Ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "A centered frame looks both ways: ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING.",
+        "Compute the average and COUNT(*) over that frame in a CTE, then filter n = 3 outside (WHERE can't see window results).",
+        "WITH ..., centered AS (SELECT ..., AVG(...) OVER (ORDER BY order_month ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS centered_avg_3m, COUNT(*) OVER (...) AS n_in_window FROM monthly) SELECT ... WHERE n_in_window = 3"
+      ],
+      "why": "Centered averages are for *analysis* (detecting spikes in history); trailing ones are for *monitoring* (you can't use next month's data today).",
+      "recall": {
+        "q": "Why can't a live dashboard use a centered moving average for the latest month?",
+        "a": "It needs the following period, which doesn't exist yet."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Use QUALIFY COUNT(*) OVER (ORDER BY order_month ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) = 3 instead of the extra CTE.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "centered_avg_3m",
+        "deviation"
+      ],
+      "expected_row_count": 22
+    }
+  ],
+  "worked_example": {
+    "question": "Show each 2025 web-event day with its event count and the average of the current and previous two event-days.",
+    "sql": "WITH daily AS (\n    SELECT date(event_time) AS event_date, COUNT(*) AS events\n    FROM web_events\n    GROUP BY event_date\n)\nSELECT event_date,\n       events,\n       ROUND(AVG(events) OVER (ORDER BY event_date\n                               ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS avg_last_3_event_days\nFROM daily\nORDER BY event_date\nLIMIT 6;",
+    "explanation": "Notice the label says *event-days*, not *days*: 2025-01-15 averages with 01-10 and 01-08 because the days in between have no rows. That's the row-based vs calendar-based distinction \u2014 exercise 33.4 and 33.5 fix it two different ways.",
+    "columns": [
+      "event_date",
+      "events",
+      "avg_last_3_event_days"
+    ],
+    "rows": [
+      [
+        "2025-01-07",
+        5,
+        5.0
+      ],
+      [
+        "2025-01-08",
+        2,
+        3.5
+      ],
+      [
+        "2025-01-10",
+        5,
+        4.0
+      ],
+      [
+        "2025-01-15",
+        1,
+        2.67
+      ],
+      [
+        "2025-01-26",
+        2,
+        2.67
+      ],
+      [
+        "2025-02-05",
+        2,
+        1.67
+      ]
+    ]
+  },
+  "recipe": "**Recipe: moving average in 4 moves**\n\n1. **One row per period** (month/day/order) \u2014 pre-aggregate in a CTE.\n2. **Frame**: `AVG(x) OVER (ORDER BY period ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)` = current + 2 previous rows.\n   Centered: `ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING`.\n3. **Partial windows**: the first rows have fewer than n rows. Check `COUNT(*) OVER (same frame)` and return NULL\n   (or flag it) when the window is not full.\n4. **Rows \u2260 calendar time.** `ROWS 2 PRECEDING` means *2 rows*, not *2 months*. If periods can be missing, either\n   build a calendar spine (one row per period, zeros filled) or use a value-based frame:\n   `SUM(x) OVER (ORDER BY julianday(d) RANGE BETWEEN 29 PRECEDING AND CURRENT ROW)` = trailing 30 calendar days.\n\n```sql\nSELECT order_month, gross_revenue,\n       AVG(gross_revenue) OVER (ORDER BY order_month\n                                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg_3m\nFROM monthly;\n```",
+  "snowflake_notes": "Snowflake supports the same ROWS frames:\n\n```sql\nSELECT order_month, gross_revenue,\n       AVG(gross_revenue) OVER (ORDER BY order_month\n                                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg_3m\nFROM monthly;\n```\n\n- **Calendar-based frames:** Snowflake supports `RANGE BETWEEN INTERVAL '29 days' PRECEDING AND CURRENT ROW`\n  when the ORDER BY is a DATE/TIMESTAMP (check your account's docs/version). The portable alternative is a\n  date spine (`GENERATOR` + `DATEADD`) joined to the data, then a ROWS frame \u2014 or a self-join on\n  `t2.d BETWEEN DATEADD(day, -29, t1.d) AND t1.d`.\n- `RANGE` with a *numeric* offset needs a numeric ORDER BY; SQLite's trick is `ORDER BY julianday(d)`.\n- To hide partial windows: `IFF(COUNT(*) OVER w = 3, AVG(x) OVER w, NULL)`; filter them out with `QUALIFY`.",
+  "common_mistakes": [
+    "Calling a ROWS-based window '3-month' or '30-day' when periods can be missing \u2014 it's '3 rows'.",
+    "Treating missing periods as 'not there' instead of 0, which inflates the average.",
+    "Reporting partial windows at the start of the series as if they were full averages.",
+    "Moving-averaging raw lines/orders when the question is about months \u2014 aggregate first.",
+    "Using RANGE with a numeric offset on a text date \u2014 order by julianday(d) (SQLite) or a real DATE (Snowflake).",
+    "Using a centered window on a live dashboard \u2014 it peeks into the future."
+  ],
+  "recall": [
+    [
+      "Frame for a trailing 7-row average?",
+      "ROWS BETWEEN 6 PRECEDING AND CURRENT ROW."
+    ],
+    [
+      "Frame for a centered 3-row average?",
+      "ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING."
+    ],
+    [
+      "Row-based vs calendar-based window \u2014 one sentence.",
+      "ROWS counts rows regardless of dates; a calendar window (RANGE on dates, or a filled spine) covers a fixed time span."
+    ],
+    [
+      "How do you hide partial windows?",
+      "Compare COUNT(*) over the same frame with the window size and return NULL / filter (QUALIFY in Snowflake)."
+    ]
+  ],
+  "review_next": "Lesson 34 introduces ranking functions \u2014 ROW_NUMBER, RANK, DENSE_RANK \u2014 and the top-N-per-group pattern (Snowflake's QUALIFY). Re-do 33.4 and 33.5 to keep both gap fixes fresh."
+}

@@ -1,0 +1,18 @@
+customer_id,name,region,order_count
+1,Alice Johnson,North,9
+2,Brian Lee,South,5
+3,John Smith,East,5
+4,John Smith,West,3
+5,Jon Smith,East,2
+6,Maria Garcia,South,3
+7,Chen Wei,West,8
+8,Priya Patel,North,2
+9,David Kim,,3
+10,Emma Brown,East,3
+11,Lucas Martin,West,4
+12,Sofia Rossi,South,2
+13,Noah Wilson,North,2
+14,Olivia Davis,East,4
+15,Liam O'Brien,West,2
+16,Ava Thompson,,1
+17,Ethan Clark,South,1

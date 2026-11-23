@@ -1,0 +1,11 @@
+revenue_rank,product_id,product_name,units_sold,gross_revenue,revenue_share_pct
+1,4,Noise-Cancelling Headphones,14,2577.05,19.77
+2,19,Adjustable Dumbbells,19,2451.0,18.8
+3,5,27in Monitor,4,1007.96,7.73
+4,9,Throw Blanket,28,989.9,7.59
+5,15,SQL for Analysts,19,760.2,5.83
+6,17,The Pragmatic Warehouse,16,727.2,5.58
+7,2,Mechanical Keyboard,7,614.1,4.71
+8,20,Mystery Gift Box,21,503.75,3.86
+9,7,Cast Iron Skillet,11,443.25,3.4
+10,6,Chef Knife,7,413.0,3.17

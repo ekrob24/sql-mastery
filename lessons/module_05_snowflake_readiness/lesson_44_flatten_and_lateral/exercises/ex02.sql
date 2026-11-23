@@ -1,0 +1,14 @@
+-- Lesson 44 · Exercise 44.2 — Tag frequency
+--
+-- BUSINESS QUESTION
+--   Marketing: how many orders carry each tag?
+-- TABLES: raw_order_events
+-- TASK
+--   Flatten $.tags and return tag and tagged_events (number of events carrying that tag).
+-- REQUIRED COLUMNS: tag, tagged_events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.2
+-- Grade it:              python3 sqlm.py submit 44.2
+--
+-- Write your query below (from memory!):
+

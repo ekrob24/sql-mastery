@@ -1,0 +1,24 @@
+-- Lesson 9 · Exercise 9.4 — Find orphan orders
+--
+-- BUSINESS QUESTION
+--   Finance found revenue that cannot be attributed to any customer. Which orders point at
+--   a customer that does not exist?
+-- TABLES: orders, customers
+-- TASK
+--   Return order_id, customer_id and order_date for every order whose customer_id has no
+--   matching row in customers.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.4
+-- Grade it:              python3 sqlm.py submit 9.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

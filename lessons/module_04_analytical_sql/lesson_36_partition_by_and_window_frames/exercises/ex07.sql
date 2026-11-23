@@ -1,0 +1,20 @@
+-- Lesson 36 · Exercise 36.7 — First and latest order value (LAST_VALUE pitfall)
+--
+-- BUSINESS QUESTION
+--   For every order, sales wants the customer's first-ever order value and their most
+--   recent order value side by side.
+-- TABLES: orders, order_items
+-- TASK
+--   Order value = SUM(quantity * unit_price) of the order's lines, valid orders only
+--   (order_status IN ('completed','shipped','returned')). Return order_id, customer_id,
+--   order_date, order_value (rounded 2), first_order_value (order_value of the customer's
+--   earliest valid order) and latest_order_value (order_value of the customer's most
+--   recent valid order — the same value on all of that customer's rows). Order a
+--   customer's orders by order_date then order_id.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_value, first_order_value, latest_order_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 36.7
+-- Grade it:              python3 sqlm.py submit 36.7
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,27 @@
+-- Lesson 14 · Exercise 14.5 — Net revenue by category
+--
+-- BUSINESS QUESTION
+--   Finance wants gross revenue, refunds and net revenue by category.
+-- TABLES: orders, order_items, products, returns
+-- TASK
+--   Return category, gross_revenue, refunds (SUM of returns.refund_amount; 0 when none)
+--   and net_revenue (gross_revenue - refunds), all rounded to 2 decimals, one row per
+--   category (NULL category is its own group). Gross revenue = SUM(quantity * unit_price)
+--   over the order_items of VALID orders, i.e. orders with order_status IN
+--   ('completed','shipped','returned') (cancelled and pending are excluded). Refunds are
+--   matched to order lines via order_item_id.
+-- REQUIRED COLUMNS: category, gross_revenue, refunds, net_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.5
+-- Grade it:              python3 sqlm.py submit 14.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

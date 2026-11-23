@@ -1,0 +1,11 @@
+return_id,line_value,refund_amount,refund_check
+1,44.98,44.98,full
+2,96.0,96,full
+3,12.0,12,full
+4,57.6,28.8,partial
+5,23.38,23.38,full
+6,267.0,267,full
+7,21.24,21.24,full
+8,96.9,96.9,full
+9,85.5,85.5,full
+10,15.0,15,full

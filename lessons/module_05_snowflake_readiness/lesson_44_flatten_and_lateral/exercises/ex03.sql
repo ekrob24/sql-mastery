@@ -1,0 +1,16 @@
+-- Lesson 44 · Exercise 44.3 — Keep untagged orders (OUTER flatten)
+--
+-- BUSINESS QUESTION
+--   Customer 7's account manager wants every one of their order events with its tags —
+--   untagged orders must still appear.
+-- TABLES: raw_order_events
+-- TASK
+--   For events whose $.customer.id is 7, return order_id and tag: one row per tag, and
+--   exactly one row with tag NULL for events that have no tags.
+-- REQUIRED COLUMNS: order_id, tag
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.3
+-- Grade it:              python3 sqlm.py submit 44.3
+--
+-- Write your query below (from memory!):
+

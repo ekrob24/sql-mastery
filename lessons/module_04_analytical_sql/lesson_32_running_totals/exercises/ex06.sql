@@ -1,0 +1,18 @@
+-- Lesson 32 · Exercise 32.6 — Progress toward the annual total
+--
+-- BUSINESS QUESTION
+--   What share of 2025's full-year revenue had been booked by the end of each month?
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For the months of 2025, return order_month ('YYYY-MM'), gross_revenue,
+--   running_revenue (both rounded to 2 decimals) and pct_of_year = 100 * running_revenue /
+--   (total 2025 gross revenue), rounded to 1 decimal. Ordered by order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, running_revenue, pct_of_year
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.6
+-- Grade it:              python3 sqlm.py submit 32.6
+--
+-- Write your query below (from memory!):
+

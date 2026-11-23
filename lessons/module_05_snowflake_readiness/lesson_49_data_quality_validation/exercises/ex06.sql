@@ -1,0 +1,18 @@
+-- Lesson 49 · Exercise 49.6 — Refunds vs. line value
+--
+-- BUSINESS QUESTION
+--   Finance rule: a refund may never exceed the value of the returned line. Classify every
+--   return.
+-- TABLES: returns, order_items
+-- TASK
+--   For every return, return return_id, line_value (quantity * unit_price of the returned
+--   line, rounded to 2 decimals), refund_amount and refund_check: 'exceeds' if
+--   refund_amount > line_value (the ROUNDED value), 'partial' if refund_amount <
+--   line_value, otherwise 'full'.
+-- REQUIRED COLUMNS: return_id, line_value, refund_amount, refund_check
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.6
+-- Grade it:              python3 sqlm.py submit 49.6
+--
+-- Write your query below (from memory!):
+

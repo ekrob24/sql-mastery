@@ -1,0 +1,26 @@
+-- Lesson 14 · Exercise 14.3 — Customer value: orders and revenue (avoid fan-out)
+--
+-- BUSINESS QUESTION
+--   Account management wants each customer's number of valid orders and gross revenue.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Return customer_id, name, valid_orders (number of DISTINCT valid orders) and
+--   gross_revenue rounded to 2 decimals, for customers in the customers table who have at
+--   least one valid order with items. Gross revenue = SUM(quantity * unit_price) over the
+--   order_items of VALID orders, i.e. orders with order_status IN
+--   ('completed','shipped','returned') (cancelled and pending are excluded).
+-- REQUIRED COLUMNS: customer_id, name, valid_orders, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.3
+-- Grade it:              python3 sqlm.py submit 14.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

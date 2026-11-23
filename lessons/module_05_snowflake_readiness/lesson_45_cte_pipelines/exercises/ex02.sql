@@ -1,0 +1,26 @@
+-- Lesson 45 · Exercise 45.2 — Monthly revenue with month-over-month change
+--
+-- BUSINESS QUESTION
+--   Refactor: SELECT m, r, r - (SELECT SUM(oi2.quantity*oi2.unit_price) FROM orders o2
+--   JOIN order_items oi2 ON oi2.order_id=o2.order_id WHERE o2.order_status IN
+--   ('completed','shipped','returned') AND strftime('%Y-%m', o2.order_date) =
+--   strftime('%Y-%m', date(m || '-01', '-1 month'))) FROM (SELECT strftime('%Y-%m',
+--   o.order_date) m, SUM(oi.quantity*oi.unit_price) r FROM orders o JOIN order_items oi ON
+--   oi.order_id=o.order_id WHERE o.order_status IN ('completed','shipped','returned')
+--   GROUP BY 1) WHERE m LIKE '2025%'
+-- TABLES: orders, order_items
+-- TASK
+--   Return order_month ('YYYY-MM'), gross_revenue, prev_month_revenue (the previous
+--   calendar month's gross revenue; for 2025-01 that is 2024-12) and mom_change
+--   (gross_revenue − prev_month_revenue), all rounded to 2 decimals, for each 2025 month
+--   that has valid orders. Every month from 2024-12 to 2025-12 has valid orders, so LAG
+--   over the monthly rows gives the previous calendar month. Valid orders = order_status
+--   IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over
+--   those orders' order_items lines (never products.list_price).
+-- REQUIRED COLUMNS: order_month, gross_revenue, prev_month_revenue, mom_change
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 45.2
+-- Grade it:              python3 sqlm.py submit 45.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,23 @@
+product_id,product_name,category,product_revenue,category_revenue,pct_of_category
+11,Running Shoes,Apparel,360.0,823.2,43.7
+12,Rain Jacket,Apparel,275.5,823.2,33.5
+13,Wool Socks (3-pack),Apparel,61.2,823.2,7.4
+14,Baseball Cap,Apparel,126.5,823.2,15.4
+15,SQL for Analysts,Books,760.2,1692.15,44.9
+16,Data Storytelling,Books,204.75,1692.15,12.1
+17,The Pragmatic Warehouse,Books,727.2,1692.15,43.0
+1,Wireless Mouse,Electronics,208.66,4875.2,4.3
+2,Mechanical Keyboard,Electronics,614.1,4875.2,12.6
+3,USB-C Hub,Electronics,359.43,4875.2,7.4
+4,Noise-Cancelling Headphones,Electronics,2577.05,4875.2,52.9
+5,27in Monitor,Electronics,1007.96,4875.2,20.7
+22,Phone Stand,Electronics,108.0,4875.2,2.2
+6,Chef Knife,Home,413.0,2372.39,17.4
+7,Cast Iron Skillet,Home,443.25,2372.39,18.7
+8,French Press,Home,153.6,2372.39,6.5
+9,Throw Blanket,Home,989.9,2372.39,41.7
+10,Desk Lamp,Home,372.64,2372.39,15.7
+18,Yoga Mat,Sports,231.0,2769.0,8.3
+19,Adjustable Dumbbells,Sports,2451.0,2769.0,88.5
+21,Water Bottle,Sports,87.0,2769.0,3.1
+20,Mystery Gift Box,Uncategorized,503.75,503.75,100.0

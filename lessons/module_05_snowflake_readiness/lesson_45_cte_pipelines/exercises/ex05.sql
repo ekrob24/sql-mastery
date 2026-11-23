@@ -1,0 +1,23 @@
+-- Lesson 45 · Exercise 45.5 — Best-selling product per category
+--
+-- BUSINESS QUESTION
+--   Refactor: SELECT cat, pn, u FROM (SELECT IFNULL(p.category,'Uncategorized') cat,
+--   p.product_name pn, SUM(oi.quantity) u FROM order_items oi JOIN products p ON
+--   p.product_id=oi.product_id JOIN orders o ON o.order_id=oi.order_id WHERE
+--   o.order_status IN ('completed','shipped','returned') GROUP BY 1,2) t WHERE u = (SELECT
+--   MAX(u2) FROM (SELECT IFNULL(p2.category,'Uncategorized') c2, SUM(oi2.quantity) u2 FROM
+--   order_items oi2 JOIN products p2 ON p2.product_id=oi2.product_id JOIN orders o2 ON
+--   o2.order_id=oi2.order_id WHERE o2.order_status IN ('completed','shipped','returned')
+--   GROUP BY 1, p2.product_id) WHERE c2 = t.cat)
+-- TABLES: orders, order_items, products
+-- TASK
+--   Return category (NULL as 'Uncategorized'), product_name and units_sold (sum of
+--   quantity on valid orders, order_status IN ('completed','shipped','returned')) for the
+--   top-selling product of each category (there are no ties at the top).
+-- REQUIRED COLUMNS: category, product_name, units_sold
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 45.5
+-- Grade it:              python3 sqlm.py submit 45.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,27 @@
+-- Lesson 18 · Exercise 18.5 — The extra shared column: name
+--
+-- BUSINESS QUESTION
+--   An analyst joined a product-sales summary to a product-supplier lookup with NATURAL
+--   JOIN and got an empty report. Both summaries use a column called `name`.
+-- TABLES: products, order_items, suppliers
+-- TASK
+--   Build sales AS (SELECT p.product_id, p.product_name AS name, SUM(i.quantity) AS
+--   units_sold FROM products p JOIN order_items i USING (product_id) GROUP BY
+--   p.product_id) and supplier_lookup AS (SELECT p.product_id, s.supplier_name AS name
+--   FROM products p JOIN suppliers s USING (supplier_id)). Join them on product_id only
+--   and return product_id, product_name, supplier_name and units_sold.
+-- REQUIRED COLUMNS: product_id, product_name, supplier_name, units_sold
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.5
+-- Grade it:              python3 sqlm.py submit 18.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

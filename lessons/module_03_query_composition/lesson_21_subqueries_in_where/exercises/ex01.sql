@@ -1,0 +1,15 @@
+-- Lesson 21 · Exercise 21.1 — Products priced above the catalog average
+--
+-- BUSINESS QUESTION
+--   Pricing wants the products whose list price is above the average list price.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, list_price for products whose list_price is greater
+--   than the average list_price of all products (AVG ignores the NULL price).
+-- REQUIRED COLUMNS: product_id, product_name, list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.1
+-- Grade it:              python3 sqlm.py submit 21.1
+--
+-- Write your query below (from memory!):
+

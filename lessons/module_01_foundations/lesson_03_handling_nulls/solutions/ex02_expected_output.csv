@@ -1,0 +1,21 @@
+customer_id,name,contact_email,region_label
+1,Alice Johnson,alice.johnson@example.com,North
+2,Brian Lee,brian.lee@example.com,South
+3,John Smith,john.smith@example.com,East
+4,John Smith,jsmith88@example.com,West
+5,Jon Smith,jon.smith@example.com,East
+6,Maria Garcia,no email on file,South
+7,Chen Wei,chen.wei@example.com,West
+8,Priya Patel,priya.patel@example.com,North
+9,David Kim,david.kim@example.com,Unassigned
+10,Emma Brown,emma.brown@example.com,East
+11,Lucas Martin,lucas.martin@example.com,West
+12,Sofia Rossi,sofia.rossi@example.com,South
+13,Noah Wilson,no email on file,North
+14,Olivia Davis,olivia.davis@example.com,East
+15,Liam O'Brien,liam.obrien@example.com,West
+16,Ava Thompson,ava.thompson@example.com,Unassigned
+17,Ethan Clark,ethan.clark@example.com,South
+18,Mia Lewis,mia.lewis@example.com,North
+19,alice johnson,alice.j@example.com,North
+20,Zoe Turner,no email on file,East

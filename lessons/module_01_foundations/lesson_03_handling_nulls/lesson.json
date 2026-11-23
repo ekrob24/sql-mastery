@@ -1,0 +1,265 @@
+{
+  "number": 3,
+  "slug": "handling_nulls",
+  "title": "Handling NULLs correctly",
+  "module": 1,
+  "module_title": "SQL foundations",
+  "objective": "Find missing values with IS NULL / IS NOT NULL, replace them with COALESCE, avoid the NULL traps in <> and NOT IN, and know when COUNT(col) differs from COUNT(*).",
+  "context": "Real warehouses are full of gaps: customers who never gave an email, products without a price or supplier, returns with no reason. NULL means 'unknown', and SQL treats unknown very differently from zero or empty text. Data-quality audits, contact lists and KPI denominators all go wrong if you treat NULL casually.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Who has no email?",
+      "question": "The CRM team needs to chase customers with no email on file.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return customer_id, name and signup_date for customers whose email is NULL.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "`= NULL` never matches anything.",
+        "Use the IS NULL operator.",
+        "SELECT customer_id, name, signup_date FROM customers WHERE email IS NULL;"
+      ],
+      "why": "Missing contact data is a recurring data-quality KPI. `WHERE email = NULL` runs without an error and returns nothing \u2014 a classic silent bug.",
+      "recall": {
+        "q": "Why does `WHERE email = NULL` return no rows?",
+        "a": "Any comparison with NULL is UNKNOWN, and WHERE keeps only TRUE rows."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "signup_date"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 2,
+      "title": "Mailing list with fallbacks",
+      "question": "Marketing wants a full customer list where blanks are replaced by readable labels.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return every customer with columns customer_id, name, contact_email (email, or the text 'no email on file' when email is NULL) and region_label (region, or 'Unassigned' when region is NULL).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "COALESCE(a, b) returns a unless a is NULL, otherwise b.",
+        "You need two COALESCE calls, each with an alias.",
+        "COALESCE(email, 'no email on file') AS contact_email, COALESCE(region, 'Unassigned') AS region_label"
+      ],
+      "why": "Dashboards show NULL as an empty cell that nobody can filter on. A labelled bucket ('Unassigned') is visible, countable and fixable.",
+      "recall": {
+        "q": "What does COALESCE(NULL, NULL, 'x', 'y') return?",
+        "a": "'x' \u2014 the first non-NULL argument."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "contact_email",
+        "region_label"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 3,
+      "title": "COUNT(*) versus COUNT(email)",
+      "question": "What share of our customer base can we actually email?",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return one row with columns total_customers (all customer rows), customers_with_email (customers whose email is not NULL) and customers_missing_email (customers whose email is NULL). Use COUNT(*) and COUNT(email) \u2014 no WHERE clause.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "COUNT(*) counts rows; COUNT(col) skips NULLs in col.",
+        "The missing count is the difference of the two.",
+        "SELECT COUNT(*) AS total_customers, COUNT(email) AS customers_with_email, COUNT(*) - COUNT(email) AS customers_missing_email FROM customers;"
+      ],
+      "why": "Choosing COUNT(*) vs COUNT(col) changes a denominator. 'Reachable customers: 17 of 20' is a different story from '20 of 20'.",
+      "recall": {
+        "q": "When do COUNT(*) and COUNT(email) differ?",
+        "a": "When some rows have a NULL email: COUNT(email) skips them, COUNT(*) doesn't."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "total_customers",
+        "customers_with_email",
+        "customers_missing_email"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "Product data-quality audit",
+      "question": "Before the catalog migration, how many products are missing a category, a price or a supplier?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return one row with columns total_products, missing_category, missing_price and missing_supplier, where each missing_* column is the number of products whose category / list_price / supplier_id is NULL.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "One query, one row \u2014 no WHERE needed.",
+        "missing = COUNT(*) - COUNT(column).",
+        "COUNT(*) - COUNT(category) AS missing_category, ... repeat for list_price and supplier_id"
+      ],
+      "why": "A one-row completeness audit is a standard first query on any new table. Note supplier_id 9 on product 21 is *not* NULL \u2014 it points to a supplier that doesn't exist, a different kind of problem you'll catch with joins in Module 2.",
+      "recall": {
+        "q": "How do you count NULLs in a column in a single expression?",
+        "a": "COUNT(*) - COUNT(col)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "total_products",
+        "missing_category",
+        "missing_price",
+        "missing_supplier"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "The NOT IN pitfall: suppliers other than 1 and 2",
+      "question": "Procurement is consolidating suppliers 1 and 2. List every product NOT sourced from them \u2014 and products with no supplier on record definitely belong on that list.",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name and supplier_id for products whose supplier_id is not 1 and not 2, INCLUDING products whose supplier_id is NULL.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Try `supplier_id NOT IN (1, 2)` alone and look for product 22 \u2014 it's missing.",
+        "NULL NOT IN (1, 2) is UNKNOWN, so you must ask for NULLs explicitly.",
+        "WHERE supplier_id NOT IN (1, 2) OR supplier_id IS NULL"
+      ],
+      "why": "Negative filters are where NULLs hide. The Phone Stand (no supplier) is exactly the product procurement most needs to see, and the naive query drops it.",
+      "recall": {
+        "q": "Fix `WHERE x NOT IN (1, 2)` so rows with NULL x are kept.",
+        "a": "WHERE x NOT IN (1, 2) OR x IS NULL"
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_id"
+      ],
+      "expected_row_count": 13
+    },
+    {
+      "number": 6,
+      "title": "Outside the North region, unknowns included",
+      "question": "The South/East/West sales team will contact every emailable customer who is not assigned to North \u2014 customers with an unknown region should go to them too.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return customer_id, name, email and region_label (region, or 'Unassigned' when NULL) for customers who have a non-NULL email AND whose region is not 'North' (customers with a NULL region count as 'not North').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two requirements: email present, region not North (NULL included).",
+        "region <> 'North' alone drops customers 9 and 16 \u2014 add OR region IS NULL, in parentheses.",
+        "WHERE email IS NOT NULL AND (region <> 'North' OR region IS NULL)"
+      ],
+      "why": "This combines both NULL skills: excluding missing values on purpose (email) and keeping them on purpose (region). Getting the parentheses wrong here would re-add customers without email.",
+      "recall": {
+        "q": "Give a NULL-safe way to write 'region is not North' in SQLite.",
+        "a": "region <> 'North' OR region IS NULL  \u2014 or  COALESCE(region, '') <> 'North'  \u2014 or  region IS NOT 'North'."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Snowflake: WHERE email IS NOT NULL AND region IS DISTINCT FROM 'North'.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "email",
+        "region_label"
+      ],
+      "expected_row_count": 13
+    }
+  ],
+  "worked_example": {
+    "question": "Which customers have no region, and how should they appear in a regional report?",
+    "sql": "SELECT customer_id,\n       name,\n       region,\n       COALESCE(region, 'Unassigned') AS region_label\nFROM customers\nWHERE region IS NULL;",
+    "explanation": "`IS NULL` finds the two customers (9 and 16). `region = NULL` would return zero rows. COALESCE gives them a readable label without changing the underlying data.",
+    "columns": [
+      "customer_id",
+      "name",
+      "region",
+      "region_label"
+    ],
+    "rows": [
+      [
+        9,
+        "David Kim",
+        null,
+        "Unassigned"
+      ],
+      [
+        16,
+        "Ava Thompson",
+        null,
+        "Unassigned"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: handle NULL in 4 moves**\n\n1. **Find it:** `WHERE email IS NULL` / `IS NOT NULL`. Never `= NULL` \u2014 that is never true.\n2. **Replace it for display:** `COALESCE(region, 'Unassigned')` returns the first non-NULL argument.\n3. **Guard negative filters:** `col <> 'x'` and `col NOT IN (...)` drop NULL rows. If unknowns should\n   be kept, say so: `WHERE col <> 'x' OR col IS NULL` (or compare `COALESCE(col, '?') <> 'x'`).\n4. **Count deliberately:** `COUNT(*)` counts rows; `COUNT(col)` counts non-NULL values of col.\n   Missing values = `COUNT(*) - COUNT(col)`.\n\n```sql\nSELECT customer_id,\n       COALESCE(email, 'no email on file') AS contact_email\nFROM   customers\nWHERE  region IS NULL;\n```\n\n**Three-valued logic:** a condition is TRUE, FALSE or UNKNOWN. `WHERE` keeps only TRUE.\n`NULL = NULL` is UNKNOWN; `NULL <> 'x'` is UNKNOWN; `x NOT IN (1, NULL)` is never TRUE.\n\n**Aggregates skip NULLs** (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT(col)`) \u2014 Lesson 6 builds on this.",
+  "snowflake_notes": "Snowflake has the same semantics plus helpers: `IFNULL(a, b)` / `NVL(a, b)` (two-argument COALESCE), `ZEROIFNULL(x)`, `NULLIF(a, b)`, and the NULL-safe comparison `a IS DISTINCT FROM b` / `EQUAL_NULL(a, b)`. SQLite also supports `IFNULL`, `NULLIF` and `IS` / `IS NOT` as NULL-safe equality (`region IS NOT 'North'`).",
+  "common_mistakes": [
+    "Writing `= NULL` or `<> NULL` instead of `IS NULL` / `IS NOT NULL`.",
+    "Using `NOT IN` or `<>` and silently losing rows where the column is NULL.",
+    "Using `COUNT(col)` as a row count when the column can be NULL (or vice versa).",
+    "COALESCE-ing to 0 before averaging: `AVG(COALESCE(price, 0))` treats 'unknown' as 'free' and drags the average down.",
+    "Forgetting that `'text' || NULL` and `5 + NULL` are NULL."
+  ],
+  "recall": [
+    [
+      "What are the three truth values in SQL logic?",
+      "TRUE, FALSE, UNKNOWN. WHERE keeps only TRUE."
+    ],
+    [
+      "What does COALESCE do?",
+      "Returns its first non-NULL argument."
+    ],
+    [
+      "Why is `x NOT IN (1, 2, NULL)` never true?",
+      "It expands to x <> 1 AND x <> 2 AND x <> NULL, and x <> NULL is UNKNOWN."
+    ],
+    [
+      "COUNT(*) vs COUNT(col)?",
+      "COUNT(*) counts rows; COUNT(col) counts non-NULL values of col."
+    ]
+  ],
+  "review_next": "Next, Lesson 4 sorts results \u2014 and NULLs come back: where do they sort? Revisit exercise 3.5 and say out loud why product 22 disappears without the IS NULL clause."
+}

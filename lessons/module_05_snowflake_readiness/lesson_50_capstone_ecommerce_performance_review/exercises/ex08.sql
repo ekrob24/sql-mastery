@@ -1,0 +1,22 @@
+-- Lesson 50 · Exercise 50.8 — Products with declining sales
+--
+-- BUSINESS QUESTION
+--   Merchandising: "Which products sold less in 2025 than in 2024, and by how much?"
+-- TABLES: orders, order_items, products
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned'). For each product
+--   sold in valid orders, revenue_2024 and revenue_2025 = gross revenue SUM(quantity *
+--   unit_price) of its lines in valid orders with order_date in that calendar year (0 if
+--   none — so a product sold in 2024 but not in 2025 has revenue_2025 = 0 and counts as
+--   declining). A product is declining when revenue_2025 < revenue_2024. Return
+--   product_id, product_name, revenue_2024, revenue_2025, revenue_change (= revenue_2025 −
+--   revenue_2024) — all rounded to 2 decimals — and change_pct = 100 * revenue_change /
+--   revenue_2024 rounded to 1 decimal. Only declining products. Order by revenue_change
+--   ascending (biggest drop first), then product_id ascending.
+-- REQUIRED COLUMNS: product_id, product_name, revenue_2024, revenue_2025, revenue_change, change_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.8
+-- Grade it:              python3 sqlm.py submit 50.8
+--
+-- Write your query below (from memory!):
+

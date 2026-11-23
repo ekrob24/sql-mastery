@@ -1,0 +1,16 @@
+-- Lesson 34 · Exercise 34.1 — Rank products by units sold
+--
+-- BUSINESS QUESTION
+--   Merchandising wants a units-sold leaderboard where tied products share a position.
+-- TABLES: orders, order_items
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'). For every product
+--   sold in a valid order, return product_id, units_sold (SUM(quantity)) and units_rank =
+--   RANK() by units_sold descending (ties share a rank; highest = 1).
+-- REQUIRED COLUMNS: product_id, units_sold, units_rank
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.1
+-- Grade it:              python3 sqlm.py submit 34.1
+--
+-- Write your query below (from memory!):
+

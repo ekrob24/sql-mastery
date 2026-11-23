@@ -1,0 +1,17 @@
+-- Lesson 46 · Exercise 46.1 — Make the year filter sargable
+--
+-- BUSINESS QUESTION
+--   Ops dashboard query: `SELECT order_status, COUNT(*) FROM orders WHERE strftime('%Y',
+--   order_date) = '2025' GROUP BY order_status`. It can't use idx_orders_date. Rewrite it.
+-- TABLES: orders
+-- TASK
+--   Return order_status and orders (count) for orders placed in calendar year 2025, using
+--   a range predicate on the bare order_date column (order_date >= '2025-01-01' AND
+--   order_date < '2026-01-01').
+-- REQUIRED COLUMNS: order_status, orders
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 46.1
+-- Grade it:              python3 sqlm.py submit 46.1
+--
+-- Write your query below (from memory!):
+

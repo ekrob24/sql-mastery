@@ -1,0 +1,19 @@
+-- Lesson 35 · Exercise 35.2 — Order value vs the previous order
+--
+-- BUSINESS QUESTION
+--   Account managers want to see whether each customer's orders are getting bigger or
+--   smaller.
+-- TABLES: orders, order_items
+-- TASK
+--   Order value = SUM(quantity * unit_price) of the order's lines, for valid orders only
+--   (order_status IN ('completed','shipped','returned')). Return order_id, customer_id,
+--   order_date, order_value (rounded to 2 decimals), prev_order_value (the same customer's
+--   previous valid order's order_value, ordering by order_date then order_id; NULL for the
+--   first) and value_change (order_value - prev_order_value, rounded to 2 decimals).
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_value, prev_order_value, value_change
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 35.2
+-- Grade it:              python3 sqlm.py submit 35.2
+--
+-- Write your query below (from memory!):
+

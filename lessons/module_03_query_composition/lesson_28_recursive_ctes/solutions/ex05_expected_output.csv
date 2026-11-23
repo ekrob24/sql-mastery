@@ -1,0 +1,15 @@
+category_id,category_name,descendant_count
+1,All Products,13
+2,Electronics,2
+3,Home,2
+4,Apparel,2
+5,Books,0
+6,Sports,2
+7,Audio,0
+8,Computer Accessories,0
+9,Kitchen,0
+10,Decor,0
+11,Footwear,0
+12,Outerwear,0
+13,Fitness,1
+14,Strength Training,0

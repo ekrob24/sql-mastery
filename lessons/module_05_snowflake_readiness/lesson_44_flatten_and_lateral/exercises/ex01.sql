@@ -1,0 +1,15 @@
+-- Lesson 44 · Exercise 44.1 — One row per JSON order line
+--
+-- BUSINESS QUESTION
+--   Finance wants to see the raw line data for the first five orders.
+-- TABLES: raw_order_events
+-- TASK
+--   Flatten $.items for events whose $.order_id is between 1 and 5 and return order_id,
+--   line_no (the 0-based array position), product_id, qty and price (from each item).
+-- REQUIRED COLUMNS: order_id, line_no, product_id, qty, price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.1
+-- Grade it:              python3 sqlm.py submit 44.1
+--
+-- Write your query below (from memory!):
+

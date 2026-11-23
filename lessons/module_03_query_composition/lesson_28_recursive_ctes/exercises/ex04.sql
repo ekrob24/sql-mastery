@@ -1,0 +1,17 @@
+-- Lesson 28 · Exercise 28.4 — Everything under Electronics
+--
+-- BUSINESS QUESTION
+--   A promotion applies to 'Electronics and all its sub-categories'. Which categories are
+--   in scope?
+-- TABLES: categories
+-- TASK
+--   Return category_id, category_name for 'Electronics' itself and all of its descendants
+--   (children, grandchildren, ...). Start the anchor from the name 'Electronics', not a
+--   hard-coded id.
+-- REQUIRED COLUMNS: category_id, category_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 28.4
+-- Grade it:              python3 sqlm.py submit 28.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 2 · Exercise 2.5 — Smith-like accounts with LIKE
+--
+-- BUSINESS QUESTION
+--   Customer success suspects duplicate accounts for 'John Smith' — including typo
+--   spellings like 'Jon Smith'. Find every candidate.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name, email and signup_date for customers whose name starts with
+--   'J', ends with 'n Smith', and has anything (or nothing) in between — i.e. name LIKE
+--   'J%n Smith'.
+-- REQUIRED COLUMNS: customer_id, name, email, signup_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.5
+-- Grade it:              python3 sqlm.py submit 2.5
+--
+-- Write your query below (from memory!):
+

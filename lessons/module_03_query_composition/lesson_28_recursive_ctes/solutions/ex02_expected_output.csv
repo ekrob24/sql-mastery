@@ -1,0 +1,15 @@
+category_id,category_name,depth
+1,All Products,0
+4,Apparel,1
+5,Books,1
+2,Electronics,1
+3,Home,1
+6,Sports,1
+11,Footwear,2
+12,Outerwear,2
+7,Audio,2
+8,Computer Accessories,2
+10,Decor,2
+9,Kitchen,2
+13,Fitness,2
+14,Strength Training,3

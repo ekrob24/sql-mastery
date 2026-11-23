@@ -1,0 +1,274 @@
+{
+  "number": 23,
+  "slug": "correlated_subqueries",
+  "title": "Correlated subqueries",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Write subqueries that reference the current outer row, so you can compare each row with its own group (its category, its customer) or compute a per-row lookup.",
+  "context": "'Is this product expensive *for its category*?', 'When did *this* customer last order?', 'Which of *this* customer's orders was the latest?'. Each needs a calculation that depends on the row being looked at. Correlated subqueries express that directly.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Each customer's last order date",
+      "question": "CRM wants every customer with the date of their most recent order.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name and last_order_date (the latest order_date of any status) for all 20 customers, using a correlated subquery in SELECT. Customers without orders get NULL.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The subquery goes in the SELECT list and needs a column alias.",
+        "Correlate with WHERE o.customer_id = c.customer_id.",
+        "(SELECT MAX(o.order_date) FROM orders o WHERE o.customer_id = c.customer_id) AS last_order_date"
+      ],
+      "why": "Per-row lookups like this feed recency metrics and churn flags. MAX over no rows returns NULL, which honestly says 'never ordered'.",
+      "recall": {
+        "q": "What does a correlated MAX(...) return for a customer with no orders?",
+        "a": "NULL."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "last_order_date"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 2,
+      "title": "Pricier than its category average",
+      "question": "Pricing wants products whose list price is above the average of their own category.",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return product_id, product_name, category, list_price for products whose list_price is greater than the average list_price of products in the same category. (Product 20, with a NULL category, has no category to compare against, so it drops out.)",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Use two aliases of products: p (outer) and p2 (inner).",
+        "The inner AVG should only see rows WHERE p2.category = p.category.",
+        "WHERE p.list_price > (SELECT AVG(p2.list_price) FROM products p2 WHERE p2.category = p.category)"
+      ],
+      "why": "Global averages mislead: a $59 knife is expensive for Home but cheap for Electronics. Comparing within the group is the fair benchmark.",
+      "recall": {
+        "q": "Why does product 20 (NULL category) never appear?",
+        "a": "p2.category = NULL is never true, so its category average is NULL and the comparison is NULL."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "list_price"
+      ],
+      "expected_row_count": 11
+    },
+    {
+      "number": 3,
+      "title": "Lines sold below the product's typical price",
+      "question": "Sales ops wants order lines where the product sold below its own average selling price.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Considering only lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), return order_item_id, product_id, unit_price and avg_product_price (the average unit_price of that same product over all valid-order lines, rounded to 2 decimals) for lines whose unit_price is below that average.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The benchmark depends on the row's product, so correlate on i2.product_id = i.product_id.",
+        "Compute the average in SELECT, then filter it in an outer query (or repeat it in WHERE). Compare against the unrounded average.",
+        "SELECT ... FROM (SELECT i.order_item_id, i.product_id, i.unit_price, (SELECT AVG(i2.unit_price) FROM order_items i2 JOIN orders o2 ... WHERE <valid> AND i2.product_id = i.product_id) AS avg ... FROM order_items i JOIN orders o ... WHERE <valid>) x WHERE x.unit_price < x.avg"
+      ],
+      "why": "Discount leakage analysis starts exactly like this: compare every transaction with its own product's norm, not with a global number.",
+      "recall": {
+        "q": "Can you reference a SELECT-list alias in the same query's WHERE?",
+        "a": "No. WHERE runs before SELECT. Wrap the query in a derived table (or repeat the expression)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "product_id",
+        "unit_price",
+        "avg_product_price"
+      ],
+      "expected_row_count": 47
+    },
+    {
+      "number": 4,
+      "title": "Latest order per customer",
+      "question": "Support wants the full details of each customer's most recent order.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return customer_id, order_id, order_date, order_status for each order whose order_date equals the latest order_date for that same customer_id (any status). Use orders only, so the orphan customer 99 appears too.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Keep an order if no later order exists for the same customer, i.e. its date is the customer's max.",
+        "Inner: SELECT MAX(o2.order_date) FROM orders o2 WHERE o2.customer_id = o.customer_id.",
+        "WHERE o.order_date = (SELECT MAX(o2.order_date) FROM orders o2 WHERE o2.customer_id = o.customer_id)"
+      ],
+      "why": "Latest-record-per-entity is one of the most common queries in analytics (latest status, latest address, latest price). If two orders tied on date, both would be returned, so decide whether that's OK.",
+      "recall": {
+        "q": "What happens with this pattern if a customer has two orders on the same latest date?",
+        "a": "Both rows are returned. Add a tie-breaker (e.g. ROW_NUMBER with order_id) if exactly one is needed."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT * FROM orders QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) = 1;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 18
+    },
+    {
+      "number": 5,
+      "title": "Order sequence number per customer",
+      "question": "Lifecycle marketing wants to know whether each valid order was the customer's 1st, 2nd, 3rd... purchase.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "For each valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) return order_id, customer_id, order_date and order_seq = the number of valid orders by the same customer_id with an order_date on or before this one (so the first valid order is 1).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Count the customer's valid orders that happened up to and including this order's date.",
+        "Both the outer query and the inner COUNT need the valid-status filter.",
+        "(SELECT COUNT(*) FROM orders o2 WHERE o2.customer_id = o.customer_id AND <valid> AND o2.order_date <= o.order_date) AS order_seq"
+      ],
+      "why": "First-vs-repeat purchase flags drive retention reporting. This is a 'running count'. Window functions (ROW_NUMBER, Lesson 30) do it faster, but the logic is the same.",
+      "recall": {
+        "q": "What is the window-function equivalent of this correlated running count?",
+        "a": "ROW_NUMBER() (or COUNT(*)) OVER (PARTITION BY customer_id ORDER BY order_date)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_seq"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 6,
+      "title": "Customers whose spend grew in 2025",
+      "question": "The account team wants customers who spent more in 2025 than in 2024.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), return customer_id, name, spend_2024 and spend_2025 (by order_date year, 0 when none, rounded to 2 decimals) for customers in the customers table whose spend_2025 is greater than spend_2024. Compute each year's spend with a correlated subquery.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two correlated SUM subqueries in SELECT, one per year. Each correlated on customer_id.",
+        "SUM over no rows is NULL, so wrap each in COALESCE(..., 0) or NULL > x fails silently.",
+        "Wrap the per-customer query as a derived table s, then WHERE spend_2025 > spend_2024."
+      ],
+      "why": "Growth lists are core account-management inputs. Customers who only appeared in 2025 (e.g. 14, 15, 17) count as growth because their 2024 spend is 0, not NULL. That only works because of COALESCE.",
+      "recall": {
+        "q": "Why COALESCE the correlated SUMs before comparing them?",
+        "a": "SUM over no rows is NULL, and NULL > 0 is not TRUE, so new customers would vanish."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "spend_2024",
+        "spend_2025"
+      ],
+      "expected_row_count": 8
+    }
+  ],
+  "worked_example": {
+    "question": "For each of the first few customers, how many orders (any status) have they placed?",
+    "sql": "SELECT c.customer_id,\n       c.name,\n       (SELECT COUNT(*)\n        FROM orders AS o\n        WHERE o.customer_id = c.customer_id) AS order_count\nFROM customers AS c\nWHERE c.customer_id IN (1, 2, 16, 18);",
+    "explanation": "For each customer row, the inner COUNT runs with c.customer_id plugged in. Customer 18 has no orders, and COUNT of nothing is 0 (whereas MAX or SUM of nothing would be NULL). No GROUP BY is needed and no rows are duplicated.",
+    "columns": [
+      "customer_id",
+      "name",
+      "order_count"
+    ],
+    "rows": [
+      [
+        1,
+        "Alice Johnson",
+        9
+      ],
+      [
+        2,
+        "Brian Lee",
+        5
+      ],
+      [
+        16,
+        "Ava Thompson",
+        1
+      ],
+      [
+        18,
+        "Mia Lewis",
+        0
+      ]
+    ]
+  },
+  "recipe": "**Recipe: a subquery that 'looks back' at the outer row**\n\n1. Alias the outer table (`FROM products AS p`) and the inner table differently (`products AS p2`).\n2. Inside the subquery, tie it to the outer row: `WHERE p2.category = p.category`.\n3. Conceptually the subquery is re-run for every outer row (optimizers often rewrite it as a join).\n   ```sql\n   SELECT p.product_id, p.list_price\n   FROM products AS p\n   WHERE p.list_price > (SELECT AVG(p2.list_price)\n                         FROM products AS p2\n                         WHERE p2.category = p.category);   -- \u2190 correlation\n   ```\n4. Use it in **SELECT** as a per-row lookup (`(SELECT MAX(order_date) FROM orders o WHERE o.customer_id = c.customer_id) AS last_order_date`)\n   or in **WHERE** as a per-row benchmark (\"latest order per customer\", \"above its category average\").\n5. A correlated scalar subquery that finds nothing returns NULL. Wrap with COALESCE when 0 is meant.",
+  "snowflake_notes": "- Snowflake supports correlated subqueries in WHERE and in SELECT, but it is stricter: correlated scalar\n  subqueries in SELECT must be provably single-row (usually an aggregate), otherwise you get\n  \"Unsupported subquery type\". Rewriting as a join to a pre-aggregated table (or a CTE) is the portable fix.\n- \"Latest row per group\" is idiomatically `QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC) = 1`.",
+  "common_mistakes": [
+    "Forgetting the correlation predicate, so the subquery computes a global value (same for every row).",
+    "Using the same alias inside and outside (`orders o` twice), so the correlation silently compares a column to itself.",
+    "Not handling 'no rows' \u2192 NULL for MAX/SUM lookups when 0 is intended.",
+    "Referencing a SELECT alias in WHERE of the same query; wrap it in a derived table instead.",
+    "Expecting a single 'latest' row when ties exist: the = MAX pattern returns all tied rows."
+  ],
+  "recall": [
+    [
+      "What makes a subquery 'correlated'?",
+      "It references a column of the outer query, so its result depends on the current outer row."
+    ],
+    [
+      "Name two places a correlated subquery commonly appears.",
+      "In SELECT (a per-row lookup) and in WHERE (a per-row benchmark/filter)."
+    ],
+    [
+      "What's a common performance-friendly rewrite of a correlated aggregate?",
+      "Pre-aggregate in a derived table/CTE and join it, or use a window function."
+    ]
+  ],
+  "review_next": "Lesson 24 covers EXISTS / NOT EXISTS, the correlated subquery that only asks 'is there at least one?'. Re-do 23.4 and think about how ROW_NUMBER (Lesson 30) would handle date ties."
+}

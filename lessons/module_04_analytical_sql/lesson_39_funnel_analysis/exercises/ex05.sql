@@ -1,0 +1,18 @@
+-- Lesson 39 · Exercise 39.5 — Monthly funnel trend
+--
+-- BUSINESS QUESTION
+--   Is conversion improving over the year?
+-- TABLES: web_events
+-- TASK
+--   Session month = 'YYYY-MM' of the session's earliest event_time. For each month with
+--   sessions, return session_month, visits (sessions with a visit), add_to_carts,
+--   purchases (sessions reaching those stages), cart_rate_pct (100.0 * add_to_carts /
+--   visits) and purchase_rate_pct (100.0 * purchases / visits), both rounded to 1 decimal.
+--   Order by session_month.
+-- REQUIRED COLUMNS: session_month, visits, add_to_carts, purchases, cart_rate_pct, purchase_rate_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 39.5
+-- Grade it:              python3 sqlm.py submit 39.5
+--
+-- Write your query below (from memory!):
+

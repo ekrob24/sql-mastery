@@ -1,0 +1,19 @@
+-- Lesson 34 · Exercise 34.2 — ROW_NUMBER vs RANK vs DENSE_RANK
+--
+-- BUSINESS QUESTION
+--   An analyst wants to see how the three ranking functions treat customers with equal
+--   order counts.
+-- TABLES: orders
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'). For every
+--   customer_id that has valid orders (including the orphan 99), return customer_id,
+--   order_count (number of valid orders), row_num (ROW_NUMBER by order_count descending,
+--   then customer_id ascending), rnk (RANK by order_count descending) and dense_rnk
+--   (DENSE_RANK by order_count descending).
+-- REQUIRED COLUMNS: customer_id, order_count, row_num, rnk, dense_rnk
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.2
+-- Grade it:              python3 sqlm.py submit 34.2
+--
+-- Write your query below (from memory!):
+

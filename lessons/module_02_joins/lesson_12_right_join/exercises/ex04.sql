@@ -1,0 +1,23 @@
+-- Lesson 12 · Exercise 12.4 — Customers who never ordered (RIGHT anti-join)
+--
+-- BUSINESS QUESTION
+--   Marketing wants the sign-ups who have never placed any order.
+-- TABLES: orders, customers
+-- TASK
+--   Write FROM orders ... RIGHT JOIN customers. Return customer_id, name and signup_date
+--   of customers with no orders at all.
+-- REQUIRED COLUMNS: customer_id, name, signup_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.4
+-- Grade it:              python3 sqlm.py submit 12.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

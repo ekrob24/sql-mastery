@@ -1,0 +1,17 @@
+customer_id,days_since_last_order,order_count,total_spend,segment
+1,302,8,1937.02,At risk
+2,53,5,1063.95,Champion
+3,101,5,1425.7,Regular
+4,160,3,1262.85,Regular
+5,375,2,201.47,Regular
+6,226,3,772.2,At risk
+7,40,7,1305.28,Champion
+8,490,2,230.18,Regular
+9,456,2,391.25,Regular
+10,330,3,985.3,At risk
+11,208,3,725.19,At risk
+12,25,2,788.9,Regular
+13,350,1,249.76,New
+14,191,3,896.35,At risk
+15,128,2,386.99,Regular
+17,174,1,50.0,New

@@ -1,0 +1,15 @@
+-- Lesson 42 · Exercise 42.3 — Missing keys become NULL: tier breakdown
+--
+-- BUSINESS QUESTION
+--   Marketing added an optional customer tier to the event feed. How many events carry it?
+-- TABLES: raw_order_events
+-- TASK
+--   Return tier and events: the number of events per value of $.customer.tier, where
+--   events without a tier key are labelled 'none'.
+-- REQUIRED COLUMNS: tier, events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.3
+-- Grade it:              python3 sqlm.py submit 42.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 40 · Exercise 40.1 — Product gross margin
+--
+-- BUSINESS QUESTION
+--   Finance wants revenue, cost and margin for every product that sold.
+-- TABLES: orders, order_items, products, product_costs
+-- TASK
+--   Use lines of valid orders (order_status IN ('completed','shipped','returned')).
+--   Revenue = SUM(quantity * unit_price); cogs = SUM(quantity * unit_cost) with unit_cost
+--   from product_costs; gross_margin = revenue - cogs. Return product_id, product_name,
+--   units_sold (SUM(quantity)), revenue, cogs, gross_margin (each rounded to 2) and
+--   margin_pct (100.0 * gross_margin / revenue, 0–100 scale, rounded to 1 decimal). One
+--   row per product with sales.
+-- REQUIRED COLUMNS: product_id, product_name, units_sold, revenue, cogs, gross_margin, margin_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 40.1
+-- Grade it:              python3 sqlm.py submit 40.1
+--
+-- Write your query below (from memory!):
+

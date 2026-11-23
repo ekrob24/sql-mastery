@@ -1,0 +1,13 @@
+category,quarter,budget,actual,variance
+Books,1,150,48.0,-102.0
+Books,2,150,244.2,94.2
+Books,3,150,232.9,82.9
+Books,4,200,105.0,-95.0
+Electronics,1,600,1338.09,738.09
+Electronics,2,600,657.34,57.34
+Electronics,3,700,739.97,39.97
+Electronics,4,800,352.04,-447.96
+Home,1,300,214.86,-85.14
+Home,2,300,371.1,71.1
+Home,3,300,263.0,-37.0
+Home,4,400,224.0,-176.0

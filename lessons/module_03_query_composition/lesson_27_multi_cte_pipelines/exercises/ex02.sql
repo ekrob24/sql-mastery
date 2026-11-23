@@ -1,0 +1,20 @@
+-- Lesson 27 · Exercise 27.2 — Product margin
+--
+-- BUSINESS QUESTION
+--   The CFO wants gross margin by product for everything we have sold.
+-- TABLES: orders, order_items, product_costs, products
+-- TASK
+--   For lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded): revenue =
+--   SUM(quantity * unit_price), total_cost = SUM(quantity * product_costs.unit_cost),
+--   gross_margin = revenue − total_cost, margin_pct = 100 * gross_margin / revenue. Return
+--   product_id, product_name, units_sold (SUM quantity), revenue, total_cost, gross_margin
+--   (each rounded to 2 decimals) and margin_pct (rounded to 1 decimal) for each sold
+--   product.
+-- REQUIRED COLUMNS: product_id, product_name, units_sold, revenue, total_cost, gross_margin, margin_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.2
+-- Grade it:              python3 sqlm.py submit 27.2
+--
+-- Write your query below (from memory!):
+

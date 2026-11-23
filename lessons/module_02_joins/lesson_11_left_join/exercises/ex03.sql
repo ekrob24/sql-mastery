@@ -1,0 +1,23 @@
+-- Lesson 11 · Exercise 11.3 — Products that were never sold (anti-join)
+--
+-- BUSINESS QUESTION
+--   Merchandising wants to delist dead stock: which products have never appeared on any
+--   order line?
+-- TABLES: products, order_items
+-- TASK
+--   Return product_id and product_name of products that appear on no order line at all.
+-- REQUIRED COLUMNS: product_id, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.3
+-- Grade it:              python3 sqlm.py submit 11.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

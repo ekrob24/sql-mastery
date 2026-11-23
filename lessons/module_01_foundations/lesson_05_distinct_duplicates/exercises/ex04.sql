@@ -1,0 +1,17 @@
+-- Lesson 5 · Exercise 5.4 — Lines, products and orders in order_items
+--
+-- BUSINESS QUESTION
+--   How many order lines do we have, and how many different products and orders do they
+--   cover?
+-- TABLES: order_items
+-- TASK
+--   Return one row with columns line_count (all rows in order_items), distinct_products
+--   (number of different product_id values) and distinct_orders (number of different
+--   order_id values).
+-- REQUIRED COLUMNS: line_count, distinct_products, distinct_orders
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 5.4
+-- Grade it:              python3 sqlm.py submit 5.4
+--
+-- Write your query below (from memory!):
+

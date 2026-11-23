@@ -1,0 +1,306 @@
+{
+  "number": 44,
+  "slug": "flatten_and_lateral",
+  "title": "FLATTEN and LATERAL for nested data",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Explode JSON arrays into one row per element (json_each \u2248 LATERAL FLATTEN), keep parents with empty arrays (OUTER), avoid fan-out when flattening two arrays, and reconcile flattened data with relational tables.",
+  "context": "Finance doesn't trust the new event pipeline yet. Before order_items is rebuilt from the raw feed, they want proof: line-level data flattened from JSON must tie out to the existing order_items, and the new tags must be reportable.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "One row per JSON order line",
+      "question": "Finance wants to see the raw line data for the first five orders.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Flatten $.items for events whose $.order_id is between 1 and 5 and return order_id, line_no (the 0-based array position), product_id, qty and price (from each item).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "FROM raw_order_events e, json_each(e.payload, '$.items') i \u2014 one row per item.",
+        "i.key is the position; i.value is the item object, so read fields with i.value ->> '$.qty'.",
+        "SELECT e.payload ->> '$.order_id' AS order_id, i.key AS line_no, i.value ->> '$.product_id' AS product_id, i.value ->> '$.qty' AS qty, i.value ->> '$.price' AS price FROM raw_order_events e, json_each(e.payload,'$.items') i WHERE ..."
+      ],
+      "why": "This is the core transformation from event-shaped to table-shaped data.",
+      "recall": {
+        "q": "Which column of json_each holds the array position?",
+        "a": "key (Snowflake FLATTEN: INDEX)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT e.payload:order_id::INT AS order_id, i.index AS line_no, i.value:product_id::INT AS product_id, i.value:qty::INT AS qty, i.value:price::NUMBER(10,2) AS price FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:items) i WHERE e.payload:order_id::INT BETWEEN 1 AND 5;",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "line_no",
+        "product_id",
+        "qty",
+        "price"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 2,
+      "title": "Tag frequency",
+      "question": "Marketing: how many orders carry each tag?",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Flatten $.tags and return tag and tagged_events (number of events carrying that tag).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Tags are plain strings, so the element itself (t.value) is the tag.",
+        "Events without a tags key produce no rows from json_each \u2014 fine here.",
+        "SELECT t.value AS tag, COUNT(*) AS tagged_events FROM raw_order_events e, json_each(e.payload,'$.tags') t GROUP BY t.value;"
+      ],
+      "why": "Multi-valued attributes (tags, categories, experiments) can't be grouped until flattened.",
+      "recall": {
+        "q": "Why don't untagged events appear in an inner flatten?",
+        "a": "json_each/FLATTEN of a missing or empty array yields zero rows, so the parent row disappears."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT t.value::STRING AS tag, COUNT(*) AS tagged_events FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:tags) t GROUP BY 1;",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "tag",
+        "tagged_events"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 3,
+      "title": "Keep untagged orders (OUTER flatten)",
+      "question": "Customer 7's account manager wants every one of their order events with its tags \u2014 untagged orders must still appear.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "For events whose $.customer.id is 7, return order_id and tag: one row per tag, and exactly one row with tag NULL for events that have no tags.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "An inner flatten drops events without tags. You need the OUTER behaviour.",
+        "In SQLite: LEFT JOIN json_each(e.payload, '$.tags') AS t ON 1 = 1.",
+        "SELECT e.payload ->> '$.order_id' AS order_id, t.value AS tag FROM raw_order_events e LEFT JOIN json_each(e.payload,'$.tags') t ON 1 = 1 WHERE e.payload ->> '$.customer.id' = 7;"
+      ],
+      "why": "Forgetting OUTER => TRUE is the FLATTEN equivalent of using INNER JOIN when you meant LEFT JOIN.",
+      "recall": {
+        "q": "Snowflake option that keeps rows whose array is empty or missing?",
+        "a": "FLATTEN(..., OUTER => TRUE)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT e.payload:order_id::INT AS order_id, t.value::STRING AS tag FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:tags, OUTER => TRUE) t WHERE e.payload:customer.id::INT = 7;",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "tag"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 4,
+      "title": "Units by category from JSON lines",
+      "question": "Merchandising wants units sold per category straight from the event feed.",
+      "tables": [
+        "raw_order_events",
+        "orders",
+        "products"
+      ],
+      "prompt": "Flatten $.items, keep only valid orders (join orders on order_id; order_status IN ('completed','shipped','returned')), join products on the item's product_id, and return category (NULL shown as 'Uncategorized') and units (sum of qty).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Flattened fields join to tables like normal columns.",
+        "Two joins: orders on the payload order_id (for status), products on i.value ->> '$.product_id'.",
+        "... FROM raw_order_events e JOIN json_each(e.payload,'$.items') i JOIN orders o ON o.order_id = e.payload ->> '$.order_id' JOIN products p ON p.product_id = i.value ->> '$.product_id' WHERE o.order_status IN (...) GROUP BY 1;"
+      ],
+      "why": "Once flattened, JSON lines behave like any fact table \u2014 and should produce the same numbers as the modelled tables (next exercises prove it).",
+      "recall": {
+        "q": "Can json_each appear in a JOIN clause instead of a comma?",
+        "a": "Yes \u2014 `JOIN json_each(e.payload, '$.items') AS i` is the same lateral join; it may reference earlier tables."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT NVL(p.category, 'Uncategorized') AS category, SUM(i.value:qty::INT) AS units FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:items) i JOIN orders o ON o.order_id = e.payload:order_id::INT JOIN products p ON p.product_id = i.value:product_id::INT WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "units"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 5,
+      "title": "Revenue by tag without the items \u00d7 tags fan-out",
+      "question": "Marketing: how much gross revenue came from orders carrying each tag?",
+      "tables": [
+        "raw_order_events",
+        "orders"
+      ],
+      "prompt": "Return tag, tagged_orders (number of valid orders with that tag) and gross_revenue (sum over those orders of the JSON items' qty * price, rounded to 2 decimals). Valid orders = order_status IN ('completed','shipped','returned') in the orders table. Careful: flattening tags and items in the same FROM multiplies rows \u2014 compute each order's value first.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "If an order has 3 items and 2 tags, a double flatten gives 6 rows \u2014 each item counted twice.",
+        "Step 1 (CTE): one row per event with its order value. Step 2: flatten tags and join the CTE.",
+        "WITH order_value AS (SELECT e.event_id, SUM((i.value->>'$.qty')*(i.value->>'$.price')) AS order_value FROM raw_order_events e, json_each(e.payload,'$.items') i GROUP BY e.event_id) SELECT t.value AS tag, COUNT(*) AS tagged_orders, ROUND(SUM(v.order_value),2) ..."
+      ],
+      "why": "Double-flatten fan-out is the semi-structured version of the join fan-out from Module 2 \u2014 and it inflates revenue silently.",
+      "recall": {
+        "q": "Why aggregate items before flattening tags?",
+        "a": "Because items \u00d7 tags is a cross product per event; aggregating first keeps one row per order."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "WITH order_value AS (SELECT e.event_id, SUM(i.value:qty::INT * i.value:price::NUMBER(10,2)) AS order_value FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:items) i GROUP BY 1) SELECT t.value::STRING AS tag, COUNT(*) AS tagged_orders, ROUND(SUM(v.order_value), 2) AS gross_revenue FROM raw_order_events e, LATERAL FLATTEN(input => e.payload:tags) t JOIN order_value v ON v.event_id = e.event_id JOIN orders o ON o.order_id = e.payload:order_id::INT WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "tag",
+        "tagged_orders",
+        "gross_revenue"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 6,
+      "title": "Reconcile JSON lines with order_items",
+      "question": "Finance sign-off: do the flattened JSON lines tie out to order_items, order by order?",
+      "tables": [
+        "raw_order_events",
+        "order_items"
+      ],
+      "prompt": "Compare every event's order with order_items and return ONE row with: orders_compared (number of events, 60), orders_matching (events whose JSON line count, total qty and value ROUND(SUM(qty*price),2) all equal those of order_items for the same order_id \u2014 an order with no lines on both sides counts as matching), json_total_value and table_total_value (sum of all line values on each side, rounded to 2 decimals; all orders, no status filter).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate each side to one row per order_id first (two CTEs), then join them.",
+        "Order 60 has an empty items array and no order_items rows: use LEFT JOINs and COALESCE(\u2026, 0) so it compares 0 = 0.",
+        "WITH json_side AS (... LEFT JOIN json_each(e.payload,'$.items') i ON 1=1 GROUP BY order_id), table_side AS (... FROM order_items GROUP BY order_id) SELECT COUNT(*) AS orders_compared, SUM(CASE WHEN ... THEN 1 ELSE 0 END) AS orders_matching, ..."
+      ],
+      "why": "Reconciliation queries (counts, sums, per-key matches) are how you earn trust in a new pipeline. Notice the JSON even reproduces the duplicate lines 149/150 \u2014 tying out proves consistency, not correctness.",
+      "recall": {
+        "q": "Why compare per order instead of only grand totals?",
+        "a": "Offsetting errors can make totals match while individual orders differ; per-key matching catches them."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same CTE structure with LATERAL FLATTEN(input => e.payload:items, OUTER => TRUE). In Snowflake you'd typically write the mismatch list with a FULL OUTER JOIN of the two aggregates and `WHERE j.value IS DISTINCT FROM t.value`.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "orders_compared",
+        "orders_matching",
+        "json_total_value",
+        "table_total_value"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 7,
+      "title": "Walk a whole document (RECURSIVE flatten)",
+      "question": "Platform team: list every leaf value in event 4's payload with its full path, to document the schema.",
+      "tables": [
+        "raw_order_events"
+      ],
+      "prompt": "Use json_tree on event 4's payload and return path (the fullkey column, e.g. $.customer.id) and leaf_value (the atom column) for every element that is NOT an object or array.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "json_tree walks every nested level (json_each only one level).",
+        "Its columns include fullkey (full path), type and atom (the scalar value).",
+        "SELECT t.fullkey AS path, t.atom AS leaf_value FROM raw_order_events e, json_tree(e.payload) t WHERE e.event_id = 4 AND t.type NOT IN ('object','array');"
+      ],
+      "why": "Recursive flattening is the fastest way to document an unfamiliar JSON source \u2014 or to diff two versions of a payload schema. (SQLite quotes some keys in fullkey, e.g. $.\"order_id\" \u2014 that is still a valid path.)",
+      "recall": {
+        "q": "Snowflake equivalent of json_tree?",
+        "a": "LATERAL FLATTEN(input => doc, RECURSIVE => TRUE)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT f.path, f.value AS leaf_value FROM raw_order_events e, LATERAL FLATTEN(input => e.payload, RECURSIVE => TRUE) f WHERE e.event_id = 4 AND TYPEOF(f.value) NOT IN ('OBJECT','ARRAY');",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "path",
+        "leaf_value"
+      ],
+      "expected_row_count": 17
+    }
+  ],
+  "worked_example": {
+    "question": "Explode event 4's items and tags to see what json_each returns.",
+    "sql": "SELECT 'item' AS array_name, i.key, i.value, i.type\nFROM raw_order_events e, json_each(e.payload, '$.items') i\nWHERE e.event_id = 4\nUNION ALL\nSELECT 'tag', t.key, t.value, t.type\nFROM raw_order_events e, json_each(e.payload, '$.tags') t\nWHERE e.event_id = 4;",
+    "explanation": "Each array element becomes a row: `key` is its position, `value` the element (a JSON object for items, a plain string for tags), `type` its JSON type. Snowflake's FLATTEN returns the same idea as columns SEQ, KEY, PATH, INDEX, VALUE, THIS.",
+    "columns": [
+      "array_name",
+      "key",
+      "value",
+      "type"
+    ],
+    "rows": [
+      [
+        "item",
+        0,
+        "{\"product_id\":15,\"qty\":3,\"price\":42.0}",
+        "object"
+      ],
+      [
+        "item",
+        1,
+        "{\"product_id\":14,\"qty\":1,\"price\":22.0}",
+        "object"
+      ],
+      [
+        "item",
+        2,
+        "{\"product_id\":20,\"qty\":2,\"price\":25.0}",
+        "object"
+      ],
+      [
+        "tag",
+        0,
+        "gift",
+        "text"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: flatten an array in 4 moves**\n\n1. **Put the table-valued function next to the table:** `FROM raw_order_events e, json_each(e.payload, '$.items') i`.\n   For every event, `json_each` produces one row per array element (it can see `e` \u2014 that's what LATERAL means).\n2. **Read the element:** `i.value ->> '$.qty'` for object elements, `i.value` for scalar elements (tags),\n   `i.key` = 0-based position.\n3. **Keep parents with no elements** when they matter: `LEFT JOIN json_each(e.payload, '$.tags') t ON 1 = 1`\n   (Snowflake: `FLATTEN(..., OUTER => TRUE)`). An inner flatten silently drops events whose array is empty or missing.\n4. **Never flatten two independent arrays in one FROM** unless you want the cross product (items \u00d7 tags).\n   Aggregate one array first (CTE), then join.\n\n```sql\nSELECT e.event_id,\n       i.key                       AS line_no,\n       i.value ->> '$.product_id'  AS product_id,\n       i.value ->> '$.qty'         AS qty\nFROM raw_order_events AS e,\n     json_each(e.payload, '$.items') AS i;\n```",
+  "snowflake_notes": "```sql\n-- One row per item\nSELECT e.event_id,\n       e.payload:order_id::INT        AS order_id,\n       i.index                        AS line_no,\n       i.value:product_id::INT        AS product_id,\n       i.value:qty::INT               AS qty,\n       i.value:price::NUMBER(10,2)    AS price\nFROM raw_order_events e,\n     LATERAL FLATTEN(input => e.payload:items) i;\n\n-- Keep events without tags (OUTER => TRUE emits one row with NULL value)\nSELECT e.event_id, t.value::STRING AS tag\nFROM raw_order_events e,\n     LATERAL FLATTEN(input => e.payload:tags, OUTER => TRUE) t;\n\n-- Walk the whole document (\u2248 json_tree)\nSELECT f.path, f.key, f.value\nFROM raw_order_events e,\n     LATERAL FLATTEN(input => e.payload, RECURSIVE => TRUE) f\nWHERE e.event_id = 4 AND TYPEOF(f.value) NOT IN ('OBJECT','ARRAY');\n```\n\n- FLATTEN output columns: `SEQ`, `KEY` (object key), `PATH`, `INDEX` (array position), `VALUE` (VARIANT), `THIS`.\n- `LATERAL` is optional with FLATTEN (`, TABLE(FLATTEN(...))` works too) but makes intent explicit.\n- **Pruning note:** FLATTEN runs on every row it's fed \u2014 filter the base table first (e.g. on `received_at`) so\n  micro-partition pruning cuts the input before the explosion.\n- Common production pattern: a staging view that flattens once (`stg_order_lines`), so every analyst doesn't\n  re-implement FLATTEN with subtly different filters.",
+  "common_mistakes": [
+    "Inner-flattening an optional array and losing the parent rows (forgetting OUTER => TRUE / LEFT JOIN \u2026 ON 1=1).",
+    "Flattening two arrays in one FROM and multiplying rows (items \u00d7 tags).",
+    "Reading i.value as a number when it is an object \u2014 use i.value ->> '$.qty' (Snowflake i.value:qty::INT).",
+    "Counting COUNT(*) after a LEFT flatten \u2014 empty arrays still give 1 row; count COUNT(i.key) instead.",
+    "Flattening the whole raw table before filtering it \u2014 filter first, then explode."
+  ],
+  "recall": [
+    [
+      "What does LATERAL mean?",
+      "The right-hand table expression may reference columns of tables to its left, row by row."
+    ],
+    [
+      "SQLite equivalent of LATERAL FLATTEN(input => e.payload:items) i?",
+      "json_each(e.payload, '$.items') AS i in the FROM clause."
+    ],
+    [
+      "How do you keep events whose tags array is missing?",
+      "LEFT JOIN json_each(...) ON 1=1 / FLATTEN(..., OUTER => TRUE)."
+    ]
+  ],
+  "review_next": "Lesson 45 is about readability: turning long nested queries (like the reconciliation above) into clean CTE pipelines that a reviewer can check step by step."
+}

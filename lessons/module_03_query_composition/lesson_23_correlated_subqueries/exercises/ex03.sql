@@ -1,0 +1,19 @@
+-- Lesson 23 · Exercise 23.3 — Lines sold below the product's typical price
+--
+-- BUSINESS QUESTION
+--   Sales ops wants order lines where the product sold below its own average selling
+--   price.
+-- TABLES: orders, order_items
+-- TASK
+--   Considering only lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return
+--   order_item_id, product_id, unit_price and avg_product_price (the average unit_price of
+--   that same product over all valid-order lines, rounded to 2 decimals) for lines whose
+--   unit_price is below that average.
+-- REQUIRED COLUMNS: order_item_id, product_id, unit_price, avg_product_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.3
+-- Grade it:              python3 sqlm.py submit 23.3
+--
+-- Write your query below (from memory!):
+

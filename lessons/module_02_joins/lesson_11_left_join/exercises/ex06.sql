@@ -1,0 +1,26 @@
+-- Lesson 11 · Exercise 11.6 — Last valid order per customer (and days since)
+--
+-- BUSINESS QUESTION
+--   Retention wants each customer's most recent VALID order and how long ago it was, as of
+--   2025-12-31.
+-- TABLES: customers, orders
+-- TASK
+--   For all 20 customers return customer_id, name, last_order_date (latest order_date
+--   among their valid orders: order_status IN ('completed','shipped','returned'); NULL if
+--   none) and days_since_last_order (whole days from last_order_date to '2025-12-31':
+--   CAST(julianday('2025-12-31') - julianday(last_order_date) AS INTEGER); NULL if none).
+-- REQUIRED COLUMNS: customer_id, name, last_order_date, days_since_last_order
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.6
+-- Grade it:              python3 sqlm.py submit 11.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

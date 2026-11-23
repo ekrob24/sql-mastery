@@ -1,0 +1,18 @@
+-- Lesson 29 · Exercise 29.5 — Days from signup to first purchase
+--
+-- BUSINESS QUESTION
+--   Growth wants to know how quickly new customers convert: days from signup to their
+--   first valid order.
+-- TABLES: customers, orders
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'). For every
+--   customer in the customers table who has at least one valid order, return customer_id,
+--   signup_date, first_order_date (earliest valid order_date) and days_to_first_order
+--   (integer days from signup_date to first_order_date).
+-- REQUIRED COLUMNS: customer_id, signup_date, first_order_date, days_to_first_order
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.5
+-- Grade it:              python3 sqlm.py submit 29.5
+--
+-- Write your query below (from memory!):
+

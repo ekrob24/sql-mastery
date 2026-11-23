@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.1 — Price sheet, most expensive first
+--
+-- BUSINESS QUESTION
+--   Sales wants the catalog sorted from most to least expensive.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name and list_price for all products, sorted by list_price
+--   descending, then product_id ascending for ties. Keep SQLite's default NULL placement
+--   (the product with a NULL price ends up last in a DESC sort).
+-- REQUIRED COLUMNS: product_id, product_name, list_price
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.1
+-- Grade it:              python3 sqlm.py submit 4.1
+--
+-- Write your query below (from memory!):
+

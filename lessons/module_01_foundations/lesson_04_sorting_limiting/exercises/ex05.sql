@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.5 — Paging through customers
+--
+-- BUSINESS QUESTION
+--   The CRM screen shows 5 customers per page, oldest sign-ups first. What's on page 2?
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name and signup_date for page 2 of the customer list when
+--   customers are sorted by signup_date ascending, then customer_id ascending, with 5
+--   customers per page (i.e. rows 6–10).
+-- REQUIRED COLUMNS: customer_id, name, signup_date
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.5
+-- Grade it:              python3 sqlm.py submit 4.5
+--
+-- Write your query below (from memory!):
+

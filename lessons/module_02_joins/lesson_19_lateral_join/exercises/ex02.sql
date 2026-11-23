@@ -1,0 +1,25 @@
+-- Lesson 19 · Exercise 19.2 — Latest order details (top-1 row per customer)
+--
+-- BUSINESS QUESTION
+--   For each customer, show their latest order's id, date and status.
+-- TABLES: customers, orders
+-- TASK
+--   Return all 20 customers with columns customer_id, name, latest_order_id,
+--   latest_order_date and latest_order_status, taken from the customer's order with the
+--   latest order_date (ties broken by the higher order_id). NULLs for customers without
+--   orders.
+-- REQUIRED COLUMNS: customer_id, name, latest_order_id, latest_order_date, latest_order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.2
+-- Grade it:              python3 sqlm.py submit 19.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

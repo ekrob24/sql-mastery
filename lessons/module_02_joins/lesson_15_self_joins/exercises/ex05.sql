@@ -1,0 +1,24 @@
+-- Lesson 15 · Exercise 15.5 — Two levels up the category tree
+--
+-- BUSINESS QUESTION
+--   For the deeper categories, the product team wants the full path: category, parent and
+--   grandparent.
+-- TABLES: categories
+-- TASK
+--   Return only categories that have a grandparent, with columns category_name,
+--   parent_name and grandparent_name.
+-- REQUIRED COLUMNS: category_name, parent_name, grandparent_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.5
+-- Grade it:              python3 sqlm.py submit 15.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

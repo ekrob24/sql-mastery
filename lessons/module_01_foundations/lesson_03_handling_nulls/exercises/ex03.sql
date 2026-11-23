@@ -1,0 +1,16 @@
+-- Lesson 3 · Exercise 3.3 — COUNT(*) versus COUNT(email)
+--
+-- BUSINESS QUESTION
+--   What share of our customer base can we actually email?
+-- TABLES: customers
+-- TASK
+--   Return one row with columns total_customers (all customer rows), customers_with_email
+--   (customers whose email is not NULL) and customers_missing_email (customers whose email
+--   is NULL). Use COUNT(*) and COUNT(email) — no WHERE clause.
+-- REQUIRED COLUMNS: total_customers, customers_with_email, customers_missing_email
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.3
+-- Grade it:              python3 sqlm.py submit 3.3
+--
+-- Write your query below (from memory!):
+

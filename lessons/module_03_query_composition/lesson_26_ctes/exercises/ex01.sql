@@ -1,0 +1,17 @@
+-- Lesson 26 · Exercise 26.1 — Valid orders per customer
+--
+-- BUSINESS QUESTION
+--   Rewrite the classic: how many valid orders has each customer_id placed?
+-- TABLES: orders
+-- TASK
+--   Define a CTE valid_orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), then return
+--   customer_id and valid_order_count for every customer_id that appears in it
+--   (orders.customer_id, so 99 is included).
+-- REQUIRED COLUMNS: customer_id, valid_order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.1
+-- Grade it:              python3 sqlm.py submit 26.1
+--
+-- Write your query below (from memory!):
+

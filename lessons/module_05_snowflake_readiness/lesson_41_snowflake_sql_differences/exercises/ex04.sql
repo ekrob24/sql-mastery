@@ -1,0 +1,22 @@
+-- Lesson 41 · Exercise 41.4 — DATE_TRUNC and :: casts in a monthly revenue query
+--
+-- BUSINESS QUESTION
+--   Finance's Snowflake query: `SELECT DATE_TRUNC('month', o.order_date)::DATE AS
+--   order_month, COUNT(DISTINCT o.order_id) AS valid_orders, SUM(oi.quantity *
+--   oi.unit_price)::NUMBER(12,2) AS gross_revenue FROM orders o JOIN order_items oi ON
+--   oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')
+--   AND o.order_date >= '2025-01-01'::DATE GROUP BY 1`.
+-- TABLES: orders, order_items
+-- TASK
+--   Return order_month (first day of the month, 'YYYY-MM-01'), valid_orders (distinct
+--   orders) and gross_revenue (rounded to 2 decimals) per month for orders dated on or
+--   after '2025-01-01'. Valid orders = order_status IN ('completed','shipped','returned');
+--   gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never
+--   products.list_price).
+-- REQUIRED COLUMNS: order_month, valid_orders, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.4
+-- Grade it:              python3 sqlm.py submit 41.4
+--
+-- Write your query below (from memory!):
+

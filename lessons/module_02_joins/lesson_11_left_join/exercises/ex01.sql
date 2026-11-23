@@ -1,0 +1,24 @@
+-- Lesson 11 · Exercise 11.1 — Every customer's order count
+--
+-- BUSINESS QUESTION
+--   Customer success wants an order count for EVERY customer, including those who never
+--   ordered.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name and order_count (orders of any status; 0 when none) for all
+--   20 customers.
+-- REQUIRED COLUMNS: customer_id, name, order_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.1
+-- Grade it:              python3 sqlm.py submit 11.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

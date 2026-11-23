@@ -1,0 +1,18 @@
+-- Lesson 44 · Exercise 44.5 — Revenue by tag without the items × tags fan-out
+--
+-- BUSINESS QUESTION
+--   Marketing: how much gross revenue came from orders carrying each tag?
+-- TABLES: raw_order_events, orders
+-- TASK
+--   Return tag, tagged_orders (number of valid orders with that tag) and gross_revenue
+--   (sum over those orders of the JSON items' qty * price, rounded to 2 decimals). Valid
+--   orders = order_status IN ('completed','shipped','returned') in the orders table.
+--   Careful: flattening tags and items in the same FROM multiplies rows — compute each
+--   order's value first.
+-- REQUIRED COLUMNS: tag, tagged_orders, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.5
+-- Grade it:              python3 sqlm.py submit 44.5
+--
+-- Write your query below (from memory!):
+

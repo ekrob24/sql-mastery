@@ -1,0 +1,16 @@
+-- Lesson 8 · Exercise 8.3 — Find the duplicate order lines
+--
+-- BUSINESS QUESTION
+--   Data engineering suspects some order lines were loaded twice. Which ones?
+-- TABLES: order_items
+-- TASK
+--   Return order_id, product_id, quantity, unit_price, copies (number of rows with that
+--   exact combination) and last_order_item_id (the highest order_item_id among the
+--   copies), only for combinations that appear more than once.
+-- REQUIRED COLUMNS: order_id, product_id, quantity, unit_price, copies, last_order_item_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 8.3
+-- Grade it:              python3 sqlm.py submit 8.3
+--
+-- Write your query below (from memory!):
+

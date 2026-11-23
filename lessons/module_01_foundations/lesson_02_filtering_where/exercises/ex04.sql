@@ -1,0 +1,17 @@
+-- Lesson 2 · Exercise 2.4 — Precedence trap: bulk headphone or monitor lines
+--
+-- BUSINESS QUESTION
+--   Which order lines sold 2 or more units of product 4 (headphones) or product 5
+--   (monitor)?
+-- TABLES: order_items
+-- TASK
+--   Return order_item_id, order_id, product_id and quantity for order lines where
+--   product_id is 4 or 5 AND quantity is at least 2. (The quantity condition applies to
+--   both products.)
+-- REQUIRED COLUMNS: order_item_id, order_id, product_id, quantity
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.4
+-- Grade it:              python3 sqlm.py submit 2.4
+--
+-- Write your query below (from memory!):
+

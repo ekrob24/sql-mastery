@@ -1,0 +1,328 @@
+{
+  "number": 14,
+  "slug": "multi_table_joins",
+  "title": "Joining three or more tables",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Chain joins across the whole warehouse (customers \u2192 orders \u2192 order_items \u2192 products \u2192 suppliers, returns), choosing the right join type at every step, and avoid fan-out and accidental INNER-ing of outer joins.",
+  "context": "Real questions cross the whole model: revenue by category, refunds by supplier, customer value. Each extra join is another chance to drop or multiply rows, so the finance team wants every multi-table query reconciled against a known total.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Gross revenue by category",
+      "question": "The CFO wants gross revenue by product category.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return category, order_lines (number of order lines counted) and gross_revenue rounded to 2 decimals, one row per category (NULL category is its own group). Gross revenue = SUM(quantity * unit_price) over the order_items of VALID orders, i.e. orders with order_status IN ('completed','shipped','returned') (cancelled and pending are excluded).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Status lives in orders, money in order_items, category in products \u2014 three tables, two keys.",
+        "orders JOIN order_items ON order_id, then JOIN products ON product_id; filter valid statuses in WHERE.",
+        "FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE o.order_status IN (...) GROUP BY p.category"
+      ],
+      "why": "Revenue-by-dimension is the most common shape of a finance query. Reconcile: the categories must sum to the total.",
+      "recall": {
+        "q": "Which join in this chain multiplies rows and which does not?",
+        "a": "orders \u2192 order_items multiplies (one-to-many); order_items \u2192 products is a lookup (many-to-one) and does not."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items, products",
+        "shared_key": "order_id, product_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "orders (60) \u2192 order_items: 150 rows (one-to-many; order 60 has no lines and drops). \u2192 products: still 150 (each line has exactly one product). WHERE keeps the 134 lines of the 53 valid orders. Grouped: 6 rows, summing to 13,035.69. The NULL category (product 20 'Mystery Gift Box', 13 lines, 503.75) comes from the products data, not from the join. INNER is safe: every line has an order and a product (order 31's lines are included \u2014 we never joined customers).",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "order_lines",
+        "gross_revenue"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 2,
+      "title": "Line detail for the latest orders",
+      "question": "Customer service wants a readable list of every line in orders placed from 2025-11-01 onward.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "For orders with order_date >= '2025-11-01' (any status), return order_id, order_date, customer_name, product_name, quantity and line_total (quantity * unit_price) \u2014 one row per order line.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Driving table: orders (filtered by date). Three lookups/expansions hang off it.",
+        "customers on customer_id, order_items on order_id, products on product_id.",
+        "FROM orders o JOIN customers c ON ... JOIN order_items oi ON ... JOIN products p ON ... WHERE o.order_date >= '2025-11-01'"
+      ],
+      "why": "Four-table detail queries power order-status pages and support tools; each join must be justified.",
+      "recall": {
+        "q": "Order 60 is dated 2025-12-27. Why is it missing?",
+        "a": "It has no order_items; the INNER JOIN to order_items drops it."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "customers, order_items, products",
+        "shared_key": "customer_id, order_id, product_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "5 orders are dated on/after 2025-11-01 (56, 57, 58, 59, 60). Joining customers keeps all 5 (all have real customers). Joining order_items expands to 12 rows (3 + 2 + 5 + 2 + 0 lines) \u2014 order 60 (pending, no lines) drops out silently. products is a lookup, so the result stays 12 rows; order 58's customer name repeats 5 times.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "customer_name",
+        "product_name",
+        "quantity",
+        "line_total"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 3,
+      "title": "Customer value: orders and revenue (avoid fan-out)",
+      "question": "Account management wants each customer's number of valid orders and gross revenue.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return customer_id, name, valid_orders (number of DISTINCT valid orders) and gross_revenue rounded to 2 decimals, for customers in the customers table who have at least one valid order with items. Gross revenue = SUM(quantity * unit_price) over the order_items of VALID orders, i.e. orders with order_status IN ('completed','shipped','returned') (cancelled and pending are excluded).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "After joining order_items you're at LINE grain \u2014 each order appears once per line.",
+        "COUNT(o.order_id) would count lines; you need COUNT(DISTINCT o.order_id).",
+        "SELECT c.customer_id, c.name, COUNT(DISTINCT o.order_id) AS valid_orders, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue FROM customers c JOIN orders o ON ... JOIN order_items oi ON ... WHERE ... GROUP BY c.customer_id, c.name"
+      ],
+      "why": "Fan-out is the most common silent error in multi-table SQL: counts of the 'one' side get inflated by the 'many' side.",
+      "recall": {
+        "q": "Customer 1 has 8 valid orders and 17 lines. What does COUNT(o.order_id) return after joining order_items?",
+        "a": "17 \u2014 one per line. COUNT(DISTINCT o.order_id) returns 8."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders, order_items",
+        "shared_key": "customer_id, order_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "customers 20 \u2192 orders: 59 rows (order 31 is orphaned) \u2192 order_items: 148 rows; WHERE keeps 132 valid lines from 52 valid orders. Grouped: 16 customers. Fan-out example: customer 1 has 8 valid orders but 17 lines \u2014 plain COUNT would say 17. Missing: customers 18\u201320 (no orders), customer 16 (only a cancelled order) and the 363.30 of order 31, so the customers sum to 12,672.39 instead of the 13,035.69 total.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "valid_orders",
+        "gross_revenue"
+      ],
+      "expected_row_count": 16
+    },
+    {
+      "number": 4,
+      "title": "Return details across five tables",
+      "question": "Quality wants every return with who bought it, what it was and which supplier made it \u2014 no return may be dropped.",
+      "tables": [
+        "returns",
+        "order_items",
+        "orders",
+        "customers",
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Return return_id, return_date, customer_name, product_name, supplier_name and refund_amount for all 10 returns. customer_name / supplier_name are NULL when the customer / supplier is missing.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Drive from returns; every hop is a parent lookup, so the row count can only stay at 10 or shrink.",
+        "Which lookups can fail? Check products 21/22 (no valid supplier). Use LEFT JOIN where a match may be missing.",
+        "FROM returns r JOIN order_items oi ON ... JOIN orders o ON ... LEFT JOIN customers c ON ... JOIN products p ON ... LEFT JOIN suppliers s ON s.supplier_id = p.supplier_id"
+      ],
+      "why": "When the driving table must fully survive, any lookup that can fail must be a LEFT JOIN \u2014 one stray INNER JOIN at the end of a chain quietly deletes rows.",
+      "recall": {
+        "q": "How many returns would you get with INNER JOIN suppliers, and why?",
+        "a": "8 \u2014 returns 3 (product 22, NULL supplier) and 10 (product 21, supplier 9 missing) would be dropped."
+      },
+      "join_plan": {
+        "left_table": "returns",
+        "right_table": "order_items, orders, customers, products, suppliers",
+        "shared_key": "order_item_id, order_id, customer_id, product_id, supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "INNER JOIN + LEFT JOIN"
+        ]
+      },
+      "join_notes": "returns 10 rows. Every hop looks up a parent by its primary key, so nothing multiplies: 10 rows all the way. order_items, orders and products always match. customers also always matches here (no return is on order 31), so its LEFT JOIN is just a safety net. suppliers does NOT: return 3 (product 22 'Phone Stand', NULL supplier_id) and return 10 (product 21 'Water Bottle', supplier 9) get supplier_name NULL. An INNER JOIN to suppliers would silently drop them and 27.00 of refunds.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "return_id",
+        "return_date",
+        "customer_name",
+        "product_name",
+        "supplier_name",
+        "refund_amount"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 5,
+      "title": "Net revenue by category",
+      "question": "Finance wants gross revenue, refunds and net revenue by category.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "returns"
+      ],
+      "prompt": "Return category, gross_revenue, refunds (SUM of returns.refund_amount; 0 when none) and net_revenue (gross_revenue - refunds), all rounded to 2 decimals, one row per category (NULL category is its own group). Gross revenue = SUM(quantity * unit_price) over the order_items of VALID orders, i.e. orders with order_status IN ('completed','shipped','returned') (cancelled and pending are excluded). Refunds are matched to order lines via order_item_id.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Most lines have no return \u2014 they must still count toward gross revenue \u2192 LEFT JOIN returns.",
+        "Each line has at most one return, so the LEFT JOIN cannot double-count line revenue. COALESCE the refunds.",
+        "... JOIN products p ON ... LEFT JOIN returns r ON r.order_item_id = oi.order_item_id WHERE ... GROUP BY p.category"
+      ],
+      "why": "Net revenue is the number finance actually reports. Getting the join type wrong on returns either wipes out gross revenue (INNER) or double-counts it (if returns could have several rows per line).",
+      "recall": {
+        "q": "What would INNER JOIN returns do to gross_revenue?",
+        "a": "It would keep only the 10 returned lines, so gross_revenue would be the revenue of returned lines only."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items, products, returns",
+        "shared_key": "order_id, product_id, order_item_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "INNER JOIN + LEFT JOIN"
+        ]
+      },
+      "join_notes": "orders \u2192 order_items \u2192 products gives 150 lines; WHERE keeps 134 valid lines. The LEFT JOIN to returns matches 10 of them and NULL-pads 124 \u2014 still 134 rows, because order_item_id is unique in returns (no multiplication). Totals: gross 13,035.69, refunds 690.80, net 12,344.89. The NULL category has no returns, so its refunds are 0 only thanks to COALESCE (otherwise net would be NULL). INNER JOIN returns would shrink gross to just the 10 returned lines.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "gross_revenue",
+        "refunds",
+        "net_revenue"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 6,
+      "title": "Supplier scorecard (all suppliers, outer-joined chain)",
+      "question": "Procurement wants a scorecard for ALL 5 suppliers: products listed, products actually sold, and revenue.",
+      "tables": [
+        "suppliers",
+        "products",
+        "order_items",
+        "orders"
+      ],
+      "prompt": "Return supplier_id, supplier_name, products_listed (distinct products referencing the supplier), products_sold (distinct products of that supplier with at least one line in a valid order) and gross_revenue rounded to 2 decimals (0 when none), for all 5 suppliers. Gross revenue = SUM(quantity * unit_price) over the order_items of VALID orders, i.e. orders with order_status IN ('completed','shipped','returned') (cancelled and pending are excluded).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Every supplier must survive, so every hop after suppliers must be a LEFT JOIN \u2014 and the status filter must sit in ON.",
+        "Lines of invalid orders still arrive (o.* NULL); count/sum them only WHEN o.order_id IS NOT NULL. Alternatively pre-aggregate valid revenue per product in a CTE and LEFT JOIN it.",
+        "FROM suppliers s LEFT JOIN products p ON ... LEFT JOIN order_items oi ON ... LEFT JOIN orders o ON o.order_id = oi.order_id AND o.order_status IN (...) ... COUNT(DISTINCT p.product_id), COUNT(DISTINCT CASE WHEN o.order_id IS NOT NULL THEN p.product_id END), SUM(CASE WHEN o.order_id IS NOT NULL THEN ... END)"
+      ],
+      "why": "Scorecards must list every entity, including the ones with nothing to report. That forces an all-LEFT chain with filters in ON \u2014 the hardest join shape to get right, and the most common in real dashboards.",
+      "recall": {
+        "q": "Why can't the status filter go in WHERE here?",
+        "a": "Supplier 5 (no products) and lines of invalid orders have NULL o.order_status; WHERE would delete supplier 5 entirely."
+      },
+      "join_plan": {
+        "left_table": "suppliers",
+        "right_table": "products, order_items, orders",
+        "shared_key": "supplier_id, product_id, order_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "suppliers 5 \u2192 products: 24 rows (23 products + NULL row for supplier 5). \u2192 order_items: 144 rows (one-to-many: each product repeats once per line; never-sold products 23, 24, 25 keep one NULL-padded row each). \u2192 orders with the status filter in ON: still 144 rows, but 20 have NULL order columns: 16 lines of cancelled/pending orders rejected by the ON filter plus the 4 padded rows. Result: 5 suppliers; Andes Trading shows 0 / 0 / 0.00. Revenues sum to 12,840.69, not 13,035.69: the 195.00 of products 21 (supplier 9) and 22 (NULL supplier) belongs to no listed supplier \u2014 that's what 'driving from suppliers' means.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name",
+        "products_listed",
+        "products_sold",
+        "gross_revenue"
+      ],
+      "expected_row_count": 5
+    }
+  ],
+  "worked_example": {
+    "question": "Show the order lines of order 41 with customer name and product name.",
+    "sql": "SELECT o.order_id,\n       c.name         AS customer_name,\n       p.product_name,\n       oi.quantity,\n       oi.unit_price\nFROM orders AS o\nJOIN customers   AS c  ON c.customer_id = o.customer_id\nJOIN order_items AS oi ON oi.order_id   = o.order_id\nJOIN products    AS p  ON p.product_id  = oi.product_id\nWHERE o.order_id = 41;",
+    "explanation": "Order 41 \u2192 1 customer (lookup) \u2192 its lines (one-to-many) \u2192 1 product per line (lookup). The row count equals the number of lines of order 41. Note product 21 'Water Bottle' appears even though its supplier is broken \u2014 we never joined suppliers.",
+    "columns": [
+      "order_id",
+      "customer_name",
+      "product_name",
+      "quantity",
+      "unit_price"
+    ],
+    "rows": [
+      [
+        41,
+        "Liam O'Brien",
+        "Water Bottle",
+        1,
+        15
+      ]
+    ]
+  },
+  "recipe": "**The join recipe \u2014 do it in this order, every time, before typing SQL**\n\n1. **Pick the driving table.** Which table's rows is the answer *about*? (\"every customer\u2026\", \"each order line\u2026\")\n   That table goes first, after `FROM` \u2014 it is the **left table**.\n2. **Name the right table(s) and the shared key.** What column links them? Is it PK \u2192 FK (one-to-many) or\n   one-to-one? Which side is the \"many\" side?\n3. **Ask: \"must every row of the left table survive, even with no match?\"**\n   - no \u2192 `INNER JOIN` (unmatched rows silently disappear)\n   - yes \u2192 `LEFT JOIN` (unmatched rows stay, right-side columns become NULL)\n   - rows from *both* sides must survive \u2192 `FULL OUTER JOIN`\n4. **Predict the row count before you run it.** Count the inputs (`SELECT COUNT(*) \u2026`), think about\n   matches per row (0, 1 or many), write your guess down \u2014 then run and compare. A surprise means\n   you misunderstood the grain, the key or the data.\n\n**Chaining joins: walk the key path, one hop at a time**\n\n```\ncustomers \u2500customer_id\u2500 orders \u2500order_id\u2500 order_items \u2500product_id\u2500 products \u2500supplier_id\u2500 suppliers\n                                               \u2514\u2500order_item_id\u2500 returns\n```\n\n1. Pick the driving table (the grain of your answer, or the table that must fully survive).\n2. Add **one** table at a time along the key path. For each hop repeat the recipe: right table, key,\n   \"must rows survive?\" \u2192 join type, **predicted row count after this hop**.\n3. Grain check: joining down a one-to-many path (orders \u2192 order_items) multiplies rows; looking up a\n   parent (order_items \u2192 products) does not. Measures from the 'one' side (counting orders) need\n   `COUNT(DISTINCT ...)` once you are at line grain.\n4. **Once a table is LEFT-joined, everything joined *to it* must be LEFT-joined too** (or filtered in ON) \u2014\n   a later INNER JOIN or a WHERE on it throws the NULL-padded rows away again.\n5. If two child tables both hang off the same parent (e.g. lines and refunds), aggregate each first\n   (CTE), then join the aggregates \u2014 otherwise they multiply each other.\n6. Reconcile: compare your total with a known total (here: gross revenue of valid orders = 13,035.69).\n\n```sql\nSELECT p.category, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue\nFROM   orders      AS o                                  -- hop 0: 60 rows\nJOIN   order_items AS oi ON oi.order_id   = o.order_id   -- hop 1: 150 (one-to-many)\nJOIN   products    AS p  ON p.product_id  = oi.product_id-- hop 2: still 150 (lookup)\nWHERE  o.order_status IN ('completed','shipped','returned')  -- 134 lines\nGROUP  BY p.category;\n```",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Counting orders (or customers) at line grain without DISTINCT \u2014 fan-out inflates the count.",
+    "LEFT JOINing a table and then INNER JOINing (or WHERE-filtering) something hanging off it, which deletes the NULL-padded rows again.",
+    "Joining two different child tables of the same parent (e.g. order_items and returns-per-order) at detail level, multiplying each other \u2014 aggregate first.",
+    "Not reconciling against a known total (13,035.69 gross) \u2014 the fastest way to detect dropped or duplicated rows.",
+    "Joining products \u2192 suppliers with INNER JOIN in a revenue query and silently losing products 21 and 22's revenue."
+  ],
+  "recall": [
+    [
+      "What is the key path from customers to suppliers?",
+      "customers.customer_id \u2192 orders.customer_id; orders.order_id \u2192 order_items.order_id; order_items.product_id \u2192 products.product_id; products.supplier_id \u2192 suppliers.supplier_id."
+    ],
+    [
+      "In a chain, once a table is LEFT-joined, how must tables joined to it be joined?",
+      "Also LEFT (with filters in ON); an INNER join or WHERE on them removes the NULL-padded rows."
+    ],
+    [
+      "Which hops multiply rows?",
+      "Parent \u2192 child hops (one-to-many), e.g. orders \u2192 order_items. Child \u2192 parent lookups do not."
+    ],
+    [
+      "How do you combine two independent one-to-many children safely?",
+      "Aggregate each to the parent's grain first (CTEs), then join the aggregates."
+    ]
+  ],
+  "review_next": "Module 2 continues with more join patterns. Before moving on, re-predict the row count of every hop in exercise 14.6 without running it \u2014 if you can, you understand joins."
+}

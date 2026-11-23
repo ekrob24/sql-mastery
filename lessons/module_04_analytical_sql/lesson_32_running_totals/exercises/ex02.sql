@@ -1,0 +1,16 @@
+-- Lesson 32 · Exercise 32.2 — Customer base over time
+--
+-- BUSINESS QUESTION
+--   Growth wants the cumulative number of signed-up customers after each signup.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, signup_date and customers_to_date (number of customers who signed
+--   up on or before this one, counting in order of signup_date then customer_id), ordered
+--   by signup_date, customer_id.
+-- REQUIRED COLUMNS: customer_id, signup_date, customers_to_date
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.2
+-- Grade it:              python3 sqlm.py submit 32.2
+--
+-- Write your query below (from memory!):
+

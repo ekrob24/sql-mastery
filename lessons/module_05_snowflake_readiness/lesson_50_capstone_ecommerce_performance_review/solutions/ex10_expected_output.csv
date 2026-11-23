@@ -1,0 +1,2 @@
+valid_orders,gross_revenue,refunds,net_revenue,avg_order_value,net_revenue_yoy_growth_pct,active_customers,repeat_purchase_rate_pct,line_return_rate_pct,lapsed_customers
+53,13035.69,690.8,12344.89,245.96,3.7,16,87.5,7.5,13

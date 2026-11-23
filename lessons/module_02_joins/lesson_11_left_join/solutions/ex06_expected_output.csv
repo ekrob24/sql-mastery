@@ -1,0 +1,21 @@
+customer_id,name,last_order_date,days_since_last_order
+1,Alice Johnson,2025-03-04,302
+2,Brian Lee,2025-11-08,53
+3,John Smith,2025-09-21,101
+4,John Smith,2025-07-24,160
+5,Jon Smith,2024-12-21,375
+6,Maria Garcia,2025-05-19,226
+7,Chen Wei,2025-11-21,40
+8,Priya Patel,2024-08-28,490
+9,David Kim,2024-10-01,456
+10,Emma Brown,2025-02-04,330
+11,Lucas Martin,2025-06-06,208
+12,Sofia Rossi,2025-12-06,25
+13,Noah Wilson,2025-01-15,350
+14,Olivia Davis,2025-06-23,191
+15,Liam O'Brien,2025-08-25,128
+16,Ava Thompson,,
+17,Ethan Clark,2025-07-10,174
+18,Mia Lewis,,
+19,alice johnson,,
+20,Zoe Turner,,

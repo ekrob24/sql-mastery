@@ -1,0 +1,19 @@
+-- Lesson 44 · Exercise 44.6 — Reconcile JSON lines with order_items
+--
+-- BUSINESS QUESTION
+--   Finance sign-off: do the flattened JSON lines tie out to order_items, order by order?
+-- TABLES: raw_order_events, order_items
+-- TASK
+--   Compare every event's order with order_items and return ONE row with: orders_compared
+--   (number of events, 60), orders_matching (events whose JSON line count, total qty and
+--   value ROUND(SUM(qty*price),2) all equal those of order_items for the same order_id —
+--   an order with no lines on both sides counts as matching), json_total_value and
+--   table_total_value (sum of all line values on each side, rounded to 2 decimals; all
+--   orders, no status filter).
+-- REQUIRED COLUMNS: orders_compared, orders_matching, json_total_value, table_total_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 44.6
+-- Grade it:              python3 sqlm.py submit 44.6
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 35 · Exercise 35.3 — Quick repeat purchases (LEAD + filter)
+--
+-- BUSINESS QUESTION
+--   Marketing wants every order that was followed by the same customer's next order within
+--   30 days — evidence the welcome-back email works.
+-- TABLES: orders
+-- TASK
+--   Using valid orders only (order_status IN ('completed','shipped','returned')), find
+--   each order's next valid order by the same customer (ordering by order_date then
+--   order_id). Return order_id, customer_id, order_date, next_order_date and
+--   days_to_next_order (integer days) for the orders whose days_to_next_order is 30 or
+--   less.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, next_order_date, days_to_next_order
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 35.3
+-- Grade it:              python3 sqlm.py submit 35.3
+--
+-- Write your query below (from memory!):
+

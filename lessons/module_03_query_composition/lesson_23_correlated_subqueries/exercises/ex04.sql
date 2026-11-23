@@ -1,0 +1,16 @@
+-- Lesson 23 · Exercise 23.4 — Latest order per customer
+--
+-- BUSINESS QUESTION
+--   Support wants the full details of each customer's most recent order.
+-- TABLES: orders
+-- TASK
+--   Return customer_id, order_id, order_date, order_status for each order whose order_date
+--   equals the latest order_date for that same customer_id (any status). Use orders only,
+--   so the orphan customer 99 appears too.
+-- REQUIRED COLUMNS: customer_id, order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.4
+-- Grade it:              python3 sqlm.py submit 23.4
+--
+-- Write your query below (from memory!):
+

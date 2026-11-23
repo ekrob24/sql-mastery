@@ -1,0 +1,27 @@
+-- Lesson 15 · Exercise 15.6 — Each order's previous order
+--
+-- BUSINESS QUESTION
+--   Retention wants, for every order, when the same customer last ordered before it and
+--   how many days had passed.
+-- TABLES: orders
+-- TASK
+--   Return all 60 orders with columns order_id, customer_id, order_date,
+--   previous_order_date (the latest order_date of an earlier order by the same
+--   customer_id, any status; NULL if none) and days_since_previous (whole days between the
+--   two dates as an integer: CAST(julianday(order_date) - julianday(previous_order_date)
+--   AS INTEGER); NULL if no previous order).
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, previous_order_date, days_since_previous
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.6
+-- Grade it:              python3 sqlm.py submit 15.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

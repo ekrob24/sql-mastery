@@ -1,0 +1,19 @@
+-- Lesson 23 · Exercise 23.6 — Customers whose spend grew in 2025
+--
+-- BUSINESS QUESTION
+--   The account team wants customers who spent more in 2025 than in 2024.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return
+--   customer_id, name, spend_2024 and spend_2025 (by order_date year, 0 when none, rounded
+--   to 2 decimals) for customers in the customers table whose spend_2025 is greater than
+--   spend_2024. Compute each year's spend with a correlated subquery.
+-- REQUIRED COLUMNS: customer_id, name, spend_2024, spend_2025
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.6
+-- Grade it:              python3 sqlm.py submit 23.6
+--
+-- Write your query below (from memory!):
+

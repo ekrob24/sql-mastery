@@ -1,0 +1,19 @@
+-- Lesson 22 · Exercise 22.5 — Category share of revenue
+--
+-- BUSINESS QUESTION
+--   The board deck needs each category's share of total revenue.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return
+--   category (NULL → 'Uncategorized'), category_revenue (rounded to 2 decimals) and
+--   pct_of_total = 100 * category revenue / total gross revenue, rounded to 1 decimal.
+--   Compute the total in its own derived table.
+-- REQUIRED COLUMNS: category, category_revenue, pct_of_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.5
+-- Grade it:              python3 sqlm.py submit 22.5
+--
+-- Write your query below (from memory!):
+

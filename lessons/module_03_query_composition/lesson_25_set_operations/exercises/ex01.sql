@@ -1,0 +1,16 @@
+-- Lesson 25 · Exercise 25.1 — Every customer ID we know about
+--
+-- BUSINESS QUESTION
+--   Data governance wants the complete set of customer IDs referenced anywhere: the
+--   customer table or orders.
+-- TABLES: customers, orders
+-- TASK
+--   Return a single column customer_id with each distinct customer_id that appears in
+--   customers or in orders (each value once).
+-- REQUIRED COLUMNS: customer_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.1
+-- Grade it:              python3 sqlm.py submit 25.1
+--
+-- Write your query below (from memory!):
+

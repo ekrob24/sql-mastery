@@ -1,0 +1,16 @@
+-- Lesson 25 · Exercise 25.2 — Bought in both years
+--
+-- BUSINESS QUESTION
+--   Retention wants the customers who made valid purchases in both 2024 and 2025.
+-- TABLES: orders
+-- TASK
+--   Return customer_id (from orders) for customers with at least one valid order (valid
+--   orders = order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) dated in 2024 and at least one dated in 2025. Use INTERSECT.
+-- REQUIRED COLUMNS: customer_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.2
+-- Grade it:              python3 sqlm.py submit 25.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 20 · Exercise 20.5 — Category revenue, 2024 vs 2025 side by side
+--
+-- BUSINESS QUESTION
+--   The category managers want this year's and last year's revenue next to each other.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return
+--   category (NULL category shown as 'Uncategorized'), revenue_2024 and revenue_2025 (by
+--   order_date year), each rounded to 2 decimals and showing 0 rather than NULL if a
+--   category had no sales that year.
+-- REQUIRED COLUMNS: category, revenue_2024, revenue_2025
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.5
+-- Grade it:              python3 sqlm.py submit 20.5
+--
+-- Write your query below (from memory!):
+

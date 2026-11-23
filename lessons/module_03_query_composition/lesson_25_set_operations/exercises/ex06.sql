@@ -1,0 +1,16 @@
+-- Lesson 25 · Exercise 25.6 — Region report with a TOTAL row
+--
+-- BUSINESS QUESTION
+--   The regional summary should end with a TOTAL line, like the spreadsheet it replaces.
+-- TABLES: customers
+-- TASK
+--   Return region and customer_count: one row per region (NULL region shown as 'Unknown')
+--   with its number of customers, plus a final row with region = 'TOTAL' and the count of
+--   all customers. Sort region rows alphabetically, with TOTAL last.
+-- REQUIRED COLUMNS: region, customer_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 25.6
+-- Grade it:              python3 sqlm.py submit 25.6
+--
+-- Write your query below (from memory!):
+

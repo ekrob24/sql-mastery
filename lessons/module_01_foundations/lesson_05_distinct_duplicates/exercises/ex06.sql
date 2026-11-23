@@ -1,0 +1,17 @@
+-- Lesson 5 · Exercise 5.6 — De-duplicated lines for two orders
+--
+-- BUSINESS QUESTION
+--   Orders 9 and 38 were loaded with a duplicated line each. Show their distinct line
+--   contents.
+-- TABLES: order_items
+-- TASK
+--   For order_id 9 and 38 only, return the distinct combinations of order_id, product_id,
+--   quantity and unit_price (do NOT include order_item_id), sorted by order_id then
+--   product_id.
+-- REQUIRED COLUMNS: order_id, product_id, quantity, unit_price
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 5.6
+-- Grade it:              python3 sqlm.py submit 5.6
+--
+-- Write your query below (from memory!):
+

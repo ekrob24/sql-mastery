@@ -1,0 +1,18 @@
+-- Lesson 22 · Exercise 22.1 — Average order value
+--
+-- BUSINESS QUESTION
+--   The CFO asks: what is our average order value (AOV)?
+-- TABLES: orders, order_items
+-- TASK
+--   Build one row per valid order (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) with its gross
+--   total (SUM(quantity * unit_price)), then return order_count (number of such orders)
+--   and avg_order_value (average of those totals, rounded to 2 decimals). Orders without
+--   lines don't count.
+-- REQUIRED COLUMNS: order_count, avg_order_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 22.1
+-- Grade it:              python3 sqlm.py submit 22.1
+--
+-- Write your query below (from memory!):
+

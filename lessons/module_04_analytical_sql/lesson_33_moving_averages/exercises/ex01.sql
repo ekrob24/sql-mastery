@@ -1,0 +1,20 @@
+-- Lesson 33 · Exercise 33.1 — 3-month moving average of revenue
+--
+-- BUSINESS QUESTION
+--   The exec dashboard wants a smoothed revenue line: the average of the current and two
+--   previous months.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_month ('YYYY-MM'), gross_revenue and moving_avg_3m (average
+--   gross_revenue of the current month row and the 2 preceding month rows; the first two
+--   months average over the 1–2 rows available), both rounded to 2 decimals, ordered by
+--   order_month. (All 24 months have valid orders.)
+-- REQUIRED COLUMNS: order_month, gross_revenue, moving_avg_3m
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.1
+-- Grade it:              python3 sqlm.py submit 33.1
+--
+-- Write your query below (from memory!):
+

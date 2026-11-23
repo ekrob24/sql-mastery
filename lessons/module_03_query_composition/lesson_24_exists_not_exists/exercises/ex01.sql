@@ -1,0 +1,15 @@
+-- Lesson 24 · Exercise 24.1 — Customers who have ordered
+--
+-- BUSINESS QUESTION
+--   How many of our customers have placed any order at all, and who are they?
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name for customers with at least one order of any status, using
+--   EXISTS.
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.1
+-- Grade it:              python3 sqlm.py submit 24.1
+--
+-- Write your query below (from memory!):
+

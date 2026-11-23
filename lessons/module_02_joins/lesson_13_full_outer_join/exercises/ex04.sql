@@ -1,0 +1,24 @@
+-- Lesson 13 · Exercise 13.4 — Reconciliation scorecard
+--
+-- BUSINESS QUESTION
+--   The data-quality dashboard wants three numbers summarising how customers and orders
+--   line up.
+-- TABLES: customers, orders
+-- TASK
+--   Return a single row with matched_rows (rows of the FULL OUTER JOIN of customers and
+--   orders where both sides exist), customers_without_orders and orders_without_customer.
+-- REQUIRED COLUMNS: matched_rows, customers_without_orders, orders_without_customer
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.4
+-- Grade it:              python3 sqlm.py submit 13.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

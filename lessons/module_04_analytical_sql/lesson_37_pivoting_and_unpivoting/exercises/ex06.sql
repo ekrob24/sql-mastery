@@ -1,0 +1,23 @@
+-- Lesson 37 · Exercise 37.6 — Budget vs actual (unpivot a wide sheet)
+--
+-- BUSINESS QUESTION
+--   Finance pasted its 2025 quarterly budget as a wide sheet. Compare it with actual
+--   revenue, quarter by quarter.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Start your query with this CTE (copy it):
+--   WITH budget(category, q1, q2, q3, q4) AS (VALUES ('Electronics', 600, 600, 700, 800),
+--   ('Home', 300, 300, 300, 400), ('Books', 150, 150, 150, 200))
+--   Unpivot it to (category, quarter, budget) with quarter = 1..4. Actual = 2025 revenue
+--   per category and calendar quarter (Revenue = SUM(quantity * unit_price) from
+--   order_items, counting only valid orders (order_status IN
+--   ('completed','shipped','returned')).); 0 when there was none. Return category, quarter
+--   (integer 1–4), budget, actual (rounded 2) and variance (actual - budget, rounded 2)
+--   for the 12 budget rows. Order by category, quarter.
+-- REQUIRED COLUMNS: category, quarter, budget, actual, variance
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 37.6
+-- Grade it:              python3 sqlm.py submit 37.6
+--
+-- Write your query below (from memory!):
+

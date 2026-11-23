@@ -1,0 +1,20 @@
+-- Lesson 40 · Exercise 40.3 — Net of refunds
+--
+-- BUSINESS QUESTION
+--   Returns eat into margin. Show each product's refunds and margin after refunds.
+-- TABLES: orders, order_items, returns, product_costs
+-- TASK
+--   Valid orders only (order_status IN ('completed','shipped','returned')). Per product
+--   with sales: revenue = SUM(quantity * unit_price), refunds = SUM(returns.refund_amount)
+--   for that product's returned lines (0 if none), net_revenue = revenue - refunds, cogs =
+--   SUM(quantity * unit_cost), net_margin = net_revenue - cogs (we assume returned goods
+--   are written off, so cost stays). Return product_id, revenue, refunds, net_revenue,
+--   net_margin (all rounded to 2) for products that had at least one refund. Order by
+--   refunds descending, then product_id.
+-- REQUIRED COLUMNS: product_id, revenue, refunds, net_revenue, net_margin
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 40.3
+-- Grade it:              python3 sqlm.py submit 40.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,19 @@
+-- Lesson 34 · Exercise 34.4 — Top 2 products per category
+--
+-- BUSINESS QUESTION
+--   Each category manager wants their two best-selling products by revenue.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For each category (exclude NULL category), return the top 2 products by
+--   product_revenue: category, product_id, product_name, product_revenue (rounded to 2
+--   decimals) and rank_in_category (ROW_NUMBER within the category by product_revenue
+--   descending, then product_id ascending). Only rows with rank_in_category <= 2.
+-- REQUIRED COLUMNS: category, product_id, product_name, product_revenue, rank_in_category
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.4
+-- Grade it:              python3 sqlm.py submit 34.4
+--
+-- Write your query below (from memory!):
+

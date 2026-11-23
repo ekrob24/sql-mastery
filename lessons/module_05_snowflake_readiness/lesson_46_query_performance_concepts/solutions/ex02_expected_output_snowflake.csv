@@ -1,0 +1,11 @@
+table_name,row_count,clustering_key,auto_clustering_on
+categories,14,none,NO
+customers,20,none,NO
+orders,60,none,NO
+order_items,150,none,NO
+products,25,none,NO
+product_costs,25,none,NO
+raw_order_events,60,none,NO
+web_events,225,none,NO
+returns,10,none,NO
+suppliers,5,none,NO

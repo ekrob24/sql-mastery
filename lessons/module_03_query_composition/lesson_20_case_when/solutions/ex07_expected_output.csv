@@ -1,0 +1,6 @@
+order_status,order_count
+pending,2
+shipped,2
+completed,48
+returned,3
+cancelled,5

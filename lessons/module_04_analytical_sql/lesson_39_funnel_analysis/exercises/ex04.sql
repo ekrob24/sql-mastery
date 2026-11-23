@@ -1,0 +1,17 @@
+-- Lesson 39 · Exercise 39.4 — Step conversion and drop-off
+--
+-- BUSINESS QUESTION
+--   Where is the biggest leak in the funnel?
+-- TABLES: web_events
+-- TASK
+--   Return stage_number (visit=1 … purchase=5), stage, sessions (distinct sessions
+--   reaching the stage), pct_of_previous (100.0 * sessions / sessions of the previous
+--   stage, rounded to 1 decimal; NULL for visit) and pct_of_visits (100.0 * sessions /
+--   visit sessions, rounded to 1 decimal). Order by stage_number.
+-- REQUIRED COLUMNS: stage_number, stage, sessions, pct_of_previous, pct_of_visits
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 39.4
+-- Grade it:              python3 sqlm.py submit 39.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,23 @@
+-- Lesson 10 · Exercise 10.1 — Product catalogue with supplier
+--
+-- BUSINESS QUESTION
+--   Merchandising wants each product listed with the supplier who provides it.
+-- TABLES: products, suppliers
+-- TASK
+--   Return product_id, product_name, supplier_name and supplier_country
+--   (suppliers.country) for every product that has a matching supplier.
+-- REQUIRED COLUMNS: product_id, product_name, supplier_name, supplier_country
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.1
+-- Grade it:              python3 sqlm.py submit 10.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

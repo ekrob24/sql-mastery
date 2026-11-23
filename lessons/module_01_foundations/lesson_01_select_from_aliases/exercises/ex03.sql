@@ -1,0 +1,15 @@
+-- Lesson 1 · Exercise 1.3 — Price sheet with tax
+--
+-- BUSINESS QUESTION
+--   Finance needs each product's list price and the price including 8% sales tax.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, list_price and price_with_tax (list_price * 1.08
+--   rounded to 2 decimals) for every product.
+-- REQUIRED COLUMNS: product_id, product_name, list_price, price_with_tax
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.3
+-- Grade it:              python3 sqlm.py submit 1.3
+--
+-- Write your query below (from memory!):
+

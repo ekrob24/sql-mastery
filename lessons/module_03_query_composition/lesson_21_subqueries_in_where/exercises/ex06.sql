@@ -1,0 +1,16 @@
+-- Lesson 21 · Exercise 21.6 — Orders that contain a returned item
+--
+-- BUSINESS QUESTION
+--   Customer service wants every order that had at least one item returned, whatever its
+--   status.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Return order_id, order_date, order_status for orders that contain at least one
+--   order_item_id present in returns. Use nested IN subqueries.
+-- REQUIRED COLUMNS: order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.6
+-- Grade it:              python3 sqlm.py submit 21.6
+--
+-- Write your query below (from memory!):
+

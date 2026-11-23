@@ -1,0 +1,16 @@
+-- Lesson 37 · Exercise 37.2 — Order status mix by year
+--
+-- BUSINESS QUESTION
+--   Ops wants to see how the order status mix changed between years.
+-- TABLES: orders
+-- TASK
+--   Using ALL orders (every status), return order_year ('YYYY' text from order_date),
+--   completed, shipped, returned, cancelled, pending (number of orders with that status in
+--   that year; 0 when none) and total_orders. Order by order_year.
+-- REQUIRED COLUMNS: order_year, completed, shipped, returned, cancelled, pending, total_orders
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 37.2
+-- Grade it:              python3 sqlm.py submit 37.2
+--
+-- Write your query below (from memory!):
+

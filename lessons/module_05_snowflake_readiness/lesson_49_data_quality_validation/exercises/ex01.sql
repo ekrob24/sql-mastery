@@ -1,0 +1,19 @@
+-- Lesson 49 · Exercise 49.1 — Orphan foreign keys across the model
+--
+-- BUSINESS QUESTION
+--   Which child rows point at parents that don't exist?
+-- TABLES: orders, customers, products, suppliers, order_items, returns
+-- TASK
+--   Check these relationships: orders.customer_id → customers, products.supplier_id →
+--   suppliers (only non-NULL supplier_id values count as violations), order_items.order_id
+--   → orders, order_items.product_id → products, returns.order_item_id → order_items.
+--   Return relationship (exactly e.g. 'orders.customer_id'), child_id (primary key of the
+--   violating child row) and missing_parent_id (the foreign-key value) for every
+--   violation.
+-- REQUIRED COLUMNS: relationship, child_id, missing_parent_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.1
+-- Grade it:              python3 sqlm.py submit 49.1
+--
+-- Write your query below (from memory!):
+

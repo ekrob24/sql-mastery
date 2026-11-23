@@ -1,0 +1,18 @@
+-- Lesson 20 · Exercise 20.3 — Bucket orders by size
+--
+-- BUSINESS QUESTION
+--   The ops team wants each valid order labelled Small / Medium / Large by its value.
+-- TABLES: orders, order_items
+-- TASK
+--   For each valid order (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) return
+--   order_id, order_total = SUM(quantity * unit_price) rounded to 2 decimals, and
+--   size_bucket: 'Small' when the (unrounded) total is < 100, 'Medium' when < 300,
+--   otherwise 'Large'.
+-- REQUIRED COLUMNS: order_id, order_total, size_bucket
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.3
+-- Grade it:              python3 sqlm.py submit 20.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,22 @@
+-- Lesson 27 · Exercise 27.6 — RFM-lite customer segments
+--
+-- BUSINESS QUESTION
+--   CRM wants a simple recency/frequency/monetary segmentation as of 2025-12-31.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded) and customers
+--   in the customers table with at least one valid order, return customer_id,
+--   days_since_last_order (integer days from the latest valid order_date to '2025-12-31'),
+--   order_count (valid orders), total_spend (rounded to 2 decimals) and segment:
+--   'Champion' if days_since_last_order <= 90 and order_count >= 3; 'At risk' if
+--   days_since_last_order > 180 and total_spend >= 500; 'New' if order_count = 1;
+--   otherwise 'Regular' (test in that order).
+-- REQUIRED COLUMNS: customer_id, days_since_last_order, order_count, total_spend, segment
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.6
+-- Grade it:              python3 sqlm.py submit 27.6
+--
+-- Write your query below (from memory!):
+

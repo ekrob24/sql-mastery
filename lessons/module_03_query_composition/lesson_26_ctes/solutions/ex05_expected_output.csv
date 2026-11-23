@@ -1,0 +1,7 @@
+category,lines_sold,lines_returned,return_rate_pct
+Apparel,9,1,11.1
+Books,25,1,4.0
+Electronics,36,4,11.1
+Home,36,3,8.3
+Sports,15,1,6.7
+Uncategorized,13,0,0.0

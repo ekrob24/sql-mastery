@@ -1,0 +1,19 @@
+-- Lesson 41 · Exercise 41.2 — IFF, NVL and ZEROIFNULL on the price sheet
+--
+-- BUSINESS QUESTION
+--   Snowflake query: `SELECT product_id, NVL(category, 'Uncategorized') AS category,
+--   ZEROIFNULL(list_price) AS list_price, IFF(list_price >= 100, 'premium', 'standard') AS
+--   price_band FROM products`. Reproduce it exactly.
+-- TABLES: products
+-- TASK
+--   Return product_id, category (NULL replaced by 'Uncategorized'), list_price (NULL
+--   replaced by 0) and price_band = 'premium' when the ORIGINAL list_price >= 100,
+--   otherwise 'standard' (note: a NULL list_price makes the condition not-true, so it
+--   lands in 'standard' — exactly what IFF does). All 25 products.
+-- REQUIRED COLUMNS: product_id, category, list_price, price_band
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.2
+-- Grade it:              python3 sqlm.py submit 41.2
+--
+-- Write your query below (from memory!):
+

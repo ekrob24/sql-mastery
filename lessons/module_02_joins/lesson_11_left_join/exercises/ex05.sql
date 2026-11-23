@@ -1,0 +1,25 @@
+-- Lesson 11 · Exercise 11.5 — Every order with its line count and value
+--
+-- BUSINESS QUESTION
+--   Operations wants all 60 orders with how many lines and how much value each has — empty
+--   orders included.
+-- TABLES: orders, order_items
+-- TASK
+--   Return order_id, order_status, line_count (number of order lines; 0 when none) and
+--   order_value (SUM(quantity * unit_price) rounded to 2 decimals; 0 when the order has no
+--   lines) for all 60 orders.
+-- REQUIRED COLUMNS: order_id, order_status, line_count, order_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.5
+-- Grade it:              python3 sqlm.py submit 11.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

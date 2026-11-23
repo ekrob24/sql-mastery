@@ -1,0 +1,21 @@
+customer_id,customer_name,valid_orders,gross_revenue,refunds,lifetime_value
+1,Alice Johnson,8,1937.02,21.24,1915.78
+7,Chen Wei,7,1305.28,0.0,1305.28
+4,John Smith,3,1262.85,0.0,1262.85
+3,John Smith,5,1425.7,267.0,1158.7
+2,Brian Lee,5,1063.95,44.98,1018.97
+10,Emma Brown,3,985.3,28.8,956.5
+14,Olivia Davis,3,896.35,0.0,896.35
+12,Sofia Rossi,2,788.9,0.0,788.9
+6,Maria Garcia,3,772.2,0.0,772.2
+11,Lucas Martin,3,725.19,182.4,542.79
+9,David Kim,2,391.25,0.0,391.25
+15,Liam O'Brien,2,386.99,15.0,371.99
+13,Noah Wilson,1,249.76,0.0,249.76
+5,Jon Smith,2,201.47,12.0,189.47
+8,Priya Patel,2,230.18,119.38,110.8
+17,Ethan Clark,1,50.0,0.0,50.0
+16,Ava Thompson,0,0.0,0.0,0.0
+18,Mia Lewis,0,0.0,0.0,0.0
+19,alice johnson,0,0.0,0.0,0.0
+20,Zoe Turner,0,0.0,0.0,0.0

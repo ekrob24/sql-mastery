@@ -1,0 +1,36 @@
+name: Snapshot progress
+
+# Copies your SQL Mastery progress from Snowflake into this repo, so it survives the trial.
+# Needs repo secret SNOWFLAKE_TOKEN (see snowflake/github_sync_user.sql) and, if your account
+# differs, repo variable SNOWFLAKE_HOST (e.g. myorg-myaccount.snowflakecomputing.com).
+on:
+  schedule:
+    - cron: "17 23 * * *"     # daily
+  workflow_dispatch: {}        # Actions » Snapshot progress » Run workflow
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull progress from Snowflake
+        env:
+          SNOWFLAKE_TOKEN: ${{ secrets.SNOWFLAKE_TOKEN }}
+          SNOWFLAKE_HOST: ${{ vars.SNOWFLAKE_HOST || 'xapylmk-ak61734.snowflakecomputing.com' }}
+          SNOWFLAKE_ROLE: SQL_MASTERY_SYNC
+        run: |
+          if [ -z "$SNOWFLAKE_TOKEN" ]; then echo "::warning::SNOWFLAKE_TOKEN secret not set; skipping"; exit 0; fi
+          python tools/snapshot_progress.py
+      - name: Commit if changed
+        run: |
+          git config user.name "sql-mastery-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add progress.json progress/
+          if git diff --cached --quiet; then echo "No progress changes."; else
+            git commit -m "Progress snapshot $(date -u +%Y-%m-%d)" && git push; fi

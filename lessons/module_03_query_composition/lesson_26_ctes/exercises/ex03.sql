@@ -1,0 +1,19 @@
+-- Lesson 26 · Exercise 26.3 — Products earning above-average revenue
+--
+-- BUSINESS QUESTION
+--   Which products earn more than the average product revenue?
+-- TABLES: orders, order_items, products
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE
+--   product_revenue (product_id, revenue) over sold products, and return product_id,
+--   product_name, revenue (rounded to 2 decimals) for products whose revenue is greater
+--   than the average revenue across rows of product_revenue. Reference the CTE twice.
+-- REQUIRED COLUMNS: product_id, product_name, revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.3
+-- Grade it:              python3 sqlm.py submit 26.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,309 @@
+{
+  "number": 35,
+  "slug": "lag_and_lead",
+  "title": "LAG and LEAD",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Compare each row with the row before or after it \u2014 previous order date, next order, change vs prior month \u2014 using LAG and LEAD with the right PARTITION BY and ORDER BY.",
+  "context": "Retention and finance teams constantly ask 'compared to what?'. How long did this customer wait before ordering again? Was this order bigger than their last one? Did revenue grow versus last month, or versus the same quarter last year? All of these are 'look one row back / forward' questions, and LAG/LEAD answer them without a self-join.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Days since previous order",
+      "question": "Retention wants to know, for every order, how long the customer had waited since their previous order.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Consider only valid orders (order_status IN ('completed','shipped','returned')). For each, return order_id, customer_id, order_date, prev_order_date (the same customer's previous valid order date, ordering a customer's orders by order_date then order_id) and days_since_prev_order (whole days between prev_order_date and order_date as an integer; NULL for a customer's first order). Keep every valid order, including the orphan order 31.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "LAG(order_date) looks one row back \u2014 but 'back' must be within the same customer.",
+        "OVER (PARTITION BY customer_id ORDER BY order_date, order_id); days = julianday(a) - julianday(b).",
+        "LAG(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS prev_order_date, CAST(julianday(order_date) - julianday(LAG(...) OVER (...)) AS INTEGER) AS days_since_prev_order"
+      ],
+      "why": "Inter-purchase time is the raw material for churn definitions ('no order in 2\u00d7 the usual gap') and for replenishment emails.",
+      "recall": {
+        "q": "What does LAG return on the first row of a partition?",
+        "a": "NULL \u2014 unless you pass a default as the third argument, e.g. LAG(x, 1, 0)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATEDIFF('day', LAG(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id), order_date) AS days_since_prev_order",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "prev_order_date",
+        "days_since_prev_order"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 2,
+      "title": "Order value vs the previous order",
+      "question": "Account managers want to see whether each customer's orders are getting bigger or smaller.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Order value = SUM(quantity * unit_price) of the order's lines, for valid orders only (order_status IN ('completed','shipped','returned')). Return order_id, customer_id, order_date, order_value (rounded to 2 decimals), prev_order_value (the same customer's previous valid order's order_value, ordering by order_date then order_id; NULL for the first) and value_change (order_value - prev_order_value, rounded to 2 decimals).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "First build one row per order (a CTE with GROUP BY), then apply LAG to that.",
+        "WITH order_values AS (SELECT order_id, customer_id, order_date, ROUND(SUM(quantity*unit_price),2) AS order_value ... GROUP BY ...)",
+        "SELECT ..., LAG(order_value) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS prev_order_value, ROUND(order_value - LAG(order_value) OVER (...), 2) AS value_change FROM order_values;"
+      ],
+      "why": "Aggregate first, window second. Applying LAG to raw order lines would compare a line with the previous *line* \u2014 often from the same order.",
+      "recall": {
+        "q": "Why aggregate to one row per order before using LAG?",
+        "a": "Because LAG moves one row at a time; at line level the 'previous row' is usually another line of the same order."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_value",
+        "prev_order_value",
+        "value_change"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 3,
+      "title": "Quick repeat purchases (LEAD + filter)",
+      "question": "Marketing wants every order that was followed by the same customer's next order within 30 days \u2014 evidence the welcome-back email works.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Using valid orders only (order_status IN ('completed','shipped','returned')), find each order's next valid order by the same customer (ordering by order_date then order_id). Return order_id, customer_id, order_date, next_order_date and days_to_next_order (integer days) for the orders whose days_to_next_order is 30 or less.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "LEAD is LAG's mirror: it reads the next row.",
+        "You can't use a window function in WHERE \u2014 compute LEAD in a CTE, filter outside it.",
+        "WITH with_next AS (SELECT ..., LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS next_order_date ...) SELECT ... FROM with_next WHERE julianday(next_order_date) - julianday(order_date) <= 30;"
+      ],
+      "why": "Filtering on window results is the pattern behind 'orders followed by\u2026', 'sessions preceded by\u2026' and every QUALIFY you'll write in Snowflake.",
+      "recall": {
+        "q": "Why can't you write WHERE LEAD(order_date) OVER (...) IS NOT NULL?",
+        "a": "Window functions are evaluated after WHERE (in the SELECT step); filter in an outer query or use QUALIFY in Snowflake."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_id, customer_id, order_date, LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS next_order_date, DATEDIFF('day', order_date, next_order_date) AS days_to_next_order FROM orders WHERE order_status IN ('completed','shipped','returned') QUALIFY days_to_next_order <= 30;",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "next_order_date",
+        "days_to_next_order"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 4,
+      "title": "Month-over-month revenue change",
+      "question": "The CFO's monthly deck needs revenue per month with the change versus the prior month.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Return one row per order month with month ('YYYY-MM' of order_date), revenue (rounded to 2 decimals), prev_month_revenue (previous month's revenue), mom_change (revenue - prev_month_revenue, rounded to 2) and mom_change_pct (mom_change as a percentage 0\u2013100 scale of prev_month_revenue, i.e. 100.0 * change / prev, rounded to 1 decimal). The first month has NULLs. Every month 2024-01\u20262025-12 has revenue, so the previous row is the previous calendar month. Order by month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate to one row per month in a CTE first.",
+        "No PARTITION BY: the whole table is one timeline. LAG(revenue) OVER (ORDER BY month).",
+        "Second CTE adds prev_month_revenue; final SELECT computes ROUND(revenue - prev, 2) and ROUND(100.0 * (revenue - prev) / prev, 1)."
+      ],
+      "why": "MoM growth is on every KPI dashboard. Beware: LAG means 'previous row', not 'previous month' \u2014 if a month had zero orders it would be missing and LAG would silently jump two months.",
+      "recall": {
+        "q": "When does LAG(revenue) OVER (ORDER BY month) NOT give the previous calendar month?",
+        "a": "When some month has no row (no sales). Fill gaps with a calendar/date spine first."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT DATE_TRUNC('month', o.order_date) AS month, SUM(...) AS revenue, LAG(SUM(...)) OVER (ORDER BY DATE_TRUNC('month', o.order_date)) AS prev_month_revenue ... GROUP BY 1 \u2014 Snowflake lets you nest the aggregate inside the window in one SELECT; DIV0(revenue - prev, prev) avoids divide-by-zero errors.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "month",
+        "revenue",
+        "prev_month_revenue",
+        "mom_change",
+        "mom_change_pct"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 5,
+      "title": "Average gap between orders per repeat customer",
+      "question": "CRM wants each repeat customer's typical purchase cycle to time reminder emails.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Using valid orders (order_status IN ('completed','shipped','returned')), compute for every order the days since the same customer's previous valid order (order by order_date, order_id). Then, for customers with at least 2 valid orders, return customer_id, order_count (valid orders), avg_gap_days (average of the gaps, rounded to 1 decimal) and longest_gap_days (largest gap, integer). Order by avg_gap_days ascending, then customer_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Two steps: window (LAG) per order, then GROUP BY customer.",
+        "AVG and MAX ignore NULLs, so the first order's NULL gap drops out automatically \u2014 but COUNT(*) still counts that order.",
+        "WITH gaps AS (SELECT customer_id, julianday(order_date) - julianday(LAG(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id)) AS gap_days FROM orders WHERE ...) SELECT customer_id, COUNT(*), ROUND(AVG(gap_days),1), CAST(MAX(gap_days) AS INTEGER) FROM gaps GROUP BY customer_id HAVING COUNT(*) >= 2 ORDER BY ..."
+      ],
+      "why": "You cannot nest a window inside an aggregate in one SELECT; staging the window in a CTE and aggregating outside is the standard two-pass pattern.",
+      "recall": {
+        "q": "Can you write AVG(LAG(x) OVER (...)) directly?",
+        "a": "No \u2014 window functions can't be nested inside aggregates. Compute the window in a CTE, aggregate in the outer query."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same two-step shape; use DATEDIFF('day', LAG(order_date) OVER (...), order_date) for the gap.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_count",
+        "avg_gap_days",
+        "longest_gap_days"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 6,
+      "title": "Year-over-year growth by quarter",
+      "question": "The board wants each 2025 quarter's revenue compared with the same quarter of 2024.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders (order_status IN ('completed','shipped','returned')). Aggregate revenue by quarter (label year_quarter like '2025-Q1'). For the 2025 quarters only, return year_quarter, revenue (rounded to 2), revenue_year_ago (the same quarter one year earlier, i.e. 4 quarters back) and yoy_growth_pct (100.0 * (revenue - revenue_year_ago) / revenue_year_ago, rounded to 1 decimal). Order by year_quarter. Careful: the 2024 quarters must still be visible to the window even though they are not in the output.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "LAG takes an offset: LAG(revenue, 4) is four rows back = same quarter last year (all 8 quarters have sales).",
+        "Quarter number = (month + 2) / 3 with integer division. Filter to 2025 only AFTER the LAG (outer query).",
+        "quarterly CTE \u2192 with_lag CTE with LAG(revenue, 4) OVER (ORDER BY year_quarter) \u2192 SELECT ... WHERE year_quarter LIKE '2025-%' ORDER BY year_quarter."
+      ],
+      "why": "YoY comparisons remove seasonality. The classic bug is putting WHERE year = 2025 in the same query as LAG \u2014 the 2024 rows vanish before the window runs and every year-ago value is NULL.",
+      "recall": {
+        "q": "Why must the 2025 filter go in an outer query here?",
+        "a": "WHERE runs before window functions; filtering first would remove the 2024 rows that LAG needs to look back to."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('quarter', order_date) gives the quarter start date; LAG(revenue, 4) OVER (ORDER BY quarter_start) ... QUALIFY YEAR(quarter_start) = 2025.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "year_quarter",
+        "revenue",
+        "revenue_year_ago",
+        "yoy_growth_pct"
+      ],
+      "expected_row_count": 4
+    }
+  ],
+  "worked_example": {
+    "question": "For customer 1, show each valid order with the previous order's date and the gap in days.",
+    "sql": "SELECT order_id,\n       order_date,\n       LAG(order_date) OVER (ORDER BY order_date, order_id) AS prev_order_date,\n       CAST(julianday(order_date)\n            - julianday(LAG(order_date) OVER (ORDER BY order_date, order_id)) AS INTEGER) AS days_since_prev\nFROM orders\nWHERE customer_id = 1\n  AND order_status IN ('completed','shipped','returned')\nORDER BY order_date, order_id;",
+    "explanation": "Only one customer is selected, so no PARTITION BY is needed. The first order has no predecessor, so both LAG columns are NULL. Note the cancelled order 9 never appears: WHERE runs before the window, so LAG skips it \u2014 exactly what we want here.",
+    "columns": [
+      "order_id",
+      "order_date",
+      "prev_order_date",
+      "days_since_prev"
+    ],
+    "rows": [
+      [
+        1,
+        "2024-01-05",
+        null,
+        null
+      ],
+      [
+        2,
+        "2024-01-15",
+        "2024-01-05",
+        10
+      ],
+      [
+        6,
+        "2024-03-02",
+        "2024-01-15",
+        47
+      ],
+      [
+        13,
+        "2024-06-02",
+        "2024-03-02",
+        92
+      ],
+      [
+        21,
+        "2024-09-05",
+        "2024-06-02",
+        95
+      ],
+      [
+        24,
+        "2024-10-08",
+        "2024-09-05",
+        33
+      ],
+      [
+        35,
+        "2025-02-23",
+        "2024-10-08",
+        138
+      ],
+      [
+        36,
+        "2025-03-04",
+        "2025-02-23",
+        9
+      ]
+    ]
+  },
+  "recipe": "**Recipe: look back / look ahead in 4 moves**\n\n1. **Get one row per thing you compare.** Orders \u2192 one row per order; months \u2192 aggregate to one row per\n   month *first* (CTE), then apply the window.\n2. **PARTITION BY** the entity whose history you follow (`customer_id`). Omit it to compare across the whole table\n   (e.g. month over month).\n3. **ORDER BY** the timeline inside the window, with a tie-breaker (`order_date, order_id`) so \"previous\"\n   is unambiguous.\n4. `LAG(col, offset, default)` reads `offset` rows back (default 1); `LEAD` reads forward.\n   The first row of each partition gets NULL (or `default`).\n\n```sql\nSELECT order_id, customer_id, order_date,\n       LAG(order_date)  OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS prev_order_date,\n       LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS next_order_date\nFROM orders;\n```\n\n**Date gaps in SQLite:** `julianday(d2) - julianday(d1)` = days between (a float \u2014 wrap in `CAST(... AS INTEGER)`).\n\n**Filtering on a LAG/LEAD result** needs a CTE/subquery: window functions run *after* WHERE.\nAnd the reverse trap: if you filter rows (e.g. `WHERE year = 2025`) *before* LAG, the rows you\nwanted to look back to are gone.",
+  "snowflake_notes": "Snowflake supports the same `LAG/LEAD(expr [, offset [, default]]) [IGNORE NULLS] OVER (...)`.\nDifferences you'll use daily:\n\n- **Date gaps:** `DATEDIFF('day', prev_order_date, order_date)` instead of `julianday` arithmetic.\n  For months: `DATEDIFF('month', a, b)` counts month boundaries crossed.\n- **Month bucket:** `DATE_TRUNC('month', order_date)` returns a DATE (first of month); SQLite uses\n  `strftime('%Y-%m', order_date)` (text) or `date(order_date, 'start of month')`.\n- **Filter on a window result without a subquery:** `QUALIFY`.\n\n```sql\nSELECT order_id, customer_id, order_date,\n       LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date, order_id) AS next_order_date\nFROM orders\nWHERE order_status IN ('completed','shipped','returned')\nQUALIFY DATEDIFF('day', order_date, next_order_date) <= 30;\n```\n\n- `LAG(x) IGNORE NULLS` skips NULL values when looking back (handy for \"last known value\" fills).\n  SQLite has no IGNORE NULLS \u2014 use a correlated subquery or a running MAX of a grouping key.",
+  "common_mistakes": [
+    "Forgetting PARTITION BY customer_id \u2014 the 'previous order' then belongs to a different customer.",
+    "ORDER BY order_date without a tie-breaker: two orders on the same day make 'previous' arbitrary.",
+    "Filtering rows (WHERE year = 2025) in the same query as LAG, wiping out the rows LAG needed.",
+    "Applying LAG to line-level data instead of aggregating to one row per order/month first.",
+    "Assuming LAG = previous calendar period; missing periods make it jump. Use a date spine when gaps are possible.",
+    "Integer division in percentages: write 100.0 * a / b, not 100 * a / b."
+  ],
+  "recall": [
+    [
+      "What do the three arguments of LAG(x, n, d) mean?",
+      "x = value to read, n = how many rows back (default 1), d = value to return when there is no such row (default NULL)."
+    ],
+    [
+      "How do you get days between two dates in SQLite vs Snowflake?",
+      "SQLite: julianday(b) - julianday(a). Snowflake: DATEDIFF('day', a, b)."
+    ],
+    [
+      "How do you filter on a LAG/LEAD result in SQLite and in Snowflake?",
+      "SQLite: wrap it in a CTE/subquery and filter outside. Snowflake: QUALIFY."
+    ]
+  ],
+  "review_next": "Next, Lesson 36 adds window frames (running totals, moving averages, share of total). Re-do exercise 35.6 and deliberately move the 2025 filter inside \u2014 see every year-ago value go NULL."
+}

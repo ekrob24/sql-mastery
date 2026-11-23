@@ -1,0 +1,20 @@
+-- Lesson 27 · Exercise 27.5 — Supplier performance
+--
+-- BUSINESS QUESTION
+--   Procurement wants every supplier, including ones with nothing sold, with how many
+--   distinct products sold and the revenue.
+-- TABLES: suppliers, products, orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return
+--   supplier_id, supplier_name, products_sold (distinct products with valid sales) and
+--   revenue (rounded to 2 decimals) for all 5 suppliers, showing 0 for both when a
+--   supplier sold nothing.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, products_sold, revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.5
+-- Grade it:              python3 sqlm.py submit 27.5
+--
+-- Write your query below (from memory!):
+

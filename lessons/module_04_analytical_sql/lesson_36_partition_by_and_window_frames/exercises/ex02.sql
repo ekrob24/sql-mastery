@@ -1,0 +1,19 @@
+-- Lesson 36 · Exercise 36.2 — Product share within its category
+--
+-- BUSINESS QUESTION
+--   Category managers want to know which products carry their category.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). For every product with revenue,
+--   return product_id, product_name, category ('Uncategorized' when NULL), product_revenue
+--   (rounded 2), category_revenue (total revenue of that category, rounded 2) and
+--   pct_of_category (product_revenue as a 0–100 percentage of category_revenue, rounded to
+--   1 decimal).
+-- REQUIRED COLUMNS: product_id, product_name, category, product_revenue, category_revenue, pct_of_category
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 36.2
+-- Grade it:              python3 sqlm.py submit 36.2
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,257 @@
+{
+  "number": 6,
+  "slug": "aggregations",
+  "title": "Aggregations: COUNT, SUM, AVG, MIN, MAX",
+  "module": 1,
+  "module_title": "SQL foundations",
+  "objective": "Collapse a table (or a filtered part of it) into summary numbers with COUNT, SUM, AVG, MIN and MAX, understand how each treats NULL, and compute conditional counts and ratios.",
+  "context": "The CFO's first questions are always aggregates: how many orders, how much was sold, what's the average refund, when was the last order. These one-row answers feed KPI tiles, so every definition \u2014 which rows, which NULLs, how rounded \u2014 must be explicit.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Electronics price spread",
+      "question": "How wide is the price range in Electronics?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "For products with category = 'Electronics', return one row with columns product_count, cheapest (MIN list_price), most_expensive (MAX list_price) and price_spread (most expensive minus cheapest).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "WHERE filters to Electronics before aggregating.",
+        "You can do arithmetic on aggregates: MAX(x) - MIN(x).",
+        "SELECT COUNT(*) AS product_count, MIN(list_price) AS cheapest, MAX(list_price) AS most_expensive, MAX(list_price) - MIN(list_price) AS price_spread FROM products WHERE category = 'Electronics';"
+      ],
+      "why": "Range metrics give merchandisers a quick feel for a category's positioning.",
+      "recall": {
+        "q": "Does WHERE run before or after aggregation?",
+        "a": "Before \u2014 it decides which rows the aggregates see."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_count",
+        "cheapest",
+        "most_expensive",
+        "price_spread"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 2,
+      "title": "2025 order window",
+      "question": "How many orders were placed in 2025, and what were the first and last order dates?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "For orders with order_date from '2025-01-01' to '2025-12-31' inclusive (any status), return one row with columns order_count, first_order_date and last_order_date.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "MIN and MAX work on dates (and text) too.",
+        "Filter the year with BETWEEN, then aggregate.",
+        "SELECT COUNT(*) AS order_count, MIN(order_date) AS first_order_date, MAX(order_date) AS last_order_date FROM orders WHERE ..."
+      ],
+      "why": "MIN/MAX of a date is how you describe a data window \u2014 and spot freshness problems (is the last order where you expect it?).",
+      "recall": {
+        "q": "Can MIN and MAX be used on text columns?",
+        "a": "Yes \u2014 they use the column's sort order (dates in ISO text sort chronologically)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_count",
+        "first_order_date",
+        "last_order_date"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 3,
+      "title": "Refund summary",
+      "question": "Finance wants a one-line summary of all refunds.",
+      "tables": [
+        "returns"
+      ],
+      "prompt": "Return one row with columns return_count (all returns), returns_with_reason (returns whose return_reason is not NULL), total_refunded (SUM of refund_amount, rounded to 2 decimals) and avg_refund (AVG of refund_amount, rounded to 2 decimals).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "COUNT(return_reason) skips the NULL reasons.",
+        "Wrap SUM and AVG in ROUND(..., 2).",
+        "COUNT(*) AS return_count, COUNT(return_reason) AS returns_with_reason, ROUND(SUM(refund_amount), 2) AS total_refunded, ROUND(AVG(refund_amount), 2) AS avg_refund"
+      ],
+      "why": "Two of ten returns have no reason recorded \u2014 a data-quality signal worth putting next to the money, so nobody over-reads the reason breakdown.",
+      "recall": {
+        "q": "Which aggregate is the only one that counts NULLs?",
+        "a": "COUNT(*)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "return_count",
+        "returns_with_reason",
+        "total_refunded",
+        "avg_refund"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "Units and line value across all lines",
+      "question": "What's the raw volume in order_items: units, line value, and average line?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Over ALL rows of order_items (no status filter \u2014 status lives in orders, which you'll join in Module 2), return one row with columns total_units (SUM of quantity), total_line_value (SUM of quantity * unit_price, rounded to 2 decimals) and avg_line_value (AVG of quantity * unit_price, rounded to 2 decimals).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate an expression: SUM(quantity * unit_price).",
+        "AVG of the same expression gives the average line value.",
+        "SELECT SUM(quantity) AS total_units, ROUND(SUM(quantity * unit_price), 2) AS total_line_value, ROUND(AVG(quantity * unit_price), 2) AS avg_line_value FROM order_items;"
+      ],
+      "why": "This is NOT revenue: it includes cancelled/pending orders and the two duplicate lines. Knowing exactly what a raw total contains is what separates a number from a metric.",
+      "recall": {
+        "q": "Why isn't SUM(quantity * unit_price) over all order_items equal to gross revenue?",
+        "a": "It includes cancelled/pending orders (and duplicate lines); revenue counts only valid orders."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "total_units",
+        "total_line_value",
+        "avg_line_value"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Valid-order share (conditional counts)",
+      "question": "What share of all orders are valid revenue orders?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Valid orders are those with order_status IN ('completed', 'shipped', 'returned'). Return one row with columns total_orders, valid_orders, cancelled_orders (status = 'cancelled') and valid_pct (100 * valid_orders / total_orders, rounded to 1 decimal).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "SUM(CASE WHEN condition THEN 1 ELSE 0 END) counts rows that meet a condition.",
+        "Multiply by 100.0 (not 100) to avoid integer division.",
+        "ROUND(100.0 * SUM(CASE WHEN order_status IN (...) THEN 1 ELSE 0 END) / COUNT(*), 1) AS valid_pct"
+      ],
+      "why": "Conditional aggregation computes several KPIs in one pass \u2014 the backbone of every summary dashboard. Forgetting the .0 would give valid_pct = 0 in SQLite.",
+      "recall": {
+        "q": "What is 53 / 60 in SQLite, and how do you fix it?",
+        "a": "0 (integer division). Use 100.0 * 53 / 60 or 53 * 1.0 / 60."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Snowflake: COUNT_IF(order_status IN ('completed','shipped','returned')) AS valid_orders; Snowflake's / always returns a decimal, so the integer-division trap doesn't apply there.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "total_orders",
+        "valid_orders",
+        "cancelled_orders",
+        "valid_pct"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 6,
+      "title": "Average price: simple versus unit-weighted",
+      "question": "What's our average selling price \u2014 per line, or per unit actually sold?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Over all rows of order_items, return one row with columns avg_unit_price (simple AVG of unit_price), weighted_avg_unit_price (SUM(quantity * unit_price) / SUM(quantity)) and avg_quantity_per_line (AVG of quantity). Round all three to 2 decimals.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A simple AVG gives every line equal weight regardless of quantity.",
+        "Weighted average = total value / total units.",
+        "ROUND(SUM(quantity * unit_price) / SUM(quantity), 2) AS weighted_avg_unit_price"
+      ],
+      "why": "'Average price' is ambiguous until you say what is being averaged. The two numbers differ because cheap items tend to be bought in larger quantities.",
+      "recall": {
+        "q": "Why can AVG(unit_price) differ from SUM(q * p) / SUM(q)?",
+        "a": "AVG weights every line equally; the weighted version weights each price by units sold."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "avg_unit_price",
+        "weighted_avg_unit_price",
+        "avg_quantity_per_line"
+      ],
+      "expected_row_count": 1
+    }
+  ],
+  "worked_example": {
+    "question": "How many products are in the catalog, and what is the price range?",
+    "sql": "SELECT COUNT(*)                  AS product_count,\n       COUNT(list_price)         AS priced_products,\n       MIN(list_price)           AS min_price,\n       MAX(list_price)           AS max_price,\n       ROUND(AVG(list_price), 2) AS avg_price\nFROM products;",
+    "explanation": "25 products, but only 24 have a price \u2014 AVG divides by 24, not 25, because AVG ignores the NULL. That's usually what you want: an unknown price isn't a $0 price.",
+    "columns": [
+      "product_count",
+      "priced_products",
+      "min_price",
+      "max_price",
+      "avg_price"
+    ],
+    "rows": [
+      [
+        25,
+        24,
+        12,
+        279.99,
+        72.46
+      ]
+    ]
+  },
+  "recipe": "**Recipe: one-row summary in 4 moves**\n\n1. Filter first with WHERE \u2014 the aggregate only sees rows that survive.\n2. Pick the function: `COUNT(*)` rows, `COUNT(col)` non-NULL values, `SUM`, `AVG`, `MIN`, `MAX`.\n   All except `COUNT(*)` **ignore NULLs**.\n3. Aggregate expressions, not just columns: `SUM(quantity * unit_price)`.\n4. Conditional aggregates count/sum a subset without a WHERE:\n   `SUM(CASE WHEN cond THEN 1 ELSE 0 END)` (portable) \u2014 and make ratios with `100.0 * part / whole`.\n\n```sql\nSELECT COUNT(*)                                       AS orders,\n       SUM(CASE WHEN order_status = 'cancelled'\n                THEN 1 ELSE 0 END)                    AS cancelled_orders,\n       ROUND(AVG(list_price), 2)                      AS avg_price\nFROM   ...;\n```\n\n**Integer division:** `3 / 4` is `0` in SQLite (integer \u00f7 integer). Multiply by `100.0` or `1.0` first.\n\n**Mixing:** without GROUP BY you can't put a plain column next to an aggregate in a meaningful way\n(SQLite allows it but returns an arbitrary row's value; Snowflake raises an error). Lesson 7 adds GROUP BY.",
+  "snowflake_notes": "Snowflake adds `COUNT_IF(cond)`, `IFF(cond, a, b)`, `DIV0(a, b)` (returns 0 instead of error on divide-by-zero), `MEDIAN(col)` and `APPROX_COUNT_DISTINCT`. In SQLite use `SUM(CASE WHEN cond THEN 1 ELSE 0 END)` or `COUNT(*) FILTER (WHERE cond)`.",
+  "common_mistakes": [
+    "Replacing NULLs with 0 before AVG (`AVG(COALESCE(x, 0))`), which changes the denominator and the answer.",
+    "Integer division in ratios: `valid / total` \u2192 0. Use 100.0 or 1.0.",
+    "Selecting a non-aggregated column next to aggregates without GROUP BY.",
+    "Calling a raw SUM over order_items 'revenue' without excluding cancelled/pending orders.",
+    "Averaging averages or using a simple average where a weighted one is meant."
+  ],
+  "recall": [
+    [
+      "Which aggregates ignore NULLs?",
+      "All of them except COUNT(*): COUNT(col), SUM, AVG, MIN, MAX."
+    ],
+    [
+      "Write a portable conditional count.",
+      "SUM(CASE WHEN cond THEN 1 ELSE 0 END)"
+    ],
+    [
+      "What does SUM return over zero rows?",
+      "NULL (COUNT returns 0). Wrap with COALESCE(SUM(x), 0) when 0 is meant."
+    ]
+  ],
+  "review_next": "Next, Lesson 7 splits these summaries per group with GROUP BY. Re-do exercise 6.5 and imagine it 'per year' \u2014 that's exactly what GROUP BY adds."
+}

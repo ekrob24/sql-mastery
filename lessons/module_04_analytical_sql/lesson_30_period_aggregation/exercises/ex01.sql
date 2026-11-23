@@ -1,0 +1,15 @@
+-- Lesson 30 · Exercise 30.1 — Orders per month
+--
+-- BUSINESS QUESTION
+--   Ops wants a simple trend line: how many orders (of any status) were placed each month?
+-- TABLES: orders
+-- TASK
+--   Return order_month (text 'YYYY-MM') and order_count (number of orders of any status)
+--   for every month that has orders, ordered by order_month ascending.
+-- REQUIRED COLUMNS: order_month, order_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.1
+-- Grade it:              python3 sqlm.py submit 30.1
+--
+-- Write your query below (from memory!):
+

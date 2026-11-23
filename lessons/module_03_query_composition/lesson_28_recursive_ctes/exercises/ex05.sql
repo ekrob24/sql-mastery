@@ -1,0 +1,16 @@
+-- Lesson 28 · Exercise 28.5 — Descendant counts for every category
+--
+-- BUSINESS QUESTION
+--   Navigation design wants to know how many categories sit beneath each node (at any
+--   depth).
+-- TABLES: categories
+-- TASK
+--   Return category_id, category_name and descendant_count (the number of categories
+--   strictly below it at any depth; 0 for leaves) for all 14 categories.
+-- REQUIRED COLUMNS: category_id, category_name, descendant_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 28.5
+-- Grade it:              python3 sqlm.py submit 28.5
+--
+-- Write your query below (from memory!):
+

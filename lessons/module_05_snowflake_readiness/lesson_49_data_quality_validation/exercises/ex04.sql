@@ -1,0 +1,16 @@
+-- Lesson 49 · Exercise 49.4 — Possible duplicate customers
+--
+-- BUSINESS QUESTION
+--   CRM suspects duplicate accounts that differ only in letter case or spacing.
+-- TABLES: customers
+-- TASK
+--   Group customers by name_key = LOWER(TRIM(name)) and for groups with more than one
+--   customer return name_key, customers (count) and customer_ids (the ids as a comma-
+--   separated list in ascending order, e.g. '3,4').
+-- REQUIRED COLUMNS: name_key, customers, customer_ids
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 49.4
+-- Grade it:              python3 sqlm.py submit 49.4
+--
+-- Write your query below (from memory!):
+

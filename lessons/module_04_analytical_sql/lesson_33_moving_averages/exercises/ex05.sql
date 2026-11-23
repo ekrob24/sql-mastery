@@ -1,0 +1,21 @@
+-- Lesson 33 · Exercise 33.5 — Moving average over a gappy series
+--
+-- BUSINESS QUESTION
+--   The Sports buyer wants a 3-month moving average — but some months have no Sports sales
+--   at all.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Consider only products with category = 'Sports'. Build a calendar of all 24
+--   months 2024-01..2025-12 so months with no Sports sales count as 0. Return order_month
+--   ('YYYY-MM'), sports_revenue (0 when none) and moving_avg_3m (average sports_revenue
+--   over the current and 2 previous *calendar* months; partial at the start), both rounded
+--   to 2 decimals, ordered by order_month.
+-- REQUIRED COLUMNS: order_month, sports_revenue, moving_avg_3m
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.5
+-- Grade it:              python3 sqlm.py submit 33.5
+--
+-- Write your query below (from memory!):
+

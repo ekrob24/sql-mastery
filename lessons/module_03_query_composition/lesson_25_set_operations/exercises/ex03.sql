@@ -1,0 +1,16 @@
+-- Lesson 25 · Exercise 25.3 — Catalog items with no valid sale
+--
+-- BUSINESS QUESTION
+--   Which catalog products have never been part of a valid order?
+-- TABLES: products, order_items, orders
+-- TASK
+--   Return product_id for products in the catalog EXCEPT those that appear on a line of a
+--   valid order (valid orders = order_status IN ('completed','shipped','returned');
+--   cancelled and pending are excluded).
+-- REQUIRED COLUMNS: product_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 25.3
+-- Grade it:              python3 sqlm.py submit 25.3
+--
+-- Write your query below (from memory!):
+

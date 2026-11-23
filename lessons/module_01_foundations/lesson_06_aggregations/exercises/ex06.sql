@@ -1,0 +1,16 @@
+-- Lesson 6 · Exercise 6.6 — Average price: simple versus unit-weighted
+--
+-- BUSINESS QUESTION
+--   What's our average selling price — per line, or per unit actually sold?
+-- TABLES: order_items
+-- TASK
+--   Over all rows of order_items, return one row with columns avg_unit_price (simple AVG
+--   of unit_price), weighted_avg_unit_price (SUM(quantity * unit_price) / SUM(quantity))
+--   and avg_quantity_per_line (AVG of quantity). Round all three to 2 decimals.
+-- REQUIRED COLUMNS: avg_unit_price, weighted_avg_unit_price, avg_quantity_per_line
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.6
+-- Grade it:              python3 sqlm.py submit 6.6
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,264 @@
+{
+  "number": 22,
+  "slug": "subqueries_in_from",
+  "title": "Subqueries in FROM",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Use a subquery as a temporary table (derived table) to aggregate in stages, filter aggregated results, and pre-aggregate before joining so rows don't fan out.",
+  "context": "'What is our average order value?' is an average of *order totals*, which first have to be built from lines. Many metrics need two levels of aggregation, and many joins need pre-aggregation to avoid double counting. Derived tables do both.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Average order value",
+      "question": "The CFO asks: what is our average order value (AOV)?",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Build one row per valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) with its gross total (SUM(quantity * unit_price)), then return order_count (number of such orders) and avg_order_value (average of those totals, rounded to 2 decimals). Orders without lines don't count.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "AOV is an average of per-order totals, not of per-line values.",
+        "Inner query: one row per order with SUM(quantity * unit_price) AS order_total.",
+        "SELECT COUNT(*) AS order_count, ROUND(AVG(order_total), 2) AS avg_order_value FROM (<inner>) AS t;"
+      ],
+      "why": "AVG(quantity * unit_price) over lines gives the average *line* value, which is a smaller, different number. Getting the grain right is the whole job.",
+      "recall": {
+        "q": "Why is AVG over order lines not the AOV?",
+        "a": "It averages lines, not orders. Orders with many lines would be weighted more heavily."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_count",
+        "avg_order_value"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 2,
+      "title": "Customers who spent $1,000+",
+      "question": "The VIP program wants customers whose lifetime gross spend is at least $1,000.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), aggregate per orders.customer_id in a derived table, then filter it with WHERE. Return customer_id, order_count (number of valid orders), total_spend (rounded to 2 decimals) for customers with total_spend >= 1000.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Inner query: one row per customer_id with order count and spend.",
+        "Joining to order_items repeats each order once per line, so count orders with COUNT(DISTINCT o.order_id).",
+        "SELECT ... FROM (SELECT o.customer_id, COUNT(DISTINCT o.order_id) AS order_count, SUM(i.quantity*i.unit_price) AS total_spend FROM ... GROUP BY o.customer_id) AS spend WHERE total_spend >= 1000;"
+      ],
+      "why": "Aggregate-then-filter with a derived table is equivalent to HAVING, but it scales better: the derived table can then be joined, ranked or filtered further.",
+      "recall": {
+        "q": "Give two ways to filter on an aggregated value.",
+        "a": "HAVING in the same query, or WHERE on a derived table/CTE that computed it."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_count",
+        "total_spend"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 3,
+      "title": "Orders and web events per customer, without fan-out",
+      "question": "Growth wants, for every customer, how many orders they placed and how many site events they generated.",
+      "tables": [
+        "customers",
+        "orders",
+        "web_events"
+      ],
+      "prompt": "Return customer_id, name, order_count (all orders, any status) and event_count (rows in web_events) for all 20 customers, showing 0 (not NULL) when there are none. Pre-aggregate each table in its own derived table before joining.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Joining customers \u2192 orders \u2192 web_events directly multiplies orders \u00d7 events per customer.",
+        "Make two small tables first: one row per customer_id with COUNT(*) from orders; same for web_events.",
+        "customers c LEFT JOIN (SELECT customer_id, COUNT(*) AS order_count FROM orders GROUP BY customer_id) o ... LEFT JOIN (... web_events ...) w ..., then COALESCE(..., 0)."
+      ],
+      "why": "Fan-out is the #1 reason dashboards overstate numbers. Pre-aggregating each child table to the parent's grain is the standard fix.",
+      "recall": {
+        "q": "What is fan-out?",
+        "a": "Row multiplication when a parent joins to two (or more) independent child tables: rows = children\u2081 \u00d7 children\u2082."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "order_count",
+        "event_count"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 4,
+      "title": "Average basket size by region",
+      "question": "Ops wants to know how many units a typical valid order contains, by customer region.",
+      "tables": [
+        "orders",
+        "order_items",
+        "customers"
+      ],
+      "prompt": "First build one row per valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) with units = SUM(quantity). Then join to customers (orders whose customer doesn't exist, i.e. order 31, drop out) and return region (NULL shown as 'Unknown'), order_count and avg_units_per_order rounded to 2 decimals.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two levels: lines \u2192 orders (SUM quantity), then orders \u2192 regions (AVG).",
+        "Keep customer_id in the inner query so you can join to customers afterwards.",
+        "SELECT COALESCE(c.region,'Unknown') AS region, COUNT(*) AS order_count, ROUND(AVG(t.units),2) AS avg_units_per_order FROM (<per-order units>) t JOIN customers c ... GROUP BY 1;"
+      ],
+      "why": "An 'average of a sum' cannot be done in one GROUP BY. Every 'average per X of a total per Y' metric needs two levels of aggregation.",
+      "recall": {
+        "q": "Why can't AVG(SUM(quantity)) be written in one SELECT?",
+        "a": "Aggregates can't be nested in one level; compute the inner SUM per order in a derived table, then AVG it."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "order_count",
+        "avg_units_per_order"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Category share of revenue",
+      "question": "The board deck needs each category's share of total revenue.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), return category (NULL \u2192 'Uncategorized'), category_revenue (rounded to 2 decimals) and pct_of_total = 100 * category revenue / total gross revenue, rounded to 1 decimal. Compute the total in its own derived table.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two derived tables: revenue per category (several rows) and total revenue (one row).",
+        "A one-row table can be attached to every row with CROSS JOIN.",
+        "FROM (<category revenue>) cr CROSS JOIN (<total revenue>) tot, then 100.0 * cr.revenue / tot.revenue."
+      ],
+      "why": "Share-of-total is everywhere: mix reports, market share, contribution analysis. (Lesson 31's window functions offer SUM(...) OVER () as a shortcut.)",
+      "recall": {
+        "q": "Why multiply by 100.0 rather than 100 when computing a percentage?",
+        "a": "To force decimal arithmetic. Integer / integer truncates in SQLite (and many databases)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "category_revenue",
+        "pct_of_total"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 6,
+      "title": "Each customer's biggest order",
+      "question": "Account managers want each customer's single largest valid order.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) and order_total = SUM(quantity * unit_price), return customer_id (orders.customer_id, so the orphan 99 is included), order_id and order_total (rounded to 2 decimals) for the order with the highest total per customer. Join a derived table of order totals to a derived table of each customer's maximum.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Step 1: order totals (one row per order). Step 2: max total per customer (built from step 1).",
+        "Join step 1 to step 2 on customer_id AND order_total = max_total.",
+        "FROM (<order totals>) t JOIN (SELECT customer_id, MAX(order_total) AS max_total FROM (<order totals>) GROUP BY customer_id) m ON m.customer_id = t.customer_id AND m.max_total = t.order_total"
+      ],
+      "why": "'The row with the max per group' is a classic pattern. Notice the order-totals query is written twice. That repetition is exactly what CTEs (Lesson 26) and ROW_NUMBER (Lesson 30) remove.",
+      "recall": {
+        "q": "Why can't you just SELECT customer_id, order_id, MAX(order_total) ... GROUP BY customer_id?",
+        "a": "order_id is neither grouped nor aggregated. Standard SQL and Snowflake reject it. SQLite accepts it (taking order_id from the MAX row), but that is a non-portable quirk, and ties make it arbitrary."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "In Snowflake: SELECT ... FROM order_totals QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_total DESC) = 1.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_id",
+        "order_total"
+      ],
+      "expected_row_count": 17
+    }
+  ],
+  "worked_example": {
+    "question": "What does the fan-out bug look like? Count customer 3's orders and web events in one join.",
+    "sql": "SELECT 'naive join' AS method,\n       COUNT(DISTINCT o.order_id) AS distinct_orders,\n       COUNT(*)                   AS joined_rows\nFROM orders o\nJOIN web_events w ON w.customer_id = o.customer_id\nWHERE o.customer_id = 3\nUNION ALL\nSELECT 'pre-aggregated',\n       (SELECT order_count FROM (SELECT customer_id, COUNT(*) AS order_count\n                                 FROM orders GROUP BY customer_id) WHERE customer_id = 3),\n       (SELECT event_count FROM (SELECT customer_id, COUNT(*) AS event_count\n                                 FROM web_events GROUP BY customer_id) WHERE customer_id = 3);",
+    "explanation": "Customer 3 has 5 orders and 29 web events. Joining both tables produces 5 \u00d7 29 = 145 rows, so any COUNT(*) or SUM over that join is inflated. Aggregating each table separately (one row per customer) and joining the results gives the true 5 and 29.",
+    "columns": [
+      "method",
+      "distinct_orders",
+      "joined_rows"
+    ],
+    "rows": [
+      [
+        "naive join",
+        5,
+        145
+      ],
+      [
+        "pre-aggregated",
+        5,
+        29
+      ]
+    ]
+  },
+  "recipe": "**Recipe: build a table, then query it**\n\n1. Write the inner query that produces the grain you need (one row per order, per customer...). Run it.\n2. Wrap it: `FROM ( inner query ) AS t` \u2014 the alias is mandatory in most databases.\n3. Query `t` like any table: aggregate again, filter with plain WHERE, or join it.\n   ```sql\n   SELECT ROUND(AVG(order_total), 2) AS avg_order_value\n   FROM (SELECT o.order_id, SUM(i.quantity * i.unit_price) AS order_total\n         FROM orders o JOIN order_items i ON i.order_id = o.order_id\n         WHERE o.order_status IN ('completed','shipped','returned')\n         GROUP BY o.order_id) AS t;\n   ```\n4. **Avoid fan-out:** when two child tables (orders, web_events) both hang off customers, joining both\n   multiplies rows (orders \u00d7 events). Aggregate each child to one row per customer *first*, then join the\n   small results.\n5. Every computed column inside must have an alias, because the outer query refers to it by name.",
+  "snowflake_notes": "- Derived tables work identically. Snowflake also has `LATERAL` (a FROM-subquery that can reference earlier\n  tables) \u2014 SQLite has no LATERAL keyword; use a correlated subquery (Lesson 23) instead.\n- In Snowflake you'd often write the same thing as a CTE (Lesson 26); the optimizer treats them the same.",
+  "common_mistakes": [
+    "Forgetting the alias after the derived table: `FROM (SELECT ...) AS t` (required in most databases).",
+    "Averaging line values when the question asks for an average per order (wrong grain).",
+    "Joining two child tables at once and summing: fan-out inflates totals. Pre-aggregate each side.",
+    "Leaving a computed column unnamed inside the derived table, so the outer query can't reference it.",
+    "Integer division in percentages: use 100.0 * a / b."
+  ],
+  "recall": [
+    [
+      "What is a derived table?",
+      "A subquery in FROM, given an alias, that the outer query treats like a table."
+    ],
+    [
+      "How do you avoid fan-out when combining two child tables?",
+      "Aggregate each child to the parent's grain first, then join the aggregates."
+    ],
+    [
+      "What's the first thing to decide before writing a two-level aggregation?",
+      "The grain of each level (e.g. lines \u2192 orders \u2192 regions)."
+    ]
+  ],
+  "review_next": "Lesson 23 lets a subquery refer to the outer row (correlated subqueries). If exercise 22.3 felt tricky, re-run the worked example and compare the 145 joined rows with the true counts."
+}

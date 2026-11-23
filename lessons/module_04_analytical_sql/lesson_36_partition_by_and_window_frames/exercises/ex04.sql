@@ -1,0 +1,18 @@
+-- Lesson 36 · Exercise 36.4 — Year-to-date revenue by month
+--
+-- BUSINESS QUESTION
+--   Finance tracks revenue YTD: the running total must reset every January.
+-- TABLES: orders, order_items
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Return month ('YYYY-MM'),
+--   revenue (rounded 2) and ytd_revenue (running total of revenue within the same calendar
+--   year up to and including this month, rounded 2), for all months 2024-01…2025-12. Order
+--   by month.
+-- REQUIRED COLUMNS: month, revenue, ytd_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 36.4
+-- Grade it:              python3 sqlm.py submit 36.4
+--
+-- Write your query below (from memory!):
+

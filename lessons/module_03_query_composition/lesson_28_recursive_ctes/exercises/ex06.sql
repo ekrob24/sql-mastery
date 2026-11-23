@@ -1,0 +1,19 @@
+-- Lesson 28 · Exercise 28.6 — Monthly Books revenue with zero months
+--
+-- BUSINESS QUESTION
+--   The Books manager's chart skips months with no sales, which makes the trend look
+--   better than it is.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Generate every month from 2024-01 to 2025-12 with a recursive CTE, then return month
+--   ('YYYY-MM') and books_revenue = SUM(quantity * unit_price) for products with category
+--   'Books' on valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), rounded to 2
+--   decimals, showing 0 for months without Books sales. Sort by month.
+-- REQUIRED COLUMNS: month, books_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 28.6
+-- Grade it:              python3 sqlm.py submit 28.6
+--
+-- Write your query below (from memory!):
+

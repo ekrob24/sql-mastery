@@ -1,0 +1,14 @@
+-- Lesson 24 · Exercise 24.3 — Orders with no line items
+--
+-- BUSINESS QUESTION
+--   Data engineering wants to catch order headers that have no lines.
+-- TABLES: orders, order_items
+-- TASK
+--   Return order_id, order_date, order_status for orders that have no rows in order_items.
+-- REQUIRED COLUMNS: order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.3
+-- Grade it:              python3 sqlm.py submit 24.3
+--
+-- Write your query below (from memory!):
+

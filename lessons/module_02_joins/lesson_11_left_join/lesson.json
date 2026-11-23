@@ -1,0 +1,325 @@
+{
+  "number": 11,
+  "slug": "left_join",
+  "title": "LEFT JOIN",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Use LEFT JOIN to keep every row of the driving table, handle the NULLs it produces, write anti-joins, and put right-table filters in ON (not WHERE) so the LEFT JOIN is not silently turned into an INNER JOIN.",
+  "context": "Customer success needs lists that include the customers who did NOT do something \u2014 never ordered, no order this year, no valid order. Those rows are exactly what an INNER JOIN throws away.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Every customer's order count",
+      "question": "Customer success wants an order count for EVERY customer, including those who never ordered.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name and order_count (orders of any status; 0 when none) for all 20 customers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "'Every customer' \u2192 customers is the driving table and must survive \u2192 LEFT JOIN.",
+        "COUNT(o.order_id) is 0 for the NULL-padded row; COUNT(*) would say 1.",
+        "FROM customers c LEFT JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id, c.name"
+      ],
+      "why": "Zero-activity customers are the target list for re-engagement campaigns. An INNER JOIN would hide them.",
+      "recall": {
+        "q": "A customer has no orders. What does COUNT(*) give after a LEFT JOIN? COUNT(o.order_id)?",
+        "a": "COUNT(*) = 1 (the NULL-padded row counts); COUNT(o.order_id) = 0."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "customers 20, orders 60. Before grouping: 62 rows = 59 order rows that match a customer (one-to-many: customer 1 repeats 9 times) + 3 NULL-padded rows for customers 18, 19 and 20, who have no orders. After GROUP BY: 20 rows; those three get order_count 0. The counts add up to 59, not 60: order 31 (customer 99) is not attached to any customer \u2014 a LEFT JOIN from customers keeps all customers, not all orders.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "order_count"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 2,
+      "title": "Every product with its supplier (or NULL)",
+      "question": "Procurement wants the COMPLETE product list with supplier name, flagging gaps instead of hiding them.",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Return product_id, product_name and supplier_name for all 25 products (supplier_name NULL when the product has no matching supplier).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "All 25 products must survive.",
+        "products LEFT JOIN suppliers.",
+        "SELECT p.product_id, p.product_name, s.supplier_name FROM products p LEFT JOIN suppliers s ON s.supplier_id = p.supplier_id;"
+      ],
+      "why": "A complete list with visible NULLs is honest; an INNER JOIN list that is silently 2 rows short is not.",
+      "recall": {
+        "q": "In a LEFT JOIN, which side's columns can become NULL because of the join?",
+        "a": "The right table's columns."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "products 25 \u2192 25 rows (each product matches at most one supplier, so no multiplication). Compare with the INNER JOIN in Lesson 10 (23 rows): the two extra rows are product 21 'Water Bottle' (supplier_id 9 doesn't exist) and product 22 'Phone Stand' (NULL supplier_id), both with supplier_name NULL. Supplier 5 still doesn't appear \u2014 LEFT JOIN protects the left table only.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_name"
+      ],
+      "expected_row_count": 25
+    },
+    {
+      "number": 3,
+      "title": "Products that were never sold (anti-join)",
+      "question": "Merchandising wants to delist dead stock: which products have never appeared on any order line?",
+      "tables": [
+        "products",
+        "order_items"
+      ],
+      "prompt": "Return product_id and product_name of products that appear on no order line at all.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Keep products, look for the ones whose match came back empty.",
+        "After the LEFT JOIN, test a right-table column that is never NULL in real rows (its primary key).",
+        "FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id WHERE oi.order_item_id IS NULL"
+      ],
+      "why": "'Which X has no Y?' (no orders, no logins, no payments) is one of the most-asked analytics questions.",
+      "recall": {
+        "q": "Why test the right table's primary key for NULL in an anti-join?",
+        "a": "The PK is never NULL in a real row, so NULL there can only mean 'no match'."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "order_items",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "NOT EXISTS"
+        ]
+      },
+      "join_notes": "products 25, order_items 150. The LEFT JOIN produces 153 rows: 150 line rows (one-to-many \u2014 product 9 alone repeats 15 times) plus 3 NULL-padded rows for products 23 'Smart Watch', 24 'Linen Tablecloth' and 25 'Tennis Racket'. WHERE oi.order_item_id IS NULL keeps exactly those 3.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 4,
+      "title": "Orders in 2025 per customer \u2014 filter in ON, not WHERE",
+      "question": "Customer success: for EVERY customer, how many orders did they place in 2025? Zero is an answer.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name and orders_2025 (orders of any status with order_date >= '2025-01-01'; 0 when none) for all 20 customers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The date filter is about the RIGHT table (orders). Where must it go so customers still survive?",
+        "If you write WHERE o.order_date >= ..., customers with no 2025 order get NULL dates and are removed.",
+        "LEFT JOIN orders o ON o.customer_id = c.customer_id AND o.order_date >= '2025-01-01'"
+      ],
+      "why": "This is the most common LEFT JOIN bug in production SQL: a WHERE on the right table quietly converts the LEFT JOIN to an INNER JOIN and the zero rows disappear from the report.",
+      "recall": {
+        "q": "Why does WHERE o.order_date >= '2025-01-01' break a LEFT JOIN from customers?",
+        "a": "Unmatched customers have NULL order_date; NULL >= '2025-01-01' is not true, so WHERE removes them \u2014 the LEFT JOIN acts like an INNER JOIN."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "With the date filter in ON: 20 rows. Customers 5 and 8 (only 2024 orders) and 18, 19, 20 (no orders at all) still appear, with orders_2025 = 0 \u2014 their NULL-padded row is counted as 0 by COUNT(o.order_id). Moving the filter to WHERE returns only 15 rows: those 5 customers are dropped because their o.order_date is NULL (or 2024). The 2025 counts sum to 29, not 30 \u2014 order 31 belongs to customer 99 who isn't in customers.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "orders_2025"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 5,
+      "title": "Every order with its line count and value",
+      "question": "Operations wants all 60 orders with how many lines and how much value each has \u2014 empty orders included.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return order_id, order_status, line_count (number of order lines; 0 when none) and order_value (SUM(quantity * unit_price) rounded to 2 decimals; 0 when the order has no lines) for all 60 orders.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "All 60 orders \u2192 orders is the left table.",
+        "SUM over only NULLs is NULL, not 0 \u2014 wrap it in COALESCE(..., 0).",
+        "COUNT(oi.order_item_id) AS line_count, ROUND(COALESCE(SUM(oi.quantity * oi.unit_price), 0), 2) AS order_value"
+      ],
+      "why": "Header/detail reports must not lose headers that have no detail yet (pending, draft, empty baskets).",
+      "recall": {
+        "q": "What does SUM() return when all inputs are NULL?",
+        "a": "NULL \u2014 use COALESCE(SUM(x), 0) to show 0."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items",
+        "shared_key": "order_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "orders 60, order_items 150. The LEFT JOIN yields 151 rows: 150 line rows (each order repeated once per line, up to 5 times) + 1 NULL-padded row for order 60 (pending, no items). GROUP BY collapses back to 60 rows. Order 60 shows line_count 0 and order_value 0 \u2014 without COALESCE its value would be NULL. An INNER JOIN would have returned only 59 orders.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_status",
+        "line_count",
+        "order_value"
+      ],
+      "expected_row_count": 60
+    },
+    {
+      "number": 6,
+      "title": "Last valid order per customer (and days since)",
+      "question": "Retention wants each customer's most recent VALID order and how long ago it was, as of 2025-12-31.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "For all 20 customers return customer_id, name, last_order_date (latest order_date among their valid orders: order_status IN ('completed','shipped','returned'); NULL if none) and days_since_last_order (whole days from last_order_date to '2025-12-31': CAST(julianday('2025-12-31') - julianday(last_order_date) AS INTEGER); NULL if none).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The status filter is on the right table and all 20 customers must survive \u2192 it goes in ON.",
+        "MAX(o.order_date) per customer; julianday() turns dates into day numbers you can subtract.",
+        "LEFT JOIN orders o ON o.customer_id = c.customer_id AND o.order_status IN (...) GROUP BY c.customer_id, c.name"
+      ],
+      "why": "Recency is the R in RFM segmentation. Customers with NULL recency are a segment of their own, not an error to hide.",
+      "recall": {
+        "q": "Customer 16 has one order, which was cancelled. What does this query show for them, and why?",
+        "a": "NULL last_order_date: the cancelled order fails the ON condition, so customer 16 gets a NULL-padded row."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "20 customers \u2192 20 rows. 16 customers have at least one valid order. Four come back NULL: customers 18, 19 and 20 have no orders at all, and customer 16 (Ava Thompson) has only order 48, which is cancelled \u2014 the status condition in ON rejects it, so she gets a NULL-padded row. Customer 13's pending order 59 is ignored the same way, so their last valid order is 2025-01-15 (350 days). Put the status filter in WHERE and customer 16 plus 18\u201320 would vanish (16 rows).",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "last_order_date",
+        "days_since_last_order"
+      ],
+      "expected_row_count": 20
+    }
+  ],
+  "worked_example": {
+    "question": "Show every product with how many order lines it appears on (0 if never sold).",
+    "sql": "SELECT p.product_id,\n       p.product_name,\n       COUNT(oi.order_item_id) AS line_count\nFROM products AS p\nLEFT JOIN order_items AS oi ON oi.product_id = p.product_id\nGROUP BY p.product_id, p.product_name\nORDER BY line_count, p.product_id\nLIMIT 6;",
+    "explanation": "All 25 products survive. Products 23, 24, 25 have no lines: they appear once with NULL order_item_id, which COUNT(oi.order_item_id) turns into 0. With an INNER JOIN they would be invisible.",
+    "columns": [
+      "product_id",
+      "product_name",
+      "line_count"
+    ],
+    "rows": [
+      [
+        23,
+        "Smart Watch",
+        0
+      ],
+      [
+        24,
+        "Linen Tablecloth",
+        0
+      ],
+      [
+        25,
+        "Tennis Racket",
+        0
+      ],
+      [
+        13,
+        "Wool Socks (3-pack)",
+        2
+      ],
+      [
+        2,
+        "Mechanical Keyboard",
+        3
+      ],
+      [
+        8,
+        "French Press",
+        3
+      ]
+    ]
+  },
+  "recipe": "**The join recipe \u2014 do it in this order, every time, before typing SQL**\n\n1. **Pick the driving table.** Which table's rows is the answer *about*? (\"every customer\u2026\", \"each order line\u2026\")\n   That table goes first, after `FROM` \u2014 it is the **left table**.\n2. **Name the right table(s) and the shared key.** What column links them? Is it PK \u2192 FK (one-to-many) or\n   one-to-one? Which side is the \"many\" side?\n3. **Ask: \"must every row of the left table survive, even with no match?\"**\n   - no \u2192 `INNER JOIN` (unmatched rows silently disappear)\n   - yes \u2192 `LEFT JOIN` (unmatched rows stay, right-side columns become NULL)\n   - rows from *both* sides must survive \u2192 `FULL OUTER JOIN`\n4. **Predict the row count before you run it.** Count the inputs (`SELECT COUNT(*) \u2026`), think about\n   matches per row (0, 1 or many), write your guess down \u2014 then run and compare. A surprise means\n   you misunderstood the grain, the key or the data.\n\n**LEFT JOIN = all left rows + matching right rows.** If a left row has no match, it appears once with\n**NULL in every right-table column**.\n\n```sql\nSELECT c.customer_id, c.name,\n       COUNT(o.order_id) AS cancelled_orders          -- count a RIGHT column \u2192 0 for no match\nFROM   customers AS c                                 -- every customer must survive\nLEFT JOIN orders AS o\n       ON  o.customer_id = c.customer_id\n       AND o.order_status = 'cancelled'               -- right-table filter goes in ON\nGROUP  BY c.customer_id, c.name;\n-- predict: 20 customers \u2192 20 rows\n```\n\n**Filter-in-ON vs filter-in-WHERE (the #1 LEFT JOIN bug)**\n- `ON ... AND o.x = ...` \u2192 filters which right rows *match*; left rows still survive (with NULLs).\n- `WHERE o.x = ...` \u2192 runs *after* the join; NULL-padded rows fail the test and are removed \u2192\n  your LEFT JOIN has silently become an INNER JOIN.\n- Filters on the **left** table belong in WHERE as usual.\n\n**Anti-join:** `LEFT JOIN \u2026 WHERE right.key IS NULL` keeps only left rows with *no* match\n(same as `WHERE NOT EXISTS (SELECT 1 FROM right WHERE \u2026)`).\n\n**NULL handling:** `COALESCE(SUM(...), 0)` turns 'no rows' into 0; `COUNT(right.col)` already returns 0.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Filtering the right table in WHERE (`WHERE o.status = ...`) \u2014 it removes the NULL-padded rows and turns LEFT into INNER.",
+    "Using COUNT(*) after a LEFT JOIN \u2014 unmatched left rows count as 1 instead of 0.",
+    "Forgetting COALESCE around SUM \u2014 'no rows' gives NULL, not 0.",
+    "Testing a left-table column for NULL in an anti-join instead of the right table's key.",
+    "Assuming LEFT JOIN keeps all rows of BOTH tables \u2014 it only protects the left one (order 31 still disappears from customers LEFT JOIN orders)."
+  ],
+  "recall": [
+    [
+      "What appears in the right-table columns for an unmatched left row?",
+      "NULL in every right-table column."
+    ],
+    [
+      "Right-table filter: ON or WHERE in a LEFT JOIN?",
+      "ON \u2014 in WHERE it eliminates the unmatched rows and the LEFT JOIN behaves like an INNER JOIN."
+    ],
+    [
+      "Write the anti-join skeleton.",
+      "FROM a LEFT JOIN b ON b.key = a.key WHERE b.key IS NULL"
+    ],
+    [
+      "Can a LEFT JOIN return more rows than the left table?",
+      "Yes \u2014 when a left row matches several right rows (one-to-many)."
+    ]
+  ],
+  "review_next": "Lesson 12 shows RIGHT JOIN \u2014 nothing new, just the mirror image. Make sure filter-in-ON vs WHERE is solid first: redo exercise 11.4 with the filter in WHERE and watch 5 customers disappear."
+}

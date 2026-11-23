@@ -1,0 +1,17 @@
+-- Lesson 3 · Exercise 3.6 — Outside the North region, unknowns included
+--
+-- BUSINESS QUESTION
+--   The South/East/West sales team will contact every emailable customer who is not
+--   assigned to North — customers with an unknown region should go to them too.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name, email and region_label (region, or 'Unassigned' when NULL)
+--   for customers who have a non-NULL email AND whose region is not 'North' (customers
+--   with a NULL region count as 'not North').
+-- REQUIRED COLUMNS: customer_id, name, email, region_label
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.6
+-- Grade it:              python3 sqlm.py submit 3.6
+--
+-- Write your query below (from memory!):
+

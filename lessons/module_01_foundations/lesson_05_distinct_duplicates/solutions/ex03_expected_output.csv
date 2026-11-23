@@ -1,0 +1,9 @@
+order_year,order_status
+2024,cancelled
+2024,completed
+2024,returned
+2025,cancelled
+2025,completed
+2025,pending
+2025,returned
+2025,shipped

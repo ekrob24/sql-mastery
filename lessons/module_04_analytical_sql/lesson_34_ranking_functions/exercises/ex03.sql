@@ -1,0 +1,17 @@
+-- Lesson 34 · Exercise 34.3 — Each customer's most recent order
+--
+-- BUSINESS QUESTION
+--   Customer success wants each customer's latest order (any status) for their account
+--   view.
+-- TABLES: orders
+-- TASK
+--   For every customer_id in orders (any status, including the orphan 99), return
+--   customer_id, order_id, order_date and order_status of that customer's most recent
+--   order (latest order_date; if two share a date, the higher order_id). Use ROW_NUMBER.
+-- REQUIRED COLUMNS: customer_id, order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 34.3
+-- Grade it:              python3 sqlm.py submit 34.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,24 @@
+-- Lesson 19 · Exercise 19.5 — Explode the JSON order feed
+--
+-- BUSINESS QUESTION
+--   The data team needs the raw order event feed flattened to one row per ordered item.
+-- TABLES: raw_order_events
+-- TASK
+--   Using json_each on payload's '$.items' array, return one row per item with columns
+--   event_id, order_id (payload $.order_id), product_id, qty and price (fields of each
+--   item).
+-- REQUIRED COLUMNS: event_id, order_id, product_id, qty, price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 19.5
+-- Grade it:              python3 sqlm.py submit 19.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

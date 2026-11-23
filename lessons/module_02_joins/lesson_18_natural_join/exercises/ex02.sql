@@ -1,0 +1,23 @@
+-- Lesson 18 · Exercise 18.2 — Rewrite with USING
+--
+-- BUSINESS QUESTION
+--   Procurement wants each product with its supplier's name and country.
+-- TABLES: products, suppliers
+-- TASK
+--   Return product_id, product_name, supplier_name and country for products whose supplier
+--   exists, joining with JOIN … USING (supplier_id).
+-- REQUIRED COLUMNS: product_id, product_name, supplier_name, country
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.2
+-- Grade it:              python3 sqlm.py submit 18.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

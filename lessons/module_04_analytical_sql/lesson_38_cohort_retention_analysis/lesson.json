@@ -1,0 +1,322 @@
+{
+  "number": 38,
+  "slug": "cohort_retention_analysis",
+  "title": "Cohort retention analysis",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Group customers into cohorts by when they started, measure how many come back in each later period, and present it as retention counts, rates and a cohort matrix.",
+  "context": "The growth team wants to know whether customers acquired in 2025 stick around as well as the 2024 ones. Averages across all customers hide this; cohorts compare like with like \u2014 customers at the same age, regardless of calendar date.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Assign each customer a cohort month",
+      "question": "Growth needs every customer tagged with their acquisition month.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Use valid orders (order_status IN ('completed','shipped','returned')) of known customers (INNER JOIN customers \u2014 the orphan order 31 is excluded). Return customer_id, first_order_date (their earliest valid order date) and cohort_month ('YYYY-MM' of first_order_date). One row per customer.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The cohort is defined by each customer's FIRST valid order.",
+        "GROUP BY customer_id with MIN(order_date).",
+        "SELECT o.customer_id, MIN(o.order_date) AS first_order_date, strftime('%Y-%m', MIN(o.order_date)) AS cohort_month FROM orders o JOIN customers c ... WHERE ... GROUP BY o.customer_id;"
+      ],
+      "why": "Every cohort analysis starts with a stable, one-row-per-customer cohort assignment. Getting the 'what counts as an order' filter right here propagates everywhere.",
+      "recall": {
+        "q": "Why exclude cancelled orders when finding the first order?",
+        "a": "A cancelled order isn't a real purchase; counting it would put customers (e.g. #16) in a cohort they never truly joined."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('month', MIN(o.order_date)) AS cohort_month (a DATE, not text).",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "first_order_date",
+        "cohort_month"
+      ],
+      "expected_row_count": 16
+    },
+    {
+      "number": 2,
+      "title": "Cohort sizes by quarter",
+      "question": "How many new customers did we acquire each quarter?",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Same customer/order definition as 38.1 (valid orders of known customers). Assign each customer the quarter of their first valid order as cohort_quarter (format 'YYYY-Qn', e.g. '2024-Q1'). Return cohort_quarter and new_customers (number of customers in that cohort). Order by cohort_quarter.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Two levels of aggregation: first per customer (MIN), then per quarter (COUNT).",
+        "Quarter label: strftime('%Y', d) || '-Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3).",
+        "WITH first_order AS (... MIN(order_date) ... GROUP BY customer_id) SELECT <quarter label> AS cohort_quarter, COUNT(*) AS new_customers FROM first_order GROUP BY 1 ORDER BY cohort_quarter;"
+      ],
+      "why": "Cohort size is the denominator of every retention rate \u2014 and a growth KPI by itself (new customers per period).",
+      "recall": {
+        "q": "What is the denominator of a cohort retention rate?",
+        "a": "The cohort size: the number of customers whose first activity fell in that cohort period."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATE_TRUNC('quarter', first_date) AS cohort_quarter, COUNT(*) ... GROUP BY 1",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "cohort_quarter",
+        "new_customers"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 3,
+      "title": "Months since first order",
+      "question": "For each customer, list the months they were active and how many months after their first order each was.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Valid orders of known customers (as in 38.1). Return one row per customer per active month: customer_id, cohort_month ('YYYY-MM' of their first valid order), order_month ('YYYY-MM' of a month with at least one valid order) and months_since_first (calendar-month difference: (year*12 + month) of order_month minus the same for cohort_month; 0 for the first month).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Join each order back to the customer's first order date.",
+        "Month index = year*12 + month; the difference of two indexes is the calendar-month gap. Use DISTINCT so two orders in one month give one row.",
+        "SELECT DISTINCT a.customer_id, strftime('%Y-%m', f.first_date), strftime('%Y-%m', a.order_date), (CAST(strftime('%Y',a.order_date) AS INTEGER)*12 + CAST(strftime('%m',a.order_date) AS INTEGER)) - (same for f.first_date) FROM activity a JOIN first_order f ..."
+      ],
+      "why": "The period index aligns customers by age, not calendar \u2014 month 3 means 'three months after joining' for everyone.",
+      "recall": {
+        "q": "Why not use (julianday(b) - julianday(a)) / 30 for months since first order?",
+        "a": "Day counts don't map cleanly onto calendar months; cohort tables count calendar-month boundaries (Jan 31 \u2192 Feb 1 is month 1)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATEDIFF('month', first_date, order_date) AS months_since_first \u2014 it counts month boundaries, exactly this index.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "cohort_month",
+        "order_month",
+        "months_since_first"
+      ],
+      "expected_row_count": 48
+    },
+    {
+      "number": 4,
+      "title": "Quarterly retention counts",
+      "question": "How many customers of each quarterly cohort were active 0, 1, 2\u2026 quarters after their first order?",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Valid orders of known customers (as in 38.1). Quarter index of a date = year*4 + (month-1)/3 (integer division). Return cohort_quarter ('YYYY-Qn' of the first valid order), quarters_since_first (quarter index of an order minus quarter index of the first order) and active_customers (distinct customers with at least one valid order in that quarter). Order by cohort_quarter, quarters_since_first.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Compute a quarter index once in the activity CTE; MIN of it per customer is the cohort's index.",
+        "COUNT(DISTINCT customer_id) \u2014 a customer with two orders in one quarter counts once.",
+        "GROUP BY cohort_quarter, (q_idx - first_q_idx) and COUNT(DISTINCT a.customer_id)."
+      ],
+      "why": "This long table (cohort, period, count) is the canonical retention dataset \u2014 every chart and matrix is built from it.",
+      "recall": {
+        "q": "Why COUNT(DISTINCT customer_id) rather than COUNT(*) in retention counts?",
+        "a": "Retention counts customers, not orders: a customer with three orders in a period is one retained customer."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "DATEDIFF('quarter', DATE_TRUNC('quarter', first_date), DATE_TRUNC('quarter', order_date)) AS quarters_since_first",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "cohort_quarter",
+        "quarters_since_first",
+        "active_customers"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 5,
+      "title": "Quarterly retention rates",
+      "question": "Turn the counts into rates so cohorts of different sizes can be compared.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Extend 38.4: return cohort_quarter, quarters_since_first, cohort_size (customers in the cohort), active_customers and retention_pct (100.0 * active_customers / cohort_size, 0\u2013100 scale, rounded to 1 decimal). Same definitions as 38.4. Order by cohort_quarter, quarters_since_first.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Cohort size = active_customers at quarters_since_first = 0, or COUNT(*) of first_order per cohort.",
+        "Build counts and sizes as separate CTEs and join them on cohort_quarter.",
+        "... SELECT c.cohort_quarter, c.quarters_since_first, s.cohort_size, c.active_customers, ROUND(100.0 * c.active_customers / s.cohort_size, 1) AS retention_pct FROM counts c JOIN sizes s USING (cohort_quarter) ORDER BY ..."
+      ],
+      "why": "Rates make a 4-customer cohort comparable to a 2-customer cohort. (With cohorts this small, one customer swings the rate by 25\u201350 points \u2014 always show cohort_size next to the rate.)",
+      "recall": {
+        "q": "What is retention_pct at quarters_since_first = 0, by construction?",
+        "a": "100% \u2014 every customer is active in their own first quarter."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Alternative for cohort_size: FIRST_VALUE(active_customers) OVER (PARTITION BY cohort_quarter ORDER BY quarters_since_first).",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "cohort_quarter",
+        "quarters_since_first",
+        "cohort_size",
+        "active_customers",
+        "retention_pct"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 6,
+      "title": "Retention matrix with censoring",
+      "question": "The board deck wants the classic triangle: one row per cohort, columns for quarters 1\u20134 after acquisition.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Same definitions as 38.5 (valid orders of known customers; quarter index = year*4 + (month-1)/3). Return cohort_quarter, cohort_size, and q1_pct, q2_pct, q3_pct, q4_pct = percentage (0\u2013100, rounded to 1 decimal) of the cohort active exactly 1, 2, 3, 4 quarters after their first quarter. Use 0 when that quarter is observable but nobody was active, and NULL when that quarter lies after 2025-Q4 (the as-of date is 2025-12-31). Order by cohort_quarter.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Pivot the (cohort, k) counts with COUNT(DISTINCT CASE WHEN k = 1 THEN customer_id END) etc.",
+        "As-of quarter index = 2025*4 + 3 (2025-Q4). A cell is observable if first_q_idx + k <= that; otherwise CASE ... END yields NULL.",
+        "per_cohort CTE: cohort_quarter, MIN(first_q_idx), COUNT(DISTINCT customer_id) AS cohort_size, a1..a4; final SELECT: CASE WHEN first_q_idx + 1 <= 2025*4+3 THEN ROUND(100.0*a1/cohort_size,1) END AS q1_pct, ..."
+      ],
+      "why": "Distinguishing 'nobody came back' (0) from 'too early to know' (NULL) is what makes a retention triangle honest. Never use date('now') \u2014 fix the as-of date so results are reproducible.",
+      "recall": {
+        "q": "Why show NULL rather than 0 for future cells of a young cohort?",
+        "a": "Because those periods haven't happened yet as of the as-of date; 0 would falsely claim everyone churned."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Pre-aggregate retention_pct per (cohort, k), then PIVOT (MAX(retention_pct) FOR k IN (1,2,3,4)); censoring: IFF(DATEADD('quarter', k, cohort_quarter) <= '2025-10-01', pct, NULL).",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "cohort_quarter",
+        "cohort_size",
+        "q1_pct",
+        "q2_pct",
+        "q3_pct",
+        "q4_pct"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 7,
+      "title": "Signup cohorts: converted within 90 days",
+      "question": "Marketing measures acquisition by signup date. Of each quarter's signups, how many placed a valid order within 90 days?",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Cohort = quarter of customers.signup_date (signup_quarter, 'YYYY-Qn'); include ALL customers, even those who never ordered. A customer converted if their first valid order (order_status IN ('completed','shipped','returned')) is on or before signup_date + 90 days (julianday(first_order) - julianday(signup_date) <= 90). Return signup_quarter, signups, converted_90d and conversion_pct (100.0 * converted_90d / signups, rounded to 1 decimal). Order by signup_quarter.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Start FROM customers and LEFT JOIN each customer's first valid order \u2014 non-buyers must stay in the denominator.",
+        "For non-buyers first_date is NULL, so the <= 90 comparison is NULL and the CASE falls to ELSE 0.",
+        "SELECT <signup quarter label>, COUNT(*) AS signups, SUM(CASE WHEN julianday(f.first_date) - julianday(c.signup_date) <= 90 THEN 1 ELSE 0 END) AS converted_90d, ... FROM customers c LEFT JOIN first_order f ... GROUP BY 1 ORDER BY signup_quarter;"
+      ],
+      "why": "Signup cohorts answer 'is our onboarding converting?', while first-order cohorts answer 'do buyers come back?'. The LEFT JOIN is what keeps never-buyers (18, 19, 20) in the denominator.",
+      "recall": {
+        "q": "Why must this query start from customers with a LEFT JOIN?",
+        "a": "So customers who never ordered still count as signups; an inner join would inflate the conversion rate."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "COUNT_IF(f.first_date <= DATEADD('day', 90, c.signup_date)) AS converted_90d, grouped by DATE_TRUNC('quarter', c.signup_date).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "signup_quarter",
+        "signups",
+        "converted_90d",
+        "conversion_pct"
+      ],
+      "expected_row_count": 8
+    }
+  ],
+  "worked_example": {
+    "question": "When did each customer place their first valid order?",
+    "sql": "SELECT o.customer_id,\n       MIN(o.order_date) AS first_order_date,\n       strftime('%Y', MIN(o.order_date)) || '-Q'\n         || ((CAST(strftime('%m', MIN(o.order_date)) AS INTEGER) + 2) / 3) AS cohort_quarter\nFROM orders AS o\nJOIN customers AS c ON c.customer_id = o.customer_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY o.customer_id\nORDER BY first_order_date\nLIMIT 6;",
+    "explanation": "MIN(order_date) per customer is the cohort anchor. The INNER JOIN to customers drops the orphan order 31 (customer 99), and the status filter means customer 16 (only a cancelled order) is not a customer for this analysis at all.",
+    "columns": [
+      "customer_id",
+      "first_order_date",
+      "cohort_quarter"
+    ],
+    "rows": [
+      [
+        1,
+        "2024-01-05",
+        "2024-Q1"
+      ],
+      [
+        2,
+        "2024-01-29",
+        "2024-Q1"
+      ],
+      [
+        3,
+        "2024-02-11",
+        "2024-Q1"
+      ],
+      [
+        4,
+        "2024-03-31",
+        "2024-Q1"
+      ],
+      [
+        7,
+        "2024-04-28",
+        "2024-Q2"
+      ],
+      [
+        8,
+        "2024-06-13",
+        "2024-Q2"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: cohort retention in 5 moves**\n\n1. **Activity table:** one row per customer per active period (here: valid orders of known customers,\n   `order_status IN ('completed','shipped','returned')` joined to `customers`).\n2. **Cohort:** each customer's first period \u2014 `MIN(order_date)` per customer (or `signup_date`).\n3. **Period index:** periods since the cohort start. Month index trick in SQLite:\n   `year*12 + month`; quarter index: `year*4 + (month-1)/3`. Subtract the cohort's index.\n4. **Count:** `COUNT(DISTINCT customer_id)` per (cohort, period_index).\n5. **Rate:** divide by the cohort size (period 0 = 100%), optionally pivot periods into columns.\n\n```sql\nWITH activity AS (...),                          -- customer_id, order_date\nfirst_order AS (SELECT customer_id, MIN(order_date) AS first_date FROM activity GROUP BY customer_id),\nidx AS (SELECT a.customer_id,\n               strftime('%Y-%m', f.first_date) AS cohort_month,\n               (CAST(strftime('%Y', a.order_date) AS INT)*12 + CAST(strftime('%m', a.order_date) AS INT))\n             - (CAST(strftime('%Y', f.first_date) AS INT)*12 + CAST(strftime('%m', f.first_date) AS INT))\n                 AS months_since_first\n        FROM activity a JOIN first_order f USING (customer_id))\nSELECT cohort_month, months_since_first, COUNT(DISTINCT customer_id) AS active_customers\nFROM idx GROUP BY 1, 2;\n```\n\n**Right-censoring:** a cohort from 2025-Q4 *cannot* have \"4 quarters later\" data as of 2025-12-31.\nShow those cells as NULL, not 0 \u2014 zero would look like everyone churned.\nWith only ~16 customers, quarterly cohorts are far more readable than monthly ones.",
+  "snowflake_notes": "Snowflake makes the date math much shorter:\n\n```sql\nWITH activity AS (\n    SELECT o.customer_id, o.order_date\n    FROM orders o JOIN customers c ON c.customer_id = o.customer_id\n    WHERE o.order_status IN ('completed','shipped','returned')\n),\ncohorts AS (\n    SELECT customer_id,\n           order_date,\n           DATE_TRUNC('month', MIN(order_date) OVER (PARTITION BY customer_id)) AS cohort_month\n    FROM activity\n)\nSELECT cohort_month,\n       DATEDIFF('month', cohort_month, DATE_TRUNC('month', order_date)) AS months_since_first,\n       COUNT(DISTINCT customer_id) AS active_customers\nFROM cohorts\nGROUP BY 1, 2\nORDER BY 1, 2;\n```\n\n- `DATEDIFF('month', a, b)` counts month *boundaries* crossed (Jan 31 \u2192 Feb 1 = 1), which is exactly the\n  calendar-month index cohort tables want. Same for `DATEDIFF('quarter', ...)`.\n- Pivot the retention matrix with `PIVOT (COUNT(DISTINCT ...) ...)`? Not allowed \u2014 PIVOT takes a simple aggregate\n  over a column; pre-aggregate, then `PIVOT (MAX(retention_pct) FOR months_since_first IN (0,1,2,3))`.\n- `DATEADD('day', 90, signup_date)` for \"within 90 days\" windows.",
+  "common_mistakes": [
+    "Counting orders instead of distinct customers in retention cells.",
+    "Defining the cohort from all orders (including cancelled) instead of valid ones.",
+    "Showing 0 for periods that haven't happened yet (right-censoring) instead of NULL.",
+    "Using day differences / 30 for month indexes instead of calendar-month arithmetic.",
+    "Using date('now') as the as-of date \u2014 results change every day; fix it ('2025-12-31').",
+    "Inner-joining signups to orders, which drops never-buyers from the denominator."
+  ],
+  "recall": [
+    [
+      "Name the three columns of a long-format retention table.",
+      "cohort (start period), period index (periods since start), active customer count (or rate)."
+    ],
+    [
+      "How do you compute a calendar-month index difference in SQLite? In Snowflake?",
+      "SQLite: (y2*12 + m2) - (y1*12 + m1) from strftime parts. Snowflake: DATEDIFF('month', d1, d2)."
+    ],
+    [
+      "What's right-censoring in a cohort table?",
+      "Later periods of young cohorts aren't observable yet as of the as-of date; they must be NULL/blank, not 0."
+    ]
+  ],
+  "review_next": "Next, Lesson 39 tracks customers through a web funnel. Revisit 38.6 and explain why 2025-Q3's q2_pct is NULL while 2024-Q4's q2_pct is 0."
+}

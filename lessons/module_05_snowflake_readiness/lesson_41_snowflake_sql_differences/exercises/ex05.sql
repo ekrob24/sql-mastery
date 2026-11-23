@@ -1,0 +1,20 @@
+-- Lesson 41 · Exercise 41.5 — QUALIFY → ROW_NUMBER in a CTE
+--
+-- BUSINESS QUESTION
+--   Customer success: `SELECT customer_id, order_id AS latest_order_id, order_date AS
+--   latest_order_date FROM orders WHERE order_status IN ('completed','shipped','returned')
+--   QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id
+--   DESC) = 1`.
+-- TABLES: orders
+-- TASK
+--   Return customer_id, latest_order_id and latest_order_date: each customer_id's most
+--   recent valid order (valid = order_status IN ('completed','shipped','returned')); break
+--   date ties by the higher order_id. Include every customer_id that appears on a valid
+--   order (also the orphan id 99).
+-- REQUIRED COLUMNS: customer_id, latest_order_id, latest_order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.5
+-- Grade it:              python3 sqlm.py submit 41.5
+--
+-- Write your query below (from memory!):
+

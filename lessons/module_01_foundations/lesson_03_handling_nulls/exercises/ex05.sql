@@ -1,0 +1,16 @@
+-- Lesson 3 · Exercise 3.5 — The NOT IN pitfall: suppliers other than 1 and 2
+--
+-- BUSINESS QUESTION
+--   Procurement is consolidating suppliers 1 and 2. List every product NOT sourced from
+--   them — and products with no supplier on record definitely belong on that list.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name and supplier_id for products whose supplier_id is not
+--   1 and not 2, INCLUDING products whose supplier_id is NULL.
+-- REQUIRED COLUMNS: product_id, product_name, supplier_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 3.5
+-- Grade it:              python3 sqlm.py submit 3.5
+--
+-- Write your query below (from memory!):
+

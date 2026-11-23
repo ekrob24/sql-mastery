@@ -1,0 +1,15 @@
+-- Lesson 43 · Exercise 43.3 — Basket-size distribution
+--
+-- BUSINESS QUESTION
+--   Product wants the distribution of items per order event — including empty baskets.
+-- TABLES: raw_order_events
+-- TASK
+--   Return item_count (length of $.items) and events (number of events with that many
+--   items) for every item_count that occurs, including 0.
+-- REQUIRED COLUMNS: item_count, events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.3
+-- Grade it:              python3 sqlm.py submit 43.3
+--
+-- Write your query below (from memory!):
+

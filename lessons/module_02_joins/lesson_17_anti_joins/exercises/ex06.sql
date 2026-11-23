@@ -1,0 +1,25 @@
+-- Lesson 17 · Exercise 17.6 — The NOT IN trap: unused category names
+--
+-- BUSINESS QUESTION
+--   The catalog team wants category names from the category tree that no product is tagged
+--   with. Their NOT IN query says 'none' — is that true?
+-- TABLES: categories, products
+-- TASK
+--   Return category_id and category_name for categories whose category_name does not equal
+--   any products.category. (products.category contains a NULL for product 20 — your query
+--   must still return the right answer.)
+-- REQUIRED COLUMNS: category_id, category_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.6
+-- Grade it:              python3 sqlm.py submit 17.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

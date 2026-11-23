@@ -1,0 +1,17 @@
+-- Lesson 48 · Exercise 48.2 — INNER JOIN drops customers without orders
+--
+-- BUSINESS QUESTION
+--   The CRM has 20 customers but this report shows only 17: `SELECT c.customer_id, c.name,
+--   COUNT(o.order_id) AS orders_placed FROM customers c JOIN orders o ON o.customer_id =
+--   c.customer_id GROUP BY c.customer_id, c.name`.
+-- TABLES: customers, orders
+-- TASK
+--   Fix it so all 20 customers appear: customer_id, name, orders_placed (number of orders
+--   of any status; 0 for customers without orders).
+-- REQUIRED COLUMNS: customer_id, name, orders_placed
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.2
+-- Grade it:              python3 sqlm.py submit 48.2
+--
+-- Write your query below (from memory!):
+

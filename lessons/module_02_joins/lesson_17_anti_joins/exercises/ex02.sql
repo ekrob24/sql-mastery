@@ -1,0 +1,24 @@
+-- Lesson 17 · Exercise 17.2 — Products never sold
+--
+-- BUSINESS QUESTION
+--   Merchandising wants to delist dead stock: which products have never appeared on any
+--   order line?
+-- TABLES: products, order_items
+-- TASK
+--   Return product_id, product_name and category for products with no row in order_items.
+--   Use NOT EXISTS.
+-- REQUIRED COLUMNS: product_id, product_name, category
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.2
+-- Grade it:              python3 sqlm.py submit 17.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,26 @@
+-- Lesson 14 · Exercise 14.1 — Gross revenue by category
+--
+-- BUSINESS QUESTION
+--   The CFO wants gross revenue by product category.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Return category, order_lines (number of order lines counted) and gross_revenue rounded
+--   to 2 decimals, one row per category (NULL category is its own group). Gross revenue =
+--   SUM(quantity * unit_price) over the order_items of VALID orders, i.e. orders with
+--   order_status IN ('completed','shipped','returned') (cancelled and pending are
+--   excluded).
+-- REQUIRED COLUMNS: category, order_lines, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.1
+-- Grade it:              python3 sqlm.py submit 14.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

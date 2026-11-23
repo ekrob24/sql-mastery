@@ -1,0 +1,25 @@
+-- Lesson 16 · Exercise 16.4 — Find duplicate-looking order lines
+--
+-- BUSINESS QUESTION
+--   Finance suspects the order feed loaded some order lines twice. Which lines are exact
+--   business duplicates of an earlier line?
+-- TABLES: order_items
+-- TASK
+--   Return one row per duplicate: original_item_id (the smaller order_item_id),
+--   duplicate_item_id (the larger), order_id, product_id, quantity, unit_price — for pairs
+--   of lines with the same order_id, product_id, quantity and unit_price.
+-- REQUIRED COLUMNS: original_item_id, duplicate_item_id, order_id, product_id, quantity, unit_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.4
+-- Grade it:              python3 sqlm.py submit 16.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

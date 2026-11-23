@@ -1,0 +1,4 @@
+order_id,customer_id,order_date,order_status
+3,2,2024-01-29,returned
+9,1,2024-04-10,cancelled
+22,11,2024-09-15,cancelled

@@ -1,0 +1,17 @@
+-- Lesson 30 · Exercise 30.5 — Weekly web sessions in Q4 2025
+--
+-- BUSINESS QUESTION
+--   Marketing wants weekly site traffic for Q4 2025.
+-- TABLES: web_events
+-- TASK
+--   Define the week as strftime('%Y-%W', event_time) (Monday-start weeks; '%W' week 00
+--   holds days before the year's first Monday). For events with event_time >= '2025-10-01'
+--   and < '2026-01-01', return event_week (that 'YYYY-WW' text), sessions (distinct
+--   session_id) and events (number of event rows), ordered by event_week.
+-- REQUIRED COLUMNS: event_week, sessions, events
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.5
+-- Grade it:              python3 sqlm.py submit 30.5
+--
+-- Write your query below (from memory!):
+

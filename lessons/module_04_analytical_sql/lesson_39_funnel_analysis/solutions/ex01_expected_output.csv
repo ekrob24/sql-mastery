@@ -1,0 +1,6 @@
+stage_number,stage,sessions
+1,visit,80
+2,product_view,68
+3,add_to_cart,33
+4,checkout,24
+5,purchase,20

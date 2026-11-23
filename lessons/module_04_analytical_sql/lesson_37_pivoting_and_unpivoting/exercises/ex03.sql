@@ -1,0 +1,18 @@
+-- Lesson 37 · Exercise 37.3 — 2025 quarterly revenue by category
+--
+-- BUSINESS QUESTION
+--   The category review needs 2025 revenue per quarter for each category.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Restrict to orders dated in
+--   2025. Return category ('Uncategorized' when NULL), q1_revenue, q2_revenue, q3_revenue,
+--   q4_revenue (revenue of that calendar quarter, 0 when none, rounded to 2) — one row per
+--   category that had 2025 revenue. Order by category.
+-- REQUIRED COLUMNS: category, q1_revenue, q2_revenue, q3_revenue, q4_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 37.3
+-- Grade it:              python3 sqlm.py submit 37.3
+--
+-- Write your query below (from memory!):
+

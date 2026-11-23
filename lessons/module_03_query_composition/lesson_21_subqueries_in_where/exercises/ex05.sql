@@ -1,0 +1,17 @@
+-- Lesson 21 · Exercise 21.5 — Unusually large order lines
+--
+-- BUSINESS QUESTION
+--   Finance wants to review order lines worth more than the average line in valid orders.
+-- TABLES: orders, order_items
+-- TASK
+--   Consider only lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded). Return
+--   order_item_id, order_id and line_total (quantity * unit_price) for lines whose
+--   line_total is greater than the average line_total over all lines of valid orders.
+-- REQUIRED COLUMNS: order_item_id, order_id, line_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.5
+-- Grade it:              python3 sqlm.py submit 21.5
+--
+-- Write your query below (from memory!):
+

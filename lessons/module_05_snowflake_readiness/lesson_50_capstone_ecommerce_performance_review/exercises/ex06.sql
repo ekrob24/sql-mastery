@@ -1,0 +1,25 @@
+-- Lesson 50 · Exercise 50.6 — Regional revenue performance
+--
+-- BUSINESS QUESTION
+--   CEO: "How does each region perform? I don't want any revenue to go missing from this
+--   table."
+-- TABLES: orders, order_items, returns, customers
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned') (cancelled and
+--   pending are excluded). Gross revenue = SUM(quantity * unit_price) over the order_items
+--   lines of valid orders (count every line as recorded — do not de-duplicate). Refunds =
+--   SUM(returns.refund_amount) for returned lines of valid orders. Net revenue = gross
+--   revenue − refunds. Attribute each valid order to its customer's region. Use region =
+--   'Unknown' when the customer's region is NULL (customers 9 and 16) AND when the order's
+--   customer does not exist in customers (order 31 / customer_id 99) — use a LEFT JOIN so
+--   no revenue is dropped. Return region, valid_orders (distinct valid orders),
+--   gross_revenue, refunds, net_revenue (money rounded to 2 decimals) and
+--   revenue_share_pct = 100 * region gross revenue / total gross revenue, rounded to 1
+--   decimal. Order by gross_revenue descending, then region ascending.
+-- REQUIRED COLUMNS: region, valid_orders, gross_revenue, refunds, net_revenue, revenue_share_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.6
+-- Grade it:              python3 sqlm.py submit 50.6
+--
+-- Write your query below (from memory!):
+

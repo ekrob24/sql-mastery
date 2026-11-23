@@ -1,0 +1,15 @@
+-- Lesson 24 · Exercise 24.2 — Customers who never ordered
+--
+-- BUSINESS QUESTION
+--   Marketing wants a welcome-offer list of signed-up customers who have never ordered.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name, signup_date for customers with no orders of any status,
+--   using NOT EXISTS.
+-- REQUIRED COLUMNS: customer_id, name, signup_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.2
+-- Grade it:              python3 sqlm.py submit 24.2
+--
+-- Write your query below (from memory!):
+

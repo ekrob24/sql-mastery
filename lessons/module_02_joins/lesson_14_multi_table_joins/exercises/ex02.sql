@@ -1,0 +1,25 @@
+-- Lesson 14 · Exercise 14.2 — Line detail for the latest orders
+--
+-- BUSINESS QUESTION
+--   Customer service wants a readable list of every line in orders placed from 2025-11-01
+--   onward.
+-- TABLES: customers, orders, order_items, products
+-- TASK
+--   For orders with order_date >= '2025-11-01' (any status), return order_id, order_date,
+--   customer_name, product_name, quantity and line_total (quantity * unit_price) — one row
+--   per order line.
+-- REQUIRED COLUMNS: order_id, order_date, customer_name, product_name, quantity, line_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.2
+-- Grade it:              python3 sqlm.py submit 14.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

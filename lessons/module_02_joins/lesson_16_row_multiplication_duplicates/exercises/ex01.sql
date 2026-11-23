@@ -1,0 +1,25 @@
+-- Lesson 16 · Exercise 16.1 — Grain check: orders vs order lines
+--
+-- BUSINESS QUESTION
+--   Before building an order report, an analyst wants to see what joining order_items does
+--   to the row count.
+-- TABLES: orders, order_items
+-- TASK
+--   Return a single row with columns orders_rows (COUNT(*) of orders), joined_rows
+--   (COUNT(*) of orders INNER JOIN order_items on order_id) and distinct_orders_joined
+--   (number of distinct order_id values in that join).
+-- REQUIRED COLUMNS: orders_rows, joined_rows, distinct_orders_joined
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 16.1
+-- Grade it:              python3 sqlm.py submit 16.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

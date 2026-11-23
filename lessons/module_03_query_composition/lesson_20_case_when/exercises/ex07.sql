@@ -1,0 +1,15 @@
+-- Lesson 20 · Exercise 20.7 — Status counts in lifecycle order
+--
+-- BUSINESS QUESTION
+--   The ops dashboard lists statuses in lifecycle order, not alphabetically.
+-- TABLES: orders
+-- TASK
+--   Return order_status and order_count (all orders), sorted in lifecycle order: pending,
+--   shipped, completed, returned, cancelled.
+-- REQUIRED COLUMNS: order_status, order_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 20.7
+-- Grade it:              python3 sqlm.py submit 20.7
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.2 — Customer list by region, then name
+--
+-- BUSINESS QUESTION
+--   Account managers want customers grouped visually by region, alphabetical within each.
+-- TABLES: customers
+-- TASK
+--   Return customer_id, name and region for all customers, sorted by region ascending
+--   (NULL regions first, which is SQLite's default), then name ascending, then customer_id
+--   ascending.
+-- REQUIRED COLUMNS: customer_id, name, region
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.2
+-- Grade it:              python3 sqlm.py submit 4.2
+--
+-- Write your query below (from memory!):
+

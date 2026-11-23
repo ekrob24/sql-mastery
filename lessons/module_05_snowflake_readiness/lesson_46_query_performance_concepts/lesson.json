@@ -1,0 +1,275 @@
+{
+  "number": 46,
+  "slug": "query_performance_concepts",
+  "title": "Query-performance concepts",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Write queries the engine can execute cheaply: sargable predicates, early filters, only the columns you need, pre-aggregation before joins \u2014 and know how indexes (SQLite) and pruning/clustering (Snowflake) reward those habits.",
+  "context": "Snowflake bills by warehouse-seconds. The data team's monthly bill doubled after a dashboard went live, and the culprit is a handful of queries that scan everything and join before they filter. You're asked to rewrite them \u2014 with identical results.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Make the year filter sargable",
+      "question": "Ops dashboard query: `SELECT order_status, COUNT(*) FROM orders WHERE strftime('%Y', order_date) = '2025' GROUP BY order_status`. It can't use idx_orders_date. Rewrite it.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return order_status and orders (count) for orders placed in calendar year 2025, using a range predicate on the bare order_date column (order_date >= '2025-01-01' AND order_date < '2026-01-01').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Sargable = Search ARGument ABLE: the column must appear on its own on one side of the comparison.",
+        "Use a half-open range: >= first day, < first day of the next period.",
+        "WHERE order_date >= '2025-01-01' AND order_date < '2026-01-01'"
+      ],
+      "why": "Half-open date ranges are correct for DATE and TIMESTAMP columns alike, and they enable index seeks in SQLite and partition pruning in Snowflake.",
+      "recall": {
+        "q": "Why prefer `< '2026-01-01'` over `<= '2025-12-31'`?",
+        "a": "It's also correct for timestamps (2025-12-31 14:00 is < 2026-01-01 but > '2025-12-31')."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_status, COUNT(*) AS orders FROM orders WHERE order_date >= '2025-01-01'::DATE AND order_date < '2026-01-01'::DATE GROUP BY 1;  -- prunes partitions; YEAR(order_date) = 2025 may not",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_status",
+        "orders"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 2,
+      "title": "Index inventory",
+      "question": "Before tuning, the DBA asks which tables have secondary indexes and on how many columns.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Query sqlite_master (type = 'index') and return table_name (tbl_name) and index_count (number of indexes on that table).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "sqlite_master is a catalog table: columns type, name, tbl_name, sql.",
+        "Filter type = 'index' and group by tbl_name.",
+        "SELECT tbl_name AS table_name, COUNT(*) AS index_count FROM sqlite_master WHERE type = 'index' GROUP BY tbl_name;"
+      ],
+      "why": "Knowing what physical structures exist (indexes in SQLite/Postgres, clustering keys in Snowflake) is the first step of any tuning conversation.",
+      "recall": {
+        "q": "Snowflake's catalog equivalent for metadata queries?",
+        "a": "INFORMATION_SCHEMA views (TABLES, COLUMNS, ...) and SNOWFLAKE.ACCOUNT_USAGE; clustering via SHOW TABLES / SYSTEM$CLUSTERING_INFORMATION."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT table_name, clustering_key FROM information_schema.tables WHERE table_schema = 'PUBLIC';",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "table_name",
+        "index_count"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 3,
+      "title": "Filter early: December 2025 order lines",
+      "question": "This query joins everything and filters at the end: `SELECT * FROM (SELECT o.*, oi.*, p.* FROM orders o JOIN order_items oi ON oi.order_id=o.order_id JOIN products p ON p.product_id=oi.product_id) WHERE order_date LIKE '2025-12%'`. The dashboard only needs a few columns.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return order_id, order_date, product_name, quantity and line_total (quantity * unit_price) for order lines of orders placed in December 2025 (any status). Filter orders with a sargable date range first and select only these columns.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Start from the smallest filtered set: orders in December 2025.",
+        "A range on order_date (>= '2025-12-01' AND < '2026-01-01') uses idx_orders_date; then idx_order_items_order serves the join.",
+        "WITH dec_orders AS (SELECT order_id, order_date FROM orders WHERE order_date >= '2025-12-01' AND order_date < '2026-01-01') SELECT d.order_id, d.order_date, p.product_name, oi.quantity, oi.quantity*oi.unit_price AS line_total FROM dec_orders d JOIN ..."
+      ],
+      "why": "Modern optimizers often push filters down for you \u2014 but not through every construct (LIKE on a derived column, window functions, UNIONs). Writing it early is cheap insurance.",
+      "recall": {
+        "q": "Which two indexes can this query use?",
+        "a": "idx_orders_date for the date range and idx_order_items_order for the join."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same query; the date range prunes orders' micro-partitions, and naming 5 columns means only those columns are read.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "product_name",
+        "quantity",
+        "line_total"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 4,
+      "title": "Pre-aggregate before joining",
+      "question": "Product revenue report: the old query joins products to every order line, then groups by product name and list price. Rewrite it to aggregate order_items first.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return product_id, product_name, units_sold and gross_revenue (rounded to 2 decimals) for every product that has at least one line on a valid order. Aggregate the lines per product_id in a CTE before joining products. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The aggregation only needs order_items (+ a status filter); product_name can be attached afterwards.",
+        "Join 22 aggregated rows to products instead of 134 valid order lines.",
+        "WITH product_sales AS (SELECT product_id, SUM(quantity) AS units_sold, SUM(quantity*unit_price) AS gross_revenue FROM order_items WHERE order_id IN (SELECT order_id FROM orders WHERE ...) GROUP BY product_id) SELECT ... JOIN products ..."
+      ],
+      "why": "Aggregating at the fact table's key and joining dimensions last shrinks the join and avoids grouping by long text columns.",
+      "recall": {
+        "q": "Why group by product_id rather than product_name?",
+        "a": "IDs are unique and compact; names can collide and make grouping slower and ambiguous."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same pattern; in Snowflake large joins are hash joins whose cost grows with input size, so shrinking inputs first matters most.",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "units_sold",
+        "gross_revenue"
+      ],
+      "expected_row_count": 22
+    },
+    {
+      "number": 5,
+      "title": "Avoid the double fan-out: orders and returns per customer",
+      "question": "A customer-health query joins customers \u2192 orders \u2192 order_items \u2192 returns and then uses COUNT(DISTINCT ...) everywhere to undo the duplication. Make it cheap and obviously correct.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "For every customer (all 20), return customer_id, valid_orders (number of valid orders, order_status IN ('completed','shipped','returned')) and returned_lines (number of returns rows on lines of that customer's orders, any status). Both are 0 when there are none. Pre-aggregate each metric in its own CTE and LEFT JOIN them to customers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two independent one-to-many paths from customers \u2192 aggregate each separately.",
+        "Each CTE has one row per customer, so the final LEFT JOINs can't multiply rows.",
+        "WITH order_counts AS (... GROUP BY customer_id), return_counts AS (SELECT o.customer_id, COUNT(*) ... FROM returns r JOIN order_items oi ... JOIN orders o ... GROUP BY o.customer_id) SELECT c.customer_id, COALESCE(oc.valid_orders,0) AS valid_orders, COALESCE(rc.returned_lines,0) AS returned_lines FROM customers c LEFT JOIN ..."
+      ],
+      "why": "COUNT(DISTINCT) over an exploded join works but costs a big intermediate result and a sort. Pre-aggregation is cheaper and makes the grain explicit.",
+      "recall": {
+        "q": "Why is COUNT(DISTINCT ...) after a fan-out join a performance smell?",
+        "a": "The engine first builds the multiplied rows, then de-duplicates them \u2014 work you could avoid by aggregating first."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical CTEs; in the Query Profile the old version shows a join whose output rows greatly exceed its inputs ('exploding join').",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "valid_orders",
+        "returned_lines"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 6,
+      "title": "Latest five valid orders, cheaply",
+      "question": "The homepage widget shows the five most recent valid orders with their line counts. The old query counted lines for all 60 orders, then sorted and limited.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return order_id, order_date and line_count (number of order_items lines) for the 5 most recent valid orders (order_status IN ('completed','shipped','returned')), ordered by order_date descending then order_id descending. Pick the 5 orders first, then count their lines.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Top-N first: ORDER BY ... LIMIT 5 inside a CTE (idx_orders_date can serve the sort).",
+        "Then join only those 5 orders to order_items and count.",
+        "WITH latest AS (SELECT order_id, order_date FROM orders WHERE ... ORDER BY order_date DESC, order_id DESC LIMIT 5) SELECT l.order_id, l.order_date, COUNT(oi.order_item_id) AS line_count FROM latest l LEFT JOIN order_items oi ... GROUP BY ... ORDER BY ...;"
+      ],
+      "why": "Reducing the row set before the expensive step (join + aggregate) is the same idea as filter-early, applied to Top-N queries.",
+      "recall": {
+        "q": "Why repeat ORDER BY in the outer query?",
+        "a": "A CTE's ORDER BY doesn't guarantee the final output order; only the outermost ORDER BY does."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same; Snowflake's TOP-N optimisation can also skip partitions whose max(order_date) is too old to make the top 5.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "line_count"
+      ],
+      "expected_row_count": 5
+    }
+  ],
+  "worked_example": {
+    "question": "Which indexes exist in the practice database, and on which columns?",
+    "sql": "SELECT m.name     AS index_name,\n       m.tbl_name AS table_name,\n       ii.name    AS column_name\nFROM sqlite_master AS m,\n     pragma_index_info(m.name) AS ii\nWHERE m.type = 'index'\nORDER BY m.name;",
+    "explanation": "Four indexes: orders(customer_id), orders(order_date), order_items(order_id) and order_items(product_id) \u2014 exactly the join and date-filter columns. Primary keys are indexed implicitly. Run `EXPLAIN QUERY PLAN` on your exercise answers to see them used.",
+    "columns": [
+      "index_name",
+      "table_name",
+      "column_name"
+    ],
+    "rows": [
+      [
+        "idx_order_items_order",
+        "order_items",
+        "order_id"
+      ],
+      [
+        "idx_order_items_product",
+        "order_items",
+        "product_id"
+      ],
+      [
+        "idx_orders_customer",
+        "orders",
+        "customer_id"
+      ],
+      [
+        "idx_orders_date",
+        "orders",
+        "order_date"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: 5 performance habits that work on every engine**\n\n1. **Sargable predicates** \u2014 leave the column bare: `order_date >= '2025-01-01' AND order_date < '2026-01-01'`\n   instead of `strftime('%Y', order_date) = '2025'`. A function wrapped around the column hides it from the\n   index (SQLite) and from min/max pruning (Snowflake).\n2. **Filter early** \u2014 restrict the big table before joining or aggregating (in a CTE or WHERE), not after.\n3. **Select only what you need** \u2014 no `SELECT *` in production queries; columnar engines (Snowflake) read only the\n   columns you name.\n4. **Pre-aggregate before joining** \u2014 reduce `order_items` to one row per order/product, *then* join dimensions.\n   Smaller join inputs, and no fan-out.\n5. **Know your indexes / clustering** \u2014 in SQLite: `SELECT name, tbl_name FROM sqlite_master WHERE type = 'index'`\n   and `EXPLAIN QUERY PLAN <query>` (look for `SEARCH ... USING INDEX` vs `SCAN`).\n\n```sql\nEXPLAIN QUERY PLAN\nSELECT order_id FROM orders WHERE order_date >= '2025-12-01';   -- SEARCH orders USING INDEX idx_orders_date\nEXPLAIN QUERY PLAN\nSELECT order_id FROM orders WHERE strftime('%Y-%m', order_date) = '2025-12';  -- SCAN orders\n```",
+  "snowflake_notes": "**Snowflake has no indexes** (except on hybrid tables). Instead:\n\n- **Micro-partitions:** every table is stored in immutable ~16 MB (compressed) columnar chunks. Snowflake keeps\n  min/max metadata per column per partition.\n- **Pruning:** `WHERE order_date >= '2025-12-01'` lets Snowflake skip every partition whose max(order_date) is\n  earlier \u2014 often 99% of the table. `WHERE TO_CHAR(order_date, 'YYYY-MM') = '2025-12'` or\n  `WHERE DATE_TRUNC('month', order_date) = ...` can defeat pruning; compare the bare column with a range.\n- **Clustering:** data loaded in time order is naturally clustered by date. For big tables filtered on another\n  column you can define `ALTER TABLE orders CLUSTER BY (customer_id)`; check health with\n  `SELECT SYSTEM$CLUSTERING_INFORMATION('orders', '(order_date)')`.\n- **Column projection:** storage is columnar, so `SELECT *` on a 200-column table reads 200 columns. Name columns.\n- **Query Profile** (Snowsight) shows *Partitions scanned vs total*, bytes spilled, and exploding joins \u2014 the\n  Snowflake equivalent of `EXPLAIN QUERY PLAN`. `EXPLAIN USING TEXT <query>` works too.\n- **Result cache:** an identical query on unchanged data returns instantly for 24 h \u2014 don't benchmark the second run.\n- **Search optimization service** helps point lookups (`WHERE email = ...`) on huge tables; it costs credits.\n- Pre-aggregation and early filtering matter even more: a join that explodes to billions of rows spills to disk.",
+  "common_mistakes": [
+    "Wrapping a filtered column in a function (strftime, DATE_TRUNC, LOWER) \u2014 kills index use and pruning.",
+    "SELECT * in dashboards on wide columnar tables.",
+    "Joining every dimension first and grouping by long text columns instead of aggregating facts by key first.",
+    "Hiding row explosion with DISTINCT / COUNT(DISTINCT) instead of fixing the join grain.",
+    "Benchmarking Snowflake on the second run (result cache) or judging SQLite plans without EXPLAIN QUERY PLAN."
+  ],
+  "recall": [
+    [
+      "What makes a predicate sargable?",
+      "The column appears bare (no function around it) in a comparison against a constant/range."
+    ],
+    [
+      "How does Snowflake avoid reading irrelevant data without indexes?",
+      "Micro-partition pruning using per-partition min/max metadata (helped by clustering)."
+    ],
+    [
+      "SQLite command to see whether an index is used?",
+      "EXPLAIN QUERY PLAN <query> \u2014 look for 'SEARCH ... USING INDEX'."
+    ]
+  ],
+  "review_next": "Lesson 47 attacks another kind of waste: joins that contribute nothing (or worse, silently filter rows)."
+}

@@ -1,0 +1,18 @@
+-- Lesson 47 · Exercise 47.4 — LEFT JOIN + IS NOT NULL → semi-join
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT DISTINCT o.order_id, o.customer_id FROM orders o LEFT JOIN
+--   order_items oi ON oi.order_id = o.order_id LEFT JOIN returns r ON r.order_item_id =
+--   oi.order_item_id WHERE r.return_id IS NOT NULL`.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Return order_id and customer_id for every order that has at least one returned line (a
+--   returns row on one of its order_items), written as a semi-join (EXISTS or IN) without
+--   DISTINCT.
+-- REQUIRED COLUMNS: order_id, customer_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.4
+-- Grade it:              python3 sqlm.py submit 47.4
+--
+-- Write your query below (from memory!):
+

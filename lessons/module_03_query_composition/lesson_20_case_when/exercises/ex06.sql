@@ -1,0 +1,18 @@
+-- Lesson 20 · Exercise 20.6 — Customer loyalty segments (including non-buyers)
+--
+-- BUSINESS QUESTION
+--   CRM wants every customer, including ones who never bought, placed in a loyalty
+--   segment.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name, valid_order_count (number of valid orders: valid orders =
+--   order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) and segment for all 20 customers: 'Inactive' for 0 valid orders, 'One-time'
+--   for 1, 'Repeat' for 2–4, 'Loyal' for 5 or more.
+-- REQUIRED COLUMNS: customer_id, name, valid_order_count, segment
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.6
+-- Grade it:              python3 sqlm.py submit 20.6
+--
+-- Write your query below (from memory!):
+

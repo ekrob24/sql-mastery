@@ -1,0 +1,303 @@
+{
+  "number": 24,
+  "slug": "exists_not_exists",
+  "title": "EXISTS and NOT EXISTS",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Test whether related rows exist (or don't) with EXISTS / NOT EXISTS. They are NULL-safe, duplicate-free and the standard tool for anti-joins and data-quality checks.",
+  "context": "Data quality and lifecycle questions are existence questions: customers who never ordered, orders without items, orders pointing to missing customers, suppliers with no products. EXISTS answers them cleanly, without NOT IN's NULL trap or a LEFT JOIN's duplicates.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Customers who have ordered",
+      "question": "How many of our customers have placed any order at all, and who are they?",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name for customers with at least one order of any status, using EXISTS.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The outer table is customers; the inner one is orders.",
+        "Correlate inside: WHERE o.customer_id = c.customer_id.",
+        "WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)"
+      ],
+      "why": "A semi-join keeps each customer once. A plain JOIN would return customer 1 nine times.",
+      "recall": {
+        "q": "Does the SELECT list inside EXISTS matter?",
+        "a": "No. Only whether at least one row exists. SELECT 1 is convention."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 2,
+      "title": "Customers who never ordered",
+      "question": "Marketing wants a welcome-offer list of signed-up customers who have never ordered.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name, signup_date for customers with no orders of any status, using NOT EXISTS.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Same as the previous exercise, with NOT.",
+        "WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE ...)",
+        "SELECT c.customer_id, c.name, c.signup_date FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);"
+      ],
+      "why": "Customers 18, 19 and 20 are the activation audience. Note that 19 ('alice johnson') may be a duplicate of customer 1, which is worth flagging before you email them.",
+      "recall": {
+        "q": "Name three ways to find customers with no orders.",
+        "a": "NOT EXISTS, LEFT JOIN ... WHERE o.order_id IS NULL, and NOT IN (with a NULL-free subquery)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "signup_date"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 3,
+      "title": "Orders with no line items",
+      "question": "Data engineering wants to catch order headers that have no lines.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return order_id, order_date, order_status for orders that have no rows in order_items.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Outer: orders. Inner: order_items.",
+        "Correlate on order_id.",
+        "WHERE NOT EXISTS (SELECT 1 FROM order_items i WHERE i.order_id = o.order_id)"
+      ],
+      "why": "Header-without-lines rows inflate order counts while adding no revenue, which drags AOV down. Order 60 is pending, so it may simply be mid-checkout, but it should be monitored.",
+      "recall": {
+        "q": "Is an order with no items counted by COUNT(*) FROM orders?",
+        "a": "Yes, which is why such orphans distort per-order metrics."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "Orphan orders (customer missing)",
+      "question": "Finance found revenue that doesn't tie to any customer. Which orders point to a non-existent customer?",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Return order_id, customer_id, order_date, order_status for orders whose customer_id has no matching row in customers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "This time the outer table is orders and the inner one is customers.",
+        "Referential-integrity check: does a parent row exist for this child?",
+        "WHERE NOT EXISTS (SELECT 1 FROM customers c WHERE c.customer_id = o.customer_id)"
+      ],
+      "why": "Order 31 (customer 99) is a completed order worth $363.30 that disappears from any report that inner-joins orders to customers. Orphan checks belong in every data-quality suite.",
+      "recall": {
+        "q": "Which report numbers change when orphan orders exist?",
+        "a": "Any revenue joined through customers (by region, by segment) is lower than the total from orders alone."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Suppliers with no products (NULL-safe)",
+      "question": "Procurement asks again: which suppliers supply none of our products? This time, no traps.",
+      "tables": [
+        "suppliers",
+        "products"
+      ],
+      "prompt": "Return supplier_id, supplier_name for suppliers with no product in products, using NOT EXISTS (products.supplier_id contains a NULL; NOT EXISTS is unaffected).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Compare with exercise 21.4, where NOT IN returned nothing.",
+        "The NULL supplier_id row simply never matches p.supplier_id = s.supplier_id, so no harm done.",
+        "WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.supplier_id = s.supplier_id)"
+      ],
+      "why": "This is the habit to keep: reach for NOT EXISTS for anti-joins and you never hit the NOT IN NULL bug.",
+      "recall": {
+        "q": "Why is NOT EXISTS NULL-safe while NOT IN is not?",
+        "a": "NOT EXISTS only asks whether a matching row exists; a NULL just fails to match. NOT IN compares against every value, and a comparison with NULL makes the whole test unknown."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 6,
+      "title": "First-time buyers in 2025",
+      "question": "Growth wants customers whose first valid purchase happened in 2025, i.e. they bought in 2025 but never in 2024.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name for customers who have at least one valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) dated in 2025 and no valid order dated in 2024. Customer 16, whose only order was cancelled, must not appear.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two existence tests on the same customer: EXISTS for 2025, NOT EXISTS for 2024.",
+        "Put the status and date filters inside each subquery.",
+        "WHERE EXISTS (... <valid> AND order_date in 2025) AND NOT EXISTS (... <valid> AND order_date in 2024)"
+      ],
+      "why": "'Did X but never Y' is the shape of acquisition, churn and cross-sell lists. Customer 13 signed up in 2024 but first bought in 2025, so signup date is not first purchase.",
+      "recall": {
+        "q": "How do you express 'did A but never did B' in SQL?",
+        "a": "WHERE EXISTS (A-subquery) AND NOT EXISTS (B-subquery)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 7,
+      "title": "Buyers who never needed a refund",
+      "question": "The reviews team wants to invite happy customers: those with valid orders and no refunded items, ever.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Return customer_id, name for customers who have at least one valid order (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) and for whom no order (any status) contains an order_item that appears in returns.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The NOT EXISTS subquery has to walk orders \u2192 order_items \u2192 returns.",
+        "Correlate only on the customer: WHERE o.customer_id = c.customer_id.",
+        "... AND NOT EXISTS (SELECT 1 FROM orders o JOIN order_items i ON ... JOIN returns r ON r.order_item_id = i.order_item_id WHERE o.customer_id = c.customer_id)"
+      ],
+      "why": "The inner query of EXISTS can be as complex as you need, with joins included. The outer result still never duplicates customers.",
+      "recall": {
+        "q": "Can the subquery inside EXISTS contain joins?",
+        "a": "Yes. Any query works; only 'at least one row?' is evaluated."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name"
+      ],
+      "expected_row_count": 8
+    }
+  ],
+  "worked_example": {
+    "question": "Which products have been sold in a cancelled order?",
+    "sql": "SELECT p.product_id, p.product_name\nFROM products AS p\nWHERE EXISTS (SELECT 1\n              FROM order_items AS i\n              JOIN orders AS o ON o.order_id = i.order_id\n              WHERE i.product_id = p.product_id\n                AND o.order_status = 'cancelled')\nLIMIT 5;",
+    "explanation": "The inner query can join and filter like any query. It is correlated on product_id. Each product appears once even if it was in several cancelled orders.",
+    "columns": [
+      "product_id",
+      "product_name"
+    ],
+    "rows": [
+      [
+        1,
+        "Wireless Mouse"
+      ],
+      [
+        5,
+        "27in Monitor"
+      ],
+      [
+        10,
+        "Desk Lamp"
+      ],
+      [
+        11,
+        "Running Shoes"
+      ],
+      [
+        12,
+        "Rain Jacket"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: 'is there at least one matching row?'**\n\n1. Start from the entity you want to return: `SELECT c.customer_id FROM customers AS c`.\n2. Add `WHERE [NOT] EXISTS (SELECT 1 FROM orders AS o WHERE o.customer_id = c.customer_id [AND ...extra conditions])`.\n3. The SELECT list inside doesn't matter (`SELECT 1` is the convention). Only whether a row exists matters.\n   ```sql\n   SELECT c.customer_id, c.name\n   FROM customers AS c\n   WHERE NOT EXISTS (SELECT 1 FROM orders AS o WHERE o.customer_id = c.customer_id);\n   ```\n4. **NULL-safe:** a NULL in the inner table just doesn't match, so NOT EXISTS never collapses to \"no rows\"\n   the way NOT IN does.\n5. **No duplicates:** each outer row is kept at most once, however many matches exist (unlike a JOIN).\n6. Combine freely: `EXISTS (...) AND NOT EXISTS (...)` = \"did X but never did Y\".",
+  "snowflake_notes": "- EXISTS / NOT EXISTS are identical in Snowflake and are usually optimised into semi-joins / anti-joins.\n- Snowflake has no `LEFT ANTI JOIN` keyword (Spark does). Write NOT EXISTS, or LEFT JOIN ... WHERE right.key IS NULL.",
+  "common_mistakes": [
+    "Forgetting the correlation (`WHERE o.customer_id = c.customer_id`): EXISTS becomes true for every row (or false for all).",
+    "Using NOT IN when the inner column can be NULL. Prefer NOT EXISTS.",
+    "Replacing EXISTS with a JOIN and getting duplicates of the outer rows.",
+    "Putting conditions (status, date) outside the subquery when they describe the inner rows.",
+    "Inner-joining orders to customers in a revenue report and silently losing orphan order 31."
+  ],
+  "recall": [
+    [
+      "What's the difference between a semi-join and an anti-join?",
+      "Semi-join keeps outer rows WITH a match (EXISTS); anti-join keeps those WITHOUT (NOT EXISTS)."
+    ],
+    [
+      "Why is EXISTS often preferred to IN for big tables?",
+      "It can stop at the first match, and NOT EXISTS is NULL-safe; optimizers handle both well."
+    ],
+    [
+      "Give two data-quality checks you can write with NOT EXISTS.",
+      "Orders without items; orders whose customer doesn't exist (orphans)."
+    ]
+  ],
+  "review_next": "Lesson 25 combines whole result sets with UNION / INTERSECT / EXCEPT, which is another way to express 'in A but not B'. Compare 24.6 with an EXCEPT version."
+}

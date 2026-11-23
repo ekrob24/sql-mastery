@@ -1,0 +1,16 @@
+-- Lesson 23 · Exercise 23.1 — Each customer's last order date
+--
+-- BUSINESS QUESTION
+--   CRM wants every customer with the date of their most recent order.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name and last_order_date (the latest order_date of any status) for
+--   all 20 customers, using a correlated subquery in SELECT. Customers without orders get
+--   NULL.
+-- REQUIRED COLUMNS: customer_id, name, last_order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 23.1
+-- Grade it:              python3 sqlm.py submit 23.1
+--
+-- Write your query below (from memory!):
+

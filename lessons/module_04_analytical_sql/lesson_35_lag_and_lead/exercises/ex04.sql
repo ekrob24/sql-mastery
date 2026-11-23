@@ -1,0 +1,21 @@
+-- Lesson 35 · Exercise 35.4 — Month-over-month revenue change
+--
+-- BUSINESS QUESTION
+--   The CFO's monthly deck needs revenue per month with the change versus the prior month.
+-- TABLES: orders, order_items
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Return one row per order month
+--   with month ('YYYY-MM' of order_date), revenue (rounded to 2 decimals),
+--   prev_month_revenue (previous month's revenue), mom_change (revenue -
+--   prev_month_revenue, rounded to 2) and mom_change_pct (mom_change as a percentage 0–100
+--   scale of prev_month_revenue, i.e. 100.0 * change / prev, rounded to 1 decimal). The
+--   first month has NULLs. Every month 2024-01…2025-12 has revenue, so the previous row is
+--   the previous calendar month. Order by month.
+-- REQUIRED COLUMNS: month, revenue, prev_month_revenue, mom_change, mom_change_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 35.4
+-- Grade it:              python3 sqlm.py submit 35.4
+--
+-- Write your query below (from memory!):
+

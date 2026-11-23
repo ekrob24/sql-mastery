@@ -1,0 +1,25 @@
+-- Lesson 15 · Exercise 15.2 — Customer pairs per region
+--
+-- BUSINESS QUESTION
+--   Sales wants to set up peer-referral pairs inside each territory. How many distinct
+--   pairs of customers can be formed in each region?
+-- TABLES: customers
+-- TASK
+--   Pair every customer with every other customer in the same region (each unordered pair
+--   once). Return region and customer_pairs (the number of such pairs). Customers with a
+--   NULL region cannot be paired.
+-- REQUIRED COLUMNS: region, customer_pairs
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.2
+-- Grade it:              python3 sqlm.py submit 15.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

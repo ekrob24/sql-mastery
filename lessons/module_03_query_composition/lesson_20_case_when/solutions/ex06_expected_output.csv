@@ -1,0 +1,21 @@
+customer_id,name,valid_order_count,segment
+1,Alice Johnson,8,Loyal
+2,Brian Lee,5,Loyal
+3,John Smith,5,Loyal
+4,John Smith,3,Repeat
+5,Jon Smith,2,Repeat
+6,Maria Garcia,3,Repeat
+7,Chen Wei,7,Loyal
+8,Priya Patel,2,Repeat
+9,David Kim,2,Repeat
+10,Emma Brown,3,Repeat
+11,Lucas Martin,3,Repeat
+12,Sofia Rossi,2,Repeat
+13,Noah Wilson,1,One-time
+14,Olivia Davis,3,Repeat
+15,Liam O'Brien,2,Repeat
+16,Ava Thompson,0,Inactive
+17,Ethan Clark,1,One-time
+18,Mia Lewis,0,Inactive
+19,alice johnson,0,Inactive
+20,Zoe Turner,0,Inactive

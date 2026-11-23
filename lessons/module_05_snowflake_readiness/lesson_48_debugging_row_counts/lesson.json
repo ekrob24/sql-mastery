@@ -1,0 +1,295 @@
+{
+  "number": 48,
+  "slug": "debugging_row_counts",
+  "title": "Debugging incorrect row counts",
+  "module": 5,
+  "module_title": "Snowflake readiness",
+  "objective": "Diagnose wrong row counts and totals \u2014 join fan-out, INNER JOINs that drop rows, WHERE clauses that turn LEFT JOINs into INNER JOINs, duplicate records and orphan keys \u2014 and write the corrected query.",
+  "context": "Finance's revenue number doesn't match the dashboard, the dashboard doesn't match the CRM, and three people have three different 'customer counts'. Each discrepancy is a row-count bug. You are the one who finds them.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Fan-out inflates order counts",
+      "question": "This query reports far too many orders per customer: `SELECT o.customer_id, COUNT(*) AS valid_orders, SUM(oi.quantity) AS units FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY o.customer_id`.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Fix it: return customer_id, valid_orders (number of distinct valid orders) and units (sum of quantity on those orders' lines) per customer_id that has valid orders (include the orphan id 99). Valid = order_status IN ('completed','shipped','returned').",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "After joining order_items, each row is a line \u2014 COUNT(*) counts lines.",
+        "SUM(quantity) is correct at line grain; only the order count needs fixing.",
+        "COUNT(DISTINCT o.order_id) AS valid_orders"
+      ],
+      "why": "Mixing metrics from two grains in one query is the #1 source of inflated KPIs.",
+      "recall": {
+        "q": "After joining orders to order_items, what does COUNT(*) count?",
+        "a": "Order lines, not orders."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same fix; or pre-aggregate lines per order in a CTE and COUNT(*) orders afterwards.",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "valid_orders",
+        "units"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 2,
+      "title": "INNER JOIN drops customers without orders",
+      "question": "The CRM has 20 customers but this report shows only 17: `SELECT c.customer_id, c.name, COUNT(o.order_id) AS orders_placed FROM customers c JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id, c.name`.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Fix it so all 20 customers appear: customer_id, name, orders_placed (number of orders of any status; 0 for customers without orders).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Which customers are missing? 18, 19, 20 \u2014 they have no orders.",
+        "Use LEFT JOIN so unmatched customers survive.",
+        "COUNT(o.order_id) (not COUNT(*)) gives 0 for them."
+      ],
+      "why": "Customer lists, product catalogs and calendars must be the LEFT side of the join if 'zero' rows matter.",
+      "recall": {
+        "q": "Why COUNT(o.order_id) instead of COUNT(*) after a LEFT JOIN?",
+        "a": "COUNT(*) counts the NULL-extended row as 1; COUNT(col) skips NULLs and returns 0."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same query.",
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "orders_placed"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 3,
+      "title": "WHERE kills the LEFT JOIN",
+      "question": "Product wants 2025 units for EVERY product (zeros included), but this returns only products sold in 2025: `SELECT p.product_id, p.product_name, COALESCE(SUM(oi.quantity),0) AS units_2025 FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id LEFT JOIN orders o ON o.order_id = oi.order_id WHERE o.order_date >= '2025-01-01' AND o.order_status IN ('completed','shipped','returned') GROUP BY p.product_id, p.product_name`.",
+      "tables": [
+        "products",
+        "order_items",
+        "orders"
+      ],
+      "prompt": "Fix it: return product_id, product_name and units_2025 (sum of quantity on valid orders \u2014 order_status IN ('completed','shipped','returned') \u2014 dated on or after '2025-01-01'; 0 if none) for all 25 products.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A WHERE condition on the right table is false/NULL for unmatched rows \u2014 they get filtered out.",
+        "Filter the lines in a CTE (or in the ON clause) BEFORE the LEFT JOIN to products.",
+        "WITH lines_2025 AS (SELECT oi.product_id, oi.quantity FROM order_items oi JOIN orders o ... WHERE ...) SELECT p.product_id, p.product_name, COALESCE(SUM(l.quantity),0) AS units_2025 FROM products p LEFT JOIN lines_2025 l ... GROUP BY ...;"
+      ],
+      "why": "A subtle trap: putting the date filter into the second LEFT JOIN's ON clause would keep 2024 lines with NULL orders and still count their quantity. Filtering the lines as a unit avoids both traps.",
+      "recall": {
+        "q": "Why does WHERE o.order_date >= ... turn a LEFT JOIN into an INNER JOIN?",
+        "a": "For unmatched rows o.order_date is NULL, the comparison is not true, so WHERE removes them."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same CTE approach; ZEROIFNULL(SUM(l.quantity)) AS units_2025.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "units_2025"
+      ],
+      "expected_row_count": 25
+    },
+    {
+      "number": 4,
+      "title": "Duplicate order lines double-count revenue",
+      "question": "Lines 149 and 150 are exact copies (same order, product, quantity, price) of lines 21 and 96 \u2014 a loader re-sent them. Finance wants revenue with duplicates removed.",
+      "tables": [
+        "order_items",
+        "orders"
+      ],
+      "prompt": "Return one row with total_lines (all order_items rows), distinct_lines (rows after removing duplicates \u2014 a duplicate has the same order_id, product_id, quantity and unit_price as a line with a lower order_item_id), and gross_revenue_dedup = gross revenue of valid orders computed on de-duplicated lines, rounded to 2 decimals. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "ROW_NUMBER() OVER (PARTITION BY order_id, product_id, quantity, unit_price ORDER BY order_item_id) numbers the copies.",
+        "Keep rn = 1, then compute counts and revenue from the de-duplicated set.",
+        "WITH ranked AS (...), dedup AS (SELECT * FROM ranked WHERE rn = 1) SELECT (SELECT COUNT(*) FROM order_items) AS total_lines, (SELECT COUNT(*) FROM dedup) AS distinct_lines, (SELECT ROUND(SUM(...),2) FROM dedup d JOIN orders o ... WHERE ...) AS gross_revenue_dedup;"
+      ],
+      "why": "Only line 150 affects revenue (149 belongs to cancelled order 9) \u2014 exactly the kind of detail you must be able to explain when your number differs from someone else's by 96.90.",
+      "recall": {
+        "q": "How do you keep one row per duplicate group in Snowflake?",
+        "a": "QUALIFY ROW_NUMBER() OVER (PARTITION BY <natural key> ORDER BY <surrogate id>) = 1."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "WITH dedup AS (SELECT * FROM order_items QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, product_id, quantity, unit_price ORDER BY order_item_id) = 1) SELECT ...;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "total_lines",
+        "distinct_lines",
+        "gross_revenue_dedup"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Orphan order 31 breaks the regional tie-out",
+      "question": "Revenue by region doesn't add up to total revenue: `SELECT c.region, COUNT(DISTINCT o.order_id) AS valid_orders, ROUND(SUM(oi.quantity*oi.unit_price),2) AS gross_revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY c.region`.",
+      "tables": [
+        "orders",
+        "customers",
+        "order_items"
+      ],
+      "prompt": "Fix it so the regions sum to the full total: return region (customers.region; use 'Unknown' when the region is NULL OR the customer does not exist), valid_orders (distinct orders) and gross_revenue (rounded to 2 decimals). Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Order 31's customer_id 99 doesn't exist \u2014 the INNER JOIN to customers drops its revenue.",
+        "LEFT JOIN customers, and COALESCE the region so NULL-region customers and orphans land in one 'Unknown' bucket.",
+        "SELECT COALESCE(c.region,'Unknown') AS region, ... FROM orders o JOIN order_items oi ... LEFT JOIN customers c ... GROUP BY 1;"
+      ],
+      "why": "Every breakdown must tie out to the total. Orphans don't disappear from the business \u2014 only from your report.",
+      "recall": {
+        "q": "Name two reasons a row can land in the 'Unknown' region bucket here.",
+        "a": "The customer has a NULL region (9, 16), or the customer doesn't exist at all (order 31 \u2192 customer 99)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same query with NVL(c.region, 'Unknown').",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "valid_orders",
+        "gross_revenue"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 6,
+      "title": "Average order value computed per line",
+      "question": "The KPI tile says average order value is about 97, finance says it's much higher. The tile uses: `SELECT AVG(oi.quantity*oi.unit_price) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')`.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return one row with valid_orders (number of valid orders with lines), gross_revenue and avg_order_value (gross_revenue / valid_orders), money rounded to 2 decimals. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "AVG over joined rows averages LINES. You need one value per order first.",
+        "CTE: one row per order with its total; then AVG over that CTE.",
+        "WITH order_totals AS (SELECT o.order_id, SUM(oi.quantity*oi.unit_price) AS order_value FROM ... GROUP BY o.order_id) SELECT COUNT(*) AS valid_orders, ROUND(SUM(order_value),2) AS gross_revenue, ROUND(AVG(order_value),2) AS avg_order_value FROM order_totals;"
+      ],
+      "why": "Averages are grain-sensitive in a way sums are not: the same rows give a different AVG depending on what one row means.",
+      "recall": {
+        "q": "Why is AVG(line value) not the average order value?",
+        "a": "It averages lines; orders with many lines get more weight and each order's value is split across rows."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same CTE; or SUM(quantity * unit_price) / COUNT(DISTINCT order_id) in one query.",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "valid_orders",
+        "gross_revenue",
+        "avg_order_value"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 7,
+      "title": "Net revenue that ignores un-returned lines",
+      "question": "This 'net revenue by year' is tiny: `SELECT strftime('%Y', o.order_date) AS order_year, SUM(oi.quantity*oi.unit_price) - SUM(r.refund_amount) AS net_revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN returns r ON r.order_item_id = oi.order_item_id WHERE o.order_status IN ('completed','shipped','returned') GROUP BY 1`.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "Fix it: return order_year ('YYYY' of order_date), gross_revenue, refunds (sum of refund_amount on those lines, 0 if none) and net_revenue (gross \u2212 refunds), money rounded to 2 decimals. Valid orders = order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over those orders' order_items lines (never products.list_price). Net revenue = gross \u2212 refunds.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The INNER JOIN to returns keeps only the 10 returned lines \u2014 gross revenue collapses.",
+        "LEFT JOIN returns (each line has at most one return, so no fan-out) and COALESCE the refunds.",
+        "... JOIN order_items oi ... LEFT JOIN returns r ON r.order_item_id = oi.order_item_id ... ROUND(SUM(oi.quantity*oi.unit_price) - COALESCE(SUM(r.refund_amount),0), 2) AS net_revenue"
+      ],
+      "why": "Optional facts (returns, discounts, shipments) must be LEFT-joined \u2014 and you should verify they're at most one per line, or pre-aggregate them, before summing across the join.",
+      "recall": {
+        "q": "Why is LEFT JOIN returns safe here without pre-aggregating?",
+        "a": "Each order_item_id appears at most once in returns, so the join can't multiply lines (verify with GROUP BY ... HAVING COUNT(*) > 1)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same query with YEAR(o.order_date) AS order_year and ZEROIFNULL(SUM(r.refund_amount)).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "gross_revenue",
+        "refunds",
+        "net_revenue"
+      ],
+      "expected_row_count": 2
+    }
+  ],
+  "worked_example": {
+    "question": "Why does `SELECT COUNT(*) FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')` not give the number of valid orders?",
+    "sql": "SELECT COUNT(*)                   AS joined_rows,\n       COUNT(DISTINCT o.order_id)  AS valid_orders,\n       (SELECT COUNT(*) FROM orders\n        WHERE order_status IN ('completed','shipped','returned')) AS valid_orders_direct\nFROM orders AS o\nJOIN order_items AS oi ON oi.order_id = o.order_id\nWHERE o.order_status IN ('completed','shipped','returned');",
+    "explanation": "After the join there is one row per *line*, not per order, so COUNT(*) counts lines. COUNT(DISTINCT order_id) restores the order grain and ties to the direct count from orders.",
+    "columns": [
+      "joined_rows",
+      "valid_orders",
+      "valid_orders_direct"
+    ],
+    "rows": [
+      [
+        134,
+        53,
+        53
+      ]
+    ]
+  },
+  "recipe": "**Recipe: debug a wrong count in 5 moves**\n\n1. **Count at every step.** Run `SELECT COUNT(*)` after each join/filter (CTEs make this easy). The step where the\n   count jumps or drops is the bug.\n2. **Check the grain.** For each table: what is one row? A join to a \"many\" side multiplies rows \u2192 `SUM` and\n   `COUNT(*)` of the \"one\" side inflate. Fix: pre-aggregate, or `COUNT(DISTINCT key)`.\n3. **Check for disappearing rows.** INNER JOIN drops unmatched keys (orphans like order 31, customers without\n   orders). `WHERE right.col = ...` after a LEFT JOIN drops the unmatched rows too \u2192 move the condition into `ON`.\n4. **Check for duplicate source rows.** `GROUP BY <natural key> HAVING COUNT(*) > 1` (order lines 149/150).\n5. **Reconcile.** Totals by the fixed query must tie to an independent simple query (e.g. `SUM` straight from the fact table).\n\n```sql\nWITH s1 AS (SELECT * FROM orders WHERE order_status IN ('completed','shipped','returned')),\n     s2 AS (SELECT s1.*, c.region FROM s1 LEFT JOIN customers c ON c.customer_id = s1.customer_id)\nSELECT (SELECT COUNT(*) FROM s1) AS after_filter, (SELECT COUNT(*) FROM s2) AS after_join;\n```",
+  "snowflake_notes": "Debugging tools that make this faster in Snowflake:\n\n```sql\n-- Grain check: is the key really unique?\nSELECT order_item_id, COUNT(*) FROM order_items GROUP BY 1 HAVING COUNT(*) > 1;\n\n-- Natural-key duplicates, keeping the full rows for inspection\nSELECT * FROM order_items\nQUALIFY COUNT(*) OVER (PARTITION BY order_id, product_id, quantity, unit_price) > 1;\n\n-- Count at each step of a pipeline in one go\nWITH s1 AS (...), s2 AS (...)\nSELECT 's1' AS step, COUNT(*) FROM s1 UNION ALL SELECT 's2', COUNT(*) FROM s2;\n\n-- Compare two versions of a result\nSELECT * FROM new_version MINUS SELECT * FROM old_version;   -- MINUS = EXCEPT\n```\n\n- **Query Profile** shows rows in/out of every join: a join whose output is far larger than both inputs is fan-out.\n- `HASH_AGG(*)` gives a fingerprint of a whole result set \u2014 handy to prove two queries return identical rows.\n- `COUNT_IF(cond)` and `IS DISTINCT FROM` (NULL-safe comparison) shorten reconciliation queries.\n- Because Snowflake doesn't enforce PK/FK constraints, duplicates and orphans are *more* common in raw layers \u2014\n  always test the grain before trusting a join.",
+  "common_mistakes": [
+    "COUNT(*) after joining to a many-side table \u2014 counts the many side.",
+    "INNER JOIN where unmatched rows matter (customers without orders, orphan orders).",
+    "Filtering the right table of a LEFT JOIN in WHERE.",
+    "'Fixing' fan-out with DISTINCT on the whole row, which also removes legitimate identical lines.",
+    "Not reconciling the fixed result to an independent total.",
+    "AVG over the wrong grain."
+  ],
+  "recall": [
+    [
+      "Too many rows after a join usually means\u2026?",
+      "The join key isn't unique on one side (fan-out) \u2014 or there are duplicate source rows."
+    ],
+    [
+      "Too few rows usually means\u2026?",
+      "An INNER JOIN dropped unmatched rows, or a WHERE on the right side of a LEFT JOIN."
+    ],
+    [
+      "Fastest way to find the faulty step in a pipeline?",
+      "COUNT(*) (and a key SUM) after every CTE/join."
+    ]
+  ],
+  "review_next": "Lesson 49 turns these bug patterns into automated data-quality checks you run before every report."
+}

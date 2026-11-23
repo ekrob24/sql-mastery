@@ -1,0 +1,15 @@
+-- Lesson 2 · Exercise 2.1 — One category
+--
+-- BUSINESS QUESTION
+--   Merchandising wants the electronics price list.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name and list_price for every product whose category is
+--   exactly 'Electronics'.
+-- REQUIRED COLUMNS: product_id, product_name, list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.1
+-- Grade it:              python3 sqlm.py submit 2.1
+--
+-- Write your query below (from memory!):
+

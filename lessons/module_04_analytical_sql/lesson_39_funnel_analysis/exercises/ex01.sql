@@ -1,0 +1,16 @@
+-- Lesson 39 · Exercise 39.1 — Sessions reaching each stage
+--
+-- BUSINESS QUESTION
+--   How many sessions reached each step of the funnel?
+-- TABLES: web_events
+-- TASK
+--   Return stage_number (visit=1, product_view=2, add_to_cart=3, checkout=4, purchase=5),
+--   stage (the event_type text) and sessions (number of distinct sessions with that
+--   event). Order by stage_number.
+-- REQUIRED COLUMNS: stage_number, stage, sessions
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 39.1
+-- Grade it:              python3 sqlm.py submit 39.1
+--
+-- Write your query below (from memory!):
+

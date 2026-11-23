@@ -1,0 +1,18 @@
+-- Lesson 8 · Exercise 8.7 — Active 2025 customers with their window
+--
+-- BUSINESS QUESTION
+--   Which customers placed at least 2 valid orders in 2025, and when were their first and
+--   last?
+-- TABLES: orders
+-- TASK
+--   Considering only valid orders (order_status IN ('completed', 'shipped', 'returned'))
+--   with order_date from '2025-01-01' to '2025-12-31' inclusive, return customer_id,
+--   order_count, first_order_date and last_order_date for customers with at least 2 such
+--   orders, sorted by order_count descending, then customer_id ascending.
+-- REQUIRED COLUMNS: customer_id, order_count, first_order_date, last_order_date
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 8.7
+-- Grade it:              python3 sqlm.py submit 8.7
+--
+-- Write your query below (from memory!):
+

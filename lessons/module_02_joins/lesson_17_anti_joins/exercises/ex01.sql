@@ -1,0 +1,23 @@
+-- Lesson 17 · Exercise 17.1 — Customers who never ordered
+--
+-- BUSINESS QUESTION
+--   Marketing wants a win-back list: customers who have never placed any order.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name and signup_date for customers with no row in orders (any
+--   status). Use LEFT JOIN … IS NULL.
+-- REQUIRED COLUMNS: customer_id, name, signup_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 17.1
+-- Grade it:              python3 sqlm.py submit 17.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

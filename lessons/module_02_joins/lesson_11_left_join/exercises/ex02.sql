@@ -1,0 +1,24 @@
+-- Lesson 11 · Exercise 11.2 — Every product with its supplier (or NULL)
+--
+-- BUSINESS QUESTION
+--   Procurement wants the COMPLETE product list with supplier name, flagging gaps instead
+--   of hiding them.
+-- TABLES: products, suppliers
+-- TASK
+--   Return product_id, product_name and supplier_name for all 25 products (supplier_name
+--   NULL when the product has no matching supplier).
+-- REQUIRED COLUMNS: product_id, product_name, supplier_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.2
+-- Grade it:              python3 sqlm.py submit 11.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

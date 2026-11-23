@@ -1,0 +1,19 @@
+-- Lesson 32 · Exercise 32.4 — Customer lifetime spend, order by order
+--
+-- BUSINESS QUESTION
+--   CRM wants each customer's cumulative spend after every valid order (for loyalty tier
+--   triggers).
+-- TABLES: orders, order_items
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'); order_total =
+--   SUM(quantity * unit_price) of the order's items. For every valid order, return
+--   customer_id, order_id, order_date, order_total and cumulative_spend (running sum of
+--   order_total per customer, in order_date then order_id order), both rounded to 2
+--   decimals. Ordered by customer_id, order_date, order_id.
+-- REQUIRED COLUMNS: customer_id, order_id, order_date, order_total, cumulative_spend
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.4
+-- Grade it:              python3 sqlm.py submit 32.4
+--
+-- Write your query below (from memory!):
+

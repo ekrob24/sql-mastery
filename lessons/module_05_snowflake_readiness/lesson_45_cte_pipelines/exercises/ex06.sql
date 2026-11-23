@@ -1,0 +1,25 @@
+-- Lesson 45 · Exercise 45.6 — Year-over-year customer growth
+--
+-- BUSINESS QUESTION
+--   Refactor: SELECT c.customer_id, c.name, (SELECT SUM(oi.quantity*oi.unit_price) FROM
+--   orders o JOIN order_items oi ON oi.order_id=o.order_id WHERE
+--   o.customer_id=c.customer_id AND o.order_status IN ('completed','shipped','returned')
+--   AND o.order_date LIKE '2024%') a, (SELECT SUM(oi.quantity*oi.unit_price) FROM orders o
+--   JOIN order_items oi ON oi.order_id=o.order_id WHERE o.customer_id=c.customer_id AND
+--   o.order_status IN ('completed','shipped','returned') AND o.order_date LIKE '2025%') b
+--   FROM customers c WHERE b > a
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Return customer_id, name, revenue_2024, revenue_2025 and growth (revenue_2025 −
+--   revenue_2024), all money rounded to 2 decimals, ordered by growth descending then
+--   customer_id — only for customers whose 2025 gross revenue is strictly greater than
+--   their 2024 gross revenue AND who had revenue in both years. Valid orders =
+--   order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity *
+--   unit_price) over those orders' order_items lines (never products.list_price).
+-- REQUIRED COLUMNS: customer_id, name, revenue_2024, revenue_2025, growth
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 45.6
+-- Grade it:              python3 sqlm.py submit 45.6
+--
+-- Write your query below (from memory!):
+

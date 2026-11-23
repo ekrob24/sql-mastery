@@ -1,0 +1,23 @@
+-- Lesson 50 · Exercise 50.9 — Customers who have not ordered in the last 90 days
+--
+-- BUSINESS QUESTION
+--   Marketing: "Give me the win-back list — buyers who have gone quiet."
+-- TABLES: customers, orders
+-- TASK
+--   As of '2025-12-31' (do not use date('now')). Only valid orders count as purchases
+--   (order_status IN ('completed','shipped','returned')) — a pending or cancelled order
+--   does not make a customer active. last_order_date = the customer's latest valid
+--   order_date; days_since_last_order = julianday('2025-12-31') −
+--   julianday(last_order_date) as an integer. A lapsed customer exists in customers, has
+--   at least one valid order, and has days_since_last_order > 90 (i.e. no valid order on
+--   or after 2025-10-02). Customers who never placed a valid order are NOT lapsed (they
+--   are prospects) and are excluded. Return customer_id, customer_name (customers.name),
+--   region (NULL shown as 'Unknown'), last_order_date, days_since_last_order. Order by
+--   days_since_last_order descending, then customer_id ascending.
+-- REQUIRED COLUMNS: customer_id, customer_name, region, last_order_date, days_since_last_order
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.9
+-- Grade it:              python3 sqlm.py submit 50.9
+--
+-- Write your query below (from memory!):
+

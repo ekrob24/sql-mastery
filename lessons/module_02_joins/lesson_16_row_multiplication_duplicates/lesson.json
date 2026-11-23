@@ -1,0 +1,364 @@
+{
+  "number": 16,
+  "slug": "row_multiplication_duplicates",
+  "title": "Row multiplication and duplicate detection",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Predict how many rows a join returns from the grain of each table, detect fan-out and duplicate rows, and fix inflated aggregates by pre-aggregating before joining.",
+  "context": "Finance noticed that a dashboard reported customer 7's revenue as 22,189.76 when their real gross revenue is 1,305.28. Nobody wrote a wrong formula \u2014 a join multiplied the rows. This lesson is about knowing the grain of every table and checking COUNT(*) before and after each join.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Grain check: orders vs order lines",
+      "question": "Before building an order report, an analyst wants to see what joining order_items does to the row count.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Return a single row with columns orders_rows (COUNT(*) of orders), joined_rows (COUNT(*) of orders INNER JOIN order_items on order_id) and distinct_orders_joined (number of distinct order_id values in that join).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A scalar subquery (SELECT COUNT(*) FROM orders) can sit in the SELECT list.",
+        "COUNT(*) counts joined rows; COUNT(DISTINCT o.order_id) counts orders that survived.",
+        "SELECT (SELECT COUNT(*) FROM orders) AS orders_rows, COUNT(*) AS joined_rows, COUNT(DISTINCT o.order_id) AS distinct_orders_joined FROM orders o JOIN order_items i ON ..."
+      ],
+      "why": "This three-number check (left rows, joined rows, distinct left keys) is the fastest way to catch both fan-out and silently dropped rows before they reach a dashboard.",
+      "recall": {
+        "q": "After an inner join, joined_rows > left rows and distinct keys < left rows. What two things happened?",
+        "a": "Fan-out (one-to-many repeated left rows) AND some left rows had no match and were dropped."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items",
+        "shared_key": "order_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "Two effects at once: 60 orders become 150 joined rows (one per line \u2014 orders with up to 5 lines are repeated up to 5 times), yet only 59 distinct orders survive because order 60 (pending) has no items and the inner join drops it. Row count going UP does not mean nothing was lost.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "orders_rows",
+        "joined_rows",
+        "distinct_orders_joined"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 2,
+      "title": "Joined rows vs real order count per customer",
+      "question": "A report counted 'orders per customer' after joining order lines and got numbers that look too high. Show the wrong and right count side by side.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "For every customer who has at least one order (any status), join customers \u2192 orders (inner) \u2192 order_items (LEFT JOIN, so orders without lines stay). Return customer_id, name, joined_rows (COUNT(*) of the joined rows) and order_count (number of distinct orders).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Chain: customers JOIN orders, then LEFT JOIN order_items.",
+        "COUNT(*) counts lines (the inflated number); COUNT(DISTINCT o.order_id) counts orders.",
+        "... GROUP BY c.customer_id, c.name with COUNT(*) AS joined_rows, COUNT(DISTINCT o.order_id) AS order_count"
+      ],
+      "why": "COUNT(*) after a one-to-many join counts the child grain, not the parent. Most 'why is this number too big' tickets are exactly this.",
+      "recall": {
+        "q": "After joining orders to order_items, what does COUNT(*) count?",
+        "a": "Order lines, not orders."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders, order_items",
+        "shared_key": [
+          "customer_id order_id"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "LEFT JOIN"
+        ]
+      },
+      "join_notes": "customers \u2192 orders gives 59 rows (order 31's customer 99 doesn't exist, and customers 18/19/20 have no orders, so 17 customers remain). \u2192 order_items fans that out to 149 rows: 148 lines of those 59 orders plus 1 NULL-item row for order 60, kept by the LEFT JOIN. Customer 1 shows 22 joined_rows for 9 orders; customer 9's order 60 still counts as an order. COUNT(*) is the line grain; COUNT(DISTINCT order_id) restores the order grain.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "joined_rows",
+        "order_count"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 3,
+      "title": "Fan-out through orders \u2192 items \u2192 returns",
+      "question": "Customer service wants every order that had a return: how many lines it had, how many were returned and how much was refunded.",
+      "tables": [
+        "orders",
+        "order_items",
+        "returns"
+      ],
+      "prompt": "For each order with at least one returned line, return order_id, line_count (number of order_items lines in the order), returned_lines (number of returns) and total_refund (SUM of refund_amount).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Returns hang off order lines (order_item_id), not off orders.",
+        "LEFT JOIN returns so non-returned lines still count in line_count; then filter groups with HAVING.",
+        "FROM orders o JOIN order_items i ON ... LEFT JOIN returns r ON r.order_item_id = i.order_item_id GROUP BY o.order_id HAVING COUNT(r.return_id) > 0"
+      ],
+      "why": "Multi-hop joins are where grain gets lost. Knowing that returns are per *line* tells you the join to items is the one that fans out, and the join to returns doesn't.",
+      "recall": {
+        "q": "Why LEFT JOIN returns instead of INNER JOIN here?",
+        "a": "An inner join would drop non-returned lines, so line_count would only count returned lines."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items, returns",
+        "shared_key": [
+          "order_id order_item_id"
+        ],
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "orders \u2192 order_items fans 59 orders with lines out to 150 rows. returns is one row per returned line (10 rows, all different order_item_id), so the LEFT JOIN to it is one-to-zero-or-one: still 150 rows, 140 with NULL return columns. Grouping by order and keeping groups with COUNT(r.return_id) > 0 leaves 10 orders, each with exactly 1 returned line. Order 38 has 4 lines, including the duplicate-looking line 150 \u2014 only line 96 was returned (96.9). With an inner join to returns, line_count would wrongly be 1 for every order.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "line_count",
+        "returned_lines",
+        "total_refund"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 4,
+      "title": "Find duplicate-looking order lines",
+      "question": "Finance suspects the order feed loaded some order lines twice. Which lines are exact business duplicates of an earlier line?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Return one row per duplicate: original_item_id (the smaller order_item_id), duplicate_item_id (the larger), order_id, product_id, quantity, unit_price \u2014 for pairs of lines with the same order_id, product_id, quantity and unit_price.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Self join order_items on all four business columns.",
+        "The surrogate key order_item_id differs between the duplicates \u2014 use it to avoid self-matches and mirrored pairs.",
+        "... ON b.order_id = a.order_id AND b.product_id = a.product_id AND b.quantity = a.quantity AND b.unit_price = a.unit_price AND b.order_item_id > a.order_item_id"
+      ],
+      "why": "Surrogate keys make every row 'unique', hiding double-loads. Duplicate detection must compare the business columns, not the id.",
+      "recall": {
+        "q": "Why doesn't the primary key protect you from duplicate order lines?",
+        "a": "The PK is a surrogate id generated per load; duplicates get new ids, so you must compare business columns."
+      },
+      "join_plan": {
+        "left_table": "order_items",
+        "right_table": "order_items",
+        "shared_key": [
+          "order_id product_id quantity unit_price"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "SELF JOIN",
+          "INNER SELF JOIN"
+        ]
+      },
+      "join_notes": "Of 150 lines, only 2 pairs match on all four business columns: line 149 duplicates line 21 (order 9, product 5, 1 \u00d7 279.99) and line 150 duplicates line 96 (order 38, product 9, 3 \u00d7 32.3). Result: 2 rows. Without the b.order_item_id > a.order_item_id condition you would get 150 self-matches plus 4 mirrored rows. Order 9 is cancelled, but order 38 is completed \u2014 its duplicate inflates gross revenue by 96.90.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "original_item_id",
+        "duplicate_item_id",
+        "order_id",
+        "product_id",
+        "quantity",
+        "unit_price"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 5,
+      "title": "Two one-to-many tables: the inflation",
+      "question": "A dashboard joins customers to both orders and web_events in one query. How badly does that multiply rows?",
+      "tables": [
+        "customers",
+        "orders",
+        "web_events"
+      ],
+      "prompt": "Join customers \u2192 orders (inner, on customer_id) and customers \u2192 web_events (inner, on customer_id) in ONE query. Per customer return customer_id, joined_rows (COUNT(*)), order_count (distinct orders) and event_count (distinct web events).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Both orders and web_events join to customers on customer_id \u2014 not to each other.",
+        "Compare COUNT(*) with COUNT(DISTINCT o.order_id) * COUNT(DISTINCT w.event_id).",
+        "FROM customers c JOIN orders o ON o.customer_id = c.customer_id JOIN web_events w ON w.customer_id = c.customer_id GROUP BY c.customer_id"
+      ],
+      "why": "This is the 'chasm trap': two independent one-to-many branches joined together produce their cross product per parent. Every SUM on either side becomes wrong.",
+      "recall": {
+        "q": "A customer has 4 orders and 10 web events. How many rows after joining both?",
+        "a": "40 \u2014 orders \u00d7 events, because the two children are unrelated to each other."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders, web_events",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "For every customer joined_rows = order_count \u00d7 event_count: customer 7 has 8 orders \u00d7 17 events = 136 rows. In total 59 order rows and 217 identified events explode into 828 joined rows across 17 customers. The 8 anonymous events (customer_id NULL) and customers 18-20 (no orders, no events) never match. Any SUM over order lines in this shape would be multiplied by the event count \u2014 that is how customer 7's 1,305.28 became 22,189.76.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "joined_rows",
+        "order_count",
+        "event_count"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 6,
+      "title": "Fix it: pre-aggregate, then join",
+      "question": "Build the correct customer scorecard: revenue and web activity for every customer.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "web_events"
+      ],
+      "prompt": "Return all 20 customers with columns customer_id, name, gross_revenue and web_events. gross_revenue = SUM(quantity * unit_price) over the customer's valid orders (order_status IN ('completed','shipped','returned')), rounded to 2 decimals, 0 if none. web_events = number of web_events rows for the customer, 0 if none. Pre-aggregate each side to one row per customer before joining.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Build two subqueries/CTEs, each GROUP BY customer_id: revenue from valid orders' items, and event counts.",
+        "Now both are one row per customer \u2014 LEFT JOIN them to customers so all 20 stay, and COALESCE the NULLs to 0.",
+        "WITH rev AS (... GROUP BY o.customer_id), ev AS (SELECT customer_id, COUNT(*) AS events FROM web_events GROUP BY customer_id) SELECT ... FROM customers c LEFT JOIN rev ... LEFT JOIN ev ..."
+      ],
+      "why": "Pre-aggregating to a common grain is THE fix for fan-out. It's how every well-built metrics layer joins facts that live at different grains.",
+      "recall": {
+        "q": "What is the fix for the 'two one-to-many tables' inflation?",
+        "a": "Aggregate each child to the parent's grain first, then join the one-row-per-key results."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": [
+          "orders, web_events",
+          "rev, ev"
+        ],
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "LEFT JOIN"
+      },
+      "join_notes": "rev has 17 rows (16 real customers with a valid order + orphan customer 99 from order 31, which never matches a customer) and ev has 18 rows (17 customers + one NULL customer_id group for anonymous events, which matches nothing). Both are one row per customer, so the joins are one-to-zero-or-one: 20 rows in, 20 out. Customer 7 now shows the true 1305.28 with 17 events. Customers 16, 18, 19, 20 have no valid order \u2192 NULL gross \u2192 COALESCE to 0; 18-20 also have no events \u2192 0.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "gross_revenue",
+        "web_events"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 7,
+      "title": "Revenue with duplicate lines removed",
+      "question": "Finance wants to know how much the duplicate order lines distort order totals.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "For each order that contains duplicate-looking lines (same order_id, product_id, quantity, unit_price), return order_id, order_status, raw_gross (SUM(quantity * unit_price) over all lines, rounded to 2) and deduped_gross (the same sum after keeping only one copy of each distinct (order_id, product_id, quantity, unit_price), rounded to 2).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "SELECT DISTINCT order_id, product_id, quantity, unit_price collapses exact duplicates.",
+        "Aggregate raw lines and deduped lines separately per order_id, then join both to orders; keep orders where the raw line count is bigger.",
+        "WITH raw AS (... GROUP BY order_id), dedup AS (SELECT order_id, SUM(...) ... FROM (SELECT DISTINCT ...) GROUP BY order_id) SELECT ... FROM orders o JOIN raw ... JOIN dedup ... WHERE raw.lines > dedup.lines"
+      ],
+      "why": "DISTINCT over the business columns is a quick de-dup, but use it consciously: if a customer truly bought the same item twice on two lines, it would wrongly merge them.",
+      "recall": {
+        "q": "Why not just use SUM(DISTINCT quantity * unit_price)?",
+        "a": "It would also merge two genuinely different lines that happen to have the same amount \u2014 de-dup rows, not values."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "order_items",
+        "shared_key": "order_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "raw and dedup are both one row per order (59 orders with lines), so joining them to orders does not multiply anything. dedup has 148 distinct lines instead of 150; only orders 9 and 38 lose a line, so 2 rows come back. Order 9 (cancelled): 966.98 raw \u2192 686.99 deduped. Order 38 (completed): 298.30 \u2192 201.40 \u2014 the 96.90 gap is real over-statement of valid gross revenue.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_status",
+        "raw_gross",
+        "deduped_gross"
+      ],
+      "expected_row_count": 2
+    }
+  ],
+  "worked_example": {
+    "question": "How many rows does each step of orders \u2192 order_items \u2192 returns produce?",
+    "sql": "SELECT (SELECT COUNT(*) FROM orders) AS orders_rows,\n       (SELECT COUNT(*) FROM orders o\n          LEFT JOIN order_items i ON i.order_id = o.order_id) AS with_items_rows,\n       (SELECT COUNT(*) FROM orders o\n          LEFT JOIN order_items i ON i.order_id = o.order_id\n          LEFT JOIN returns r ON r.order_item_id = i.order_item_id) AS with_returns_rows;",
+    "explanation": "60 orders fan out to 151 rows once items are attached (150 lines + 1 NULL row for order 60, which has no items). Adding returns keeps 151: each line has at most one return, so that join is one-to-zero-or-one and does not multiply.",
+    "columns": [
+      "orders_rows",
+      "with_items_rows",
+      "with_returns_rows"
+    ],
+    "rows": [
+      [
+        60,
+        151,
+        151
+      ]
+    ]
+  },
+  "recipe": "**Recipe: guard every join against fan-out**\n\n1. **State the grain** of each table: \"one row per ___\". orders = one per order; order_items = one per\n   order line; returns = one per returned line; web_events = one per event.\n2. **Classify each join**: one-to-one, one-to-many, many-to-many. Joining the \"one\" side to the \"many\"\n   side repeats the \"one\" row once per match.\n3. **Count before and after**: `SELECT COUNT(*)` of the left table, then of the join. If the count grew,\n   every column from the \"one\" side is now repeated.\n4. **Never SUM a repeated column.** If two one-to-many tables hang off the same parent\n   (customer \u2192 orders and customer \u2192 web_events), joining both gives orders \u00d7 events rows per customer.\n5. **Fix by pre-aggregating** each child to the parent's grain *first*, then join one-to-one:\n\n```sql\nWITH rev AS (SELECT customer_id, SUM(...) AS gross FROM ... GROUP BY customer_id),\n     ev  AS (SELECT customer_id, COUNT(*)  AS events FROM web_events GROUP BY customer_id)\nSELECT c.customer_id, COALESCE(rev.gross, 0), COALESCE(ev.events, 0)\nFROM customers c\nLEFT JOIN rev ON rev.customer_id = c.customer_id\nLEFT JOIN ev  ON ev.customer_id  = c.customer_id;\n```\n\n**Duplicate detection:** group by the columns that *should* be unique and look for `COUNT(*) > 1`, or\nself join rows with identical business columns but different ids.\n\n`COUNT(DISTINCT key)` can rescue counts, but there is no safe `SUM(DISTINCT ...)` \u2014 two different lines\nwith the same amount would collapse. Pre-aggregate instead.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Summing a parent-level number (order total, refund) after joining to a child table \u2014 it repeats once per child row.",
+    "Joining two independent one-to-many tables in one query (customer \u2192 orders and customer \u2192 events): rows = orders \u00d7 events.",
+    "Checking only that the row count went up and assuming nothing was lost \u2014 an inner join can fan out AND drop rows at the same time.",
+    "Reaching for SUM(DISTINCT \u2026) to 'fix' inflation; it merges genuinely equal amounts.",
+    "Trusting the surrogate primary key to guarantee no duplicates \u2014 compare the business columns."
+  ],
+  "recall": [
+    [
+      "What does 'grain' mean?",
+      "What one row of a table represents, e.g. one row per order line."
+    ],
+    [
+      "Which join direction multiplies rows?",
+      "Joining a 'one' row to a 'many' table: the one-side row repeats once per match."
+    ],
+    [
+      "What three numbers should you check around every join?",
+      "Left-table rows, joined rows, and distinct left keys in the joined result."
+    ],
+    [
+      "How do you safely combine two metrics from different child tables?",
+      "Pre-aggregate each to the shared parent grain, then join one-to-one."
+    ]
+  ],
+  "review_next": "Next, Lesson 17 flips the question: instead of rows that match too often, rows that never match at all (anti-joins). Before moving on, re-run 16.5 and confirm joined_rows = order_count \u00d7 event_count for two customers by hand."
+}

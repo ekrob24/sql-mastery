@@ -1,0 +1,16 @@
+-- Lesson 24 · Exercise 24.4 — Orphan orders (customer missing)
+--
+-- BUSINESS QUESTION
+--   Finance found revenue that doesn't tie to any customer. Which orders point to a non-
+--   existent customer?
+-- TABLES: orders, customers
+-- TASK
+--   Return order_id, customer_id, order_date, order_status for orders whose customer_id
+--   has no matching row in customers.
+-- REQUIRED COLUMNS: order_id, customer_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 24.4
+-- Grade it:              python3 sqlm.py submit 24.4
+--
+-- Write your query below (from memory!):
+

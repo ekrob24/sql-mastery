@@ -1,0 +1,19 @@
+-- Lesson 35 · Exercise 35.5 — Average gap between orders per repeat customer
+--
+-- BUSINESS QUESTION
+--   CRM wants each repeat customer's typical purchase cycle to time reminder emails.
+-- TABLES: orders
+-- TASK
+--   Using valid orders (order_status IN ('completed','shipped','returned')), compute for
+--   every order the days since the same customer's previous valid order (order by
+--   order_date, order_id). Then, for customers with at least 2 valid orders, return
+--   customer_id, order_count (valid orders), avg_gap_days (average of the gaps, rounded to
+--   1 decimal) and longest_gap_days (largest gap, integer). Order by avg_gap_days
+--   ascending, then customer_id.
+-- REQUIRED COLUMNS: customer_id, order_count, avg_gap_days, longest_gap_days
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 35.5
+-- Grade it:              python3 sqlm.py submit 35.5
+--
+-- Write your query below (from memory!):
+

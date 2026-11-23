@@ -1,0 +1,26 @@
+-- Lesson 12 · Exercise 12.6 — Lines sold vs. lines returned per product
+--
+-- BUSINESS QUESTION
+--   Quality wants, per sold product, how many order lines were sold, how many were
+--   returned and the total refunded.
+-- TABLES: returns, order_items
+-- TASK
+--   Write FROM returns ... RIGHT JOIN order_items. Return product_id, lines_sold (number
+--   of order lines, any status), lines_returned (number of those lines with a return) and
+--   total_refunded (SUM of refund_amount rounded to 2 decimals; 0 when none), one row per
+--   product that appears in order_items.
+-- REQUIRED COLUMNS: product_id, lines_sold, lines_returned, total_refunded
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.6
+-- Grade it:              python3 sqlm.py submit 12.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

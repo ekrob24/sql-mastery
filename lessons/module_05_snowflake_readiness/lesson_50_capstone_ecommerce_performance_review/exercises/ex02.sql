@@ -1,0 +1,22 @@
+-- Lesson 50 · Exercise 50.2 — Top 10 products by revenue
+--
+-- BUSINESS QUESTION
+--   Merchandising: "Which ten products drive the business, and how concentrated is
+--   revenue?"
+-- TABLES: orders, order_items, products
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned'). For each product,
+--   gross_revenue = SUM(quantity * unit_price) over its lines in valid orders (count every
+--   line as recorded), and units_sold = SUM(quantity) over the same lines.
+--   revenue_share_pct = 100 * product gross revenue / total gross revenue of ALL products
+--   (computed before keeping only the top 10), rounded to 2 decimals. Rank products by
+--   gross revenue descending, ties broken by product_id ascending; revenue_rank = 1, 2, 3,
+--   ... Return the top 10 with columns revenue_rank, product_id, product_name, units_sold,
+--   gross_revenue (rounded to 2 decimals), revenue_share_pct. Order by revenue_rank.
+-- REQUIRED COLUMNS: revenue_rank, product_id, product_name, units_sold, gross_revenue, revenue_share_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.2
+-- Grade it:              python3 sqlm.py submit 50.2
+--
+-- Write your query below (from memory!):
+

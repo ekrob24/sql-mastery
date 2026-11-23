@@ -1,0 +1,18 @@
+-- Lesson 42 · Exercise 42.6 — Index into an array: the first order line
+--
+-- BUSINESS QUESTION
+--   Merchandising asks: which orders started with a big-ticket item (first line priced at
+--   100 or more)?
+-- TABLES: raw_order_events
+-- TASK
+--   Return event_id, order_id, first_product_id ($.items[0].product_id), first_qty
+--   ($.items[0].qty) and first_price ($.items[0].price) for events where first_price >=
+--   100. (Arrays are 0-based; an order with an empty items array simply returns NULL and
+--   drops out.)
+-- REQUIRED COLUMNS: event_id, order_id, first_product_id, first_qty, first_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.6
+-- Grade it:              python3 sqlm.py submit 42.6
+--
+-- Write your query below (from memory!):
+

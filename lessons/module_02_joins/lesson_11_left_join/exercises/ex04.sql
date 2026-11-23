@@ -1,0 +1,24 @@
+-- Lesson 11 · Exercise 11.4 — Orders in 2025 per customer — filter in ON, not WHERE
+--
+-- BUSINESS QUESTION
+--   Customer success: for EVERY customer, how many orders did they place in 2025? Zero is
+--   an answer.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id, name and orders_2025 (orders of any status with order_date >=
+--   '2025-01-01'; 0 when none) for all 20 customers.
+-- REQUIRED COLUMNS: customer_id, name, orders_2025
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 11.4
+-- Grade it:              python3 sqlm.py submit 11.4
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

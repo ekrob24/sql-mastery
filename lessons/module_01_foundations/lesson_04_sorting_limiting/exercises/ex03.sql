@@ -1,0 +1,16 @@
+-- Lesson 4 · Exercise 4.3 — Cheapest first, unknown prices last
+--
+-- BUSINESS QUESTION
+--   Purchasing wants the cheapest products at the top, but the product with no price
+--   should be at the bottom where it won't be mistaken for 'free'.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name and list_price for all products, sorted by list_price
+--   ascending with NULL prices LAST, then product_id ascending.
+-- REQUIRED COLUMNS: product_id, product_name, list_price
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 4.3
+-- Grade it:              python3 sqlm.py submit 4.3
+--
+-- Write your query below (from memory!):
+

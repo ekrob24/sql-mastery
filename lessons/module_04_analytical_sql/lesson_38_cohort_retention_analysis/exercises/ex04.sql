@@ -1,0 +1,19 @@
+-- Lesson 38 · Exercise 38.4 — Quarterly retention counts
+--
+-- BUSINESS QUESTION
+--   How many customers of each quarterly cohort were active 0, 1, 2… quarters after their
+--   first order?
+-- TABLES: orders, customers
+-- TASK
+--   Valid orders of known customers (as in 38.1). Quarter index of a date = year*4 +
+--   (month-1)/3 (integer division). Return cohort_quarter ('YYYY-Qn' of the first valid
+--   order), quarters_since_first (quarter index of an order minus quarter index of the
+--   first order) and active_customers (distinct customers with at least one valid order in
+--   that quarter). Order by cohort_quarter, quarters_since_first.
+-- REQUIRED COLUMNS: cohort_quarter, quarters_since_first, active_customers
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 38.4
+-- Grade it:              python3 sqlm.py submit 38.4
+--
+-- Write your query below (from memory!):
+

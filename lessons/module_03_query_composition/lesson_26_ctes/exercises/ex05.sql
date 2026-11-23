@@ -1,0 +1,19 @@
+-- Lesson 26 · Exercise 26.5 — Return rate by category
+--
+-- BUSINESS QUESTION
+--   Quality wants to know which categories have the highest share of order lines returned.
+-- TABLES: orders, order_items, products, returns
+-- TASK
+--   Consider lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded). Build a CTE
+--   of those lines with their category (NULL → 'Uncategorized') and a flag for whether the
+--   order_item_id appears in returns. Return category, lines_sold (number of lines),
+--   lines_returned (lines that appear in returns) and return_rate_pct = 100 *
+--   lines_returned / lines_sold rounded to 1 decimal.
+-- REQUIRED COLUMNS: category, lines_sold, lines_returned, return_rate_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 26.5
+-- Grade it:              python3 sqlm.py submit 26.5
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,343 @@
+{
+  "number": 15,
+  "slug": "self_joins",
+  "title": "Self joins",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Join a table to itself with two aliases to compare rows of the same table: duplicate detection, pairs, hierarchies and 'previous row' lookups.",
+  "context": "Data quality wants to know which customer records look like duplicates, sales wants to know which customers share a territory, merchandising wants price ladders inside a category, and the product team keeps its category tree in one table where each row points at its parent. All of these compare a row with *other rows of the same table* \u2014 that is a self join.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Case-insensitive duplicate names",
+      "question": "Data quality suspects duplicate customer records whose names only differ in capitalisation. Which pairs of customers share a name, ignoring case?",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return one row per pair of different customers whose names are equal when compared case-insensitively (LOWER). Columns: customer_id_a (the smaller id), name_a, email_a, customer_id_b (the larger id), name_b, email_b. Each pair appears exactly once.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Join customers to itself with two aliases, a and b.",
+        "Match on LOWER(a.name) = LOWER(b.name). Then stop a row from pairing with itself and stop (1,19) from also appearing as (19,1).",
+        "... FROM customers a JOIN customers b ON LOWER(a.name) = LOWER(b.name) AND a.customer_id < b.customer_id"
+      ],
+      "why": "Duplicate-entity detection is a self join in every CRM clean-up. Normalising the key (LOWER, TRIM) before matching is what finds the duplicates a plain = misses.",
+      "recall": {
+        "q": "Why use a.id < b.id instead of a.id <> b.id when listing pairs?",
+        "a": "<> only removes self-matches; each pair still appears twice (A,B) and (B,A). < keeps one copy."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "customers",
+        "shared_key": [
+          "name",
+          "lower"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "SELF JOIN",
+          "INNER SELF JOIN"
+        ]
+      },
+      "join_notes": "20 customers joined to themselves on LOWER(name) gives 24 rows before the id filter: 20 self-matches plus 4 mirrored pairs ((1,19),(19,1),(3,4),(4,3)). a.customer_id < b.customer_id leaves exactly 2 rows: (1 'Alice Johnson', 19 'alice johnson') and (3 'John Smith', 4 'John Smith'). Customer 5 'Jon Smith' is NOT matched \u2014 the spelling differs, which no case rule can fix. No NULLs appear because an inner join only keeps customers that have a partner; the 16 customers with a unique name simply drop out.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id_a",
+        "name_a",
+        "email_a",
+        "customer_id_b",
+        "name_b",
+        "email_b"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 2,
+      "title": "Customer pairs per region",
+      "question": "Sales wants to set up peer-referral pairs inside each territory. How many distinct pairs of customers can be formed in each region?",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Pair every customer with every other customer in the same region (each unordered pair once). Return region and customer_pairs (the number of such pairs). Customers with a NULL region cannot be paired.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Self join on region; keep each pair once with a.customer_id < b.customer_id.",
+        "Then GROUP BY the region and COUNT(*) the joined rows.",
+        "SELECT a.region, COUNT(*) AS customer_pairs FROM customers a JOIN customers b ON a.region = b.region AND a.customer_id < b.customer_id GROUP BY a.region;"
+      ],
+      "why": "Self joins on a non-unique attribute explode quickly (n customers \u2192 n(n\u22121)/2 pairs). Knowing that formula lets you sanity-check counts before a query melts a warehouse.",
+      "recall": {
+        "q": "How many unordered pairs can n rows form?",
+        "a": "n \u00d7 (n \u2212 1) / 2 \u2014 e.g. 5 North customers \u2192 10 pairs."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "customers",
+        "shared_key": "region",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "SELF JOIN",
+          "INNER SELF JOIN"
+        ]
+      },
+      "join_notes": "Region is not unique, so this is a many-to-many self join: North has 5 customers (1, 8, 13, 18, 19) \u2192 25 raw rows, of which 10 survive a.id < b.id; East also has 5 \u2192 10 pairs; South and West have 4 each \u2192 6 pairs. Total 32 joined rows, 4 groups. Customers 9 and 16 (NULL region) vanish: NULL = NULL is not true, so a NULL key never matches anything \u2014 not even another NULL.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "customer_pairs"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 3,
+      "title": "Category with its parent",
+      "question": "The product team wants the category tree flattened: each category next to its parent.",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return every category with columns category_id, category_name and parent_name (the category_name of its parent category; NULL for the root). All 14 categories must appear.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Two aliases: c (child) and p (parent). The child's parent_category_id points at the parent's category_id.",
+        "The root has no parent \u2014 which join keeps it?",
+        "FROM categories c LEFT JOIN categories p ON p.category_id = c.parent_category_id"
+      ],
+      "why": "Org charts, account hierarchies and category trees are almost always stored as 'parent id' columns. One self join is how you label each node with its parent.",
+      "recall": {
+        "q": "In an adjacency-list hierarchy, which column of the child joins to which column of the parent?",
+        "a": "child.parent_id = parent.id (here c.parent_category_id = p.category_id)."
+      },
+      "join_plan": {
+        "left_table": "categories",
+        "right_table": "categories",
+        "shared_key": [
+          "parent_category_id",
+          "category_id"
+        ],
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "LEFT SELF JOIN"
+        ]
+      },
+      "join_notes": "category_id is unique, so each child matches at most one parent \u2014 no row multiplication: 14 rows in, 14 rows out. 13 categories find their parent; 'All Products' (parent_category_id NULL) has none, so the LEFT JOIN keeps it with parent_name = NULL. An inner join would silently return 13 rows and lose the root.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name",
+        "parent_name"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 4,
+      "title": "Cheaper products in the same category",
+      "question": "Merchandising builds price ladders: for each product, how many products in the same category are cheaper?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return every product (all 25) with columns product_id, product_name, category and cheaper_in_category = the number of OTHER products with the same category and a strictly lower list_price. Products with no cheaper peer (or a NULL category / NULL price) get 0.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Self join products: p = the product, c = a cheaper candidate in the same category.",
+        "Both conditions (same category, lower price) belong in ON, and you must keep products that have no cheaper peer. Count a column from the right side, not *.",
+        "FROM products p LEFT JOIN products c ON c.category = p.category AND c.list_price < p.list_price GROUP BY p.product_id, ... with COUNT(c.product_id)"
+      ],
+      "why": "'Compare each row with its peers' (cheaper, earlier, bigger) is a self join with an inequality. It's also how ranking worked before window functions \u2014 Lesson 30 does it faster.",
+      "recall": {
+        "q": "Why COUNT(c.product_id) and not COUNT(*) after the LEFT JOIN?",
+        "a": "COUNT(*) counts the NULL-extended row too, so products with no match would show 1 instead of 0."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "products",
+        "shared_key": "category",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "LEFT SELF JOIN"
+        ]
+      },
+      "join_notes": "There are 48 (product, cheaper product) pairs. The LEFT JOIN adds 7 NULL-extended rows for products with no cheaper peer \u2014 the cheapest product of each of the 5 categories, product 19 (NULL list_price: NULL < x is unknown) and product 20 (NULL category) \u2014 55 rows, collapsed back to 25 by GROUP BY. COUNT(c.product_id) turns those 7 NULL partners into 0; COUNT(*) would have reported 1. Putting the price condition in WHERE instead of ON would drop those 7 products entirely.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "cheaper_in_category"
+      ],
+      "expected_row_count": 25
+    },
+    {
+      "number": 5,
+      "title": "Two levels up the category tree",
+      "question": "For the deeper categories, the product team wants the full path: category, parent and grandparent.",
+      "tables": [
+        "categories"
+      ],
+      "prompt": "Return only categories that have a grandparent, with columns category_name, parent_name and grandparent_name.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "You need three copies of categories: c, p (parent) and g (grandparent).",
+        "Chain them: c \u2192 p on c.parent_category_id, then p \u2192 g on p.parent_category_id. Only rows that reach a grandparent should survive.",
+        "FROM categories c JOIN categories p ON p.category_id = c.parent_category_id JOIN categories g ON g.category_id = p.parent_category_id"
+      ],
+      "why": "Fixed-depth hierarchy reports (region \u2192 country \u2192 city) are chains of self joins. When depth varies you switch to recursive CTEs, but you should recognise the chain first.",
+      "recall": {
+        "q": "How many self joins do you need to reach the grandparent?",
+        "a": "Two \u2014 one per level climbed."
+      },
+      "join_plan": {
+        "left_table": "categories",
+        "right_table": "categories",
+        "shared_key": [
+          "parent_category_id",
+          "category_id"
+        ],
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "SELF JOIN",
+          "INNER SELF JOIN"
+        ]
+      },
+      "join_notes": "First self join: 13 of 14 categories have a parent (root 'All Products' drops). Second self join: only 8 of those 13 have a parent that itself has a parent \u2014 the five level-1 categories (Electronics, Home, Apparel, Books, Sports) drop because their parent 'All Products' has no parent. Every join is on a unique id, so nothing multiplies: result 8 rows. 'Strength Training' \u2192 'Fitness' \u2192 'Sports' shows the tree is 4 levels deep, so a two-level chain would not reach the root for it.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category_name",
+        "parent_name",
+        "grandparent_name"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 6,
+      "title": "Each order's previous order",
+      "question": "Retention wants, for every order, when the same customer last ordered before it and how many days had passed.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return all 60 orders with columns order_id, customer_id, order_date, previous_order_date (the latest order_date of an earlier order by the same customer_id, any status; NULL if none) and days_since_previous (whole days between the two dates as an integer: CAST(julianday(order_date) - julianday(previous_order_date) AS INTEGER); NULL if no previous order).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Self join orders: o = this order, prev = any earlier order of the same customer.",
+        "That join matches ALL earlier orders, so aggregate back to one row per o.order_id and take MAX(prev.order_date). A customer's first order has no earlier order \u2014 keep it.",
+        "FROM orders o LEFT JOIN orders prev ON prev.customer_id = o.customer_id AND prev.order_date < o.order_date GROUP BY o.order_id, o.customer_id, o.order_date"
+      ],
+      "why": "'Days since previous purchase' drives churn and repeat-rate models. The self-join + MAX pattern works everywhere; LAG() (Lesson 31) is the modern shortcut.",
+      "recall": {
+        "q": "Why is GROUP BY needed after the 'previous order' self join?",
+        "a": "Because prev matches every earlier order, multiplying rows; MAX collapses them to the single latest one."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "LEFT SELF JOIN"
+        ]
+      },
+      "join_notes": "The inequality join multiplies rows: customer 1 has 9 orders, so their last order matches 8 earlier ones. Overall the LEFT JOIN yields 131 rows, which GROUP BY collapses back to 60 (one per order). Each customer's first order \u2014 and orphan order 31 (customer 99, only order) \u2014 has no earlier partner, so the LEFT JOIN keeps it with previous_order_date and days_since_previous = NULL (18 such rows: 17 customers' first orders + order 31). An inner join would have returned only 42 orders.",
+      "snowflake": "Same SQL works; in Snowflake you'd normally write LAG(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) and DATEDIFF('day', prev_date, order_date).",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "previous_order_date",
+        "days_since_previous"
+      ],
+      "expected_row_count": 60
+    }
+  ],
+  "worked_example": {
+    "question": "Which customers signed up in the same month as another customer?",
+    "sql": "SELECT a.customer_id AS customer_id,\n       a.name        AS customer_name,\n       b.customer_id AS same_month_customer_id,\n       b.name        AS same_month_customer_name,\n       strftime('%Y-%m', a.signup_date) AS signup_month\nFROM customers AS a\nJOIN customers AS b\n  ON strftime('%Y-%m', a.signup_date) = strftime('%Y-%m', b.signup_date)\n AND a.customer_id < b.customer_id;",
+    "explanation": "Two aliases of `customers`; the ON clause pairs rows sharing a signup month and `a.customer_id < b.customer_id` removes both the self-match and the mirrored pair. Without that second condition every customer would pair with themselves (20 extra rows).",
+    "columns": [
+      "customer_id",
+      "customer_name",
+      "same_month_customer_id",
+      "same_month_customer_name",
+      "signup_month"
+    ],
+    "rows": [
+      [
+        1,
+        "Alice Johnson",
+        2,
+        "Brian Lee",
+        "2024-01"
+      ],
+      [
+        4,
+        "John Smith",
+        5,
+        "Jon Smith",
+        "2024-03"
+      ],
+      [
+        6,
+        "Maria Garcia",
+        7,
+        "Chen Wei",
+        "2024-04"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: self join in 5 moves**\n\n1. Picture **two copies** of the table and give them roles: `customers AS a` and `customers AS b`\n   (or `c` = child, `p` = parent; `o` = this order, `prev` = earlier order). Aliases are mandatory.\n2. Write the **matching rule** in `ON`: what makes two rows a pair? (`LOWER(a.name) = LOWER(b.name)`,\n   `a.region = b.region`, `c.parent_category_id = p.category_id`).\n3. **Kill self-matches and mirror pairs.** Every row matches itself, and (1,19) also appears as (19,1).\n   `a.id <> b.id` removes self-matches; `a.id < b.id` keeps each unordered pair exactly once.\n4. Decide **inner or left**: do rows *without* a partner matter (the root category, a customer's\n   first order)? Then `LEFT JOIN` and keep the NULLs.\n5. If the partner side can match many rows (all earlier orders), **aggregate** (`MAX`, `COUNT`) back to\n   one row per left row.\n\n```sql\nSELECT a.customer_id AS id_a, b.customer_id AS id_b\nFROM   customers AS a\nJOIN   customers AS b\n  ON   LOWER(a.name) = LOWER(b.name)\n AND   a.customer_id < b.customer_id;      -- each pair once, no self-pairs\n```\n\n**Hierarchy (adjacency list):** `categories.parent_category_id` points at another `category_id` in the\nsame table. One self join climbs one level; two self joins climb two levels; for unknown depth you'll\nuse a recursive CTE (Lesson 28).\n\n**Row-count intuition:** a self join on a non-unique key is a many-to-many join. 5 North customers\nproduce 5 \u00d7 5 = 25 rows before you filter (5 self-matches + 20 mirrored = 10 unique pairs).",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Forgetting a second alias \u2014 `FROM customers JOIN customers` is ambiguous; every column needs a.col / b.col.",
+    "Using `a.id <> b.id` when you want unordered pairs: every pair is reported twice.",
+    "Forgetting that every row matches itself \u2014 a self join on name 'finds' 20 duplicates in 20 unique customers.",
+    "Inner-joining a hierarchy and losing the root (or a customer's first order) without noticing.",
+    "Not aggregating after an inequality self join (`prev.date < o.date`), so each order appears once per earlier order."
+  ],
+  "recall": [
+    [
+      "What makes a join a 'self join'?",
+      "The same table appears twice (with different aliases) and rows are compared with other rows of that table."
+    ],
+    [
+      "How do you list each unordered pair exactly once?",
+      "Add a.id < b.id to the join condition."
+    ],
+    [
+      "Why do customers with a NULL region never pair up?",
+      "NULL = NULL is not true, so NULL keys never satisfy an equality join."
+    ],
+    [
+      "How do you find a row's predecessor with a self join?",
+      "Join on the same entity with prev.date < this.date, then MAX(prev.date) grouped by the current row."
+    ]
+  ],
+  "review_next": "Next, Lesson 16 makes row multiplication the main character: grain, fan-out and the classic inflated SUM. Re-run exercise 15.6 without GROUP BY and count the rows \u2014 that 131 is exactly the kind of fan-out you'll learn to predict."
+}

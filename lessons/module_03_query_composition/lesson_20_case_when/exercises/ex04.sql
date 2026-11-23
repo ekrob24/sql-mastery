@@ -1,0 +1,17 @@
+-- Lesson 20 · Exercise 20.4 — Yearly order scorecard (conditional aggregation)
+--
+-- BUSINESS QUESTION
+--   Leadership wants one row per year showing how many orders were valid, cancelled and
+--   pending.
+-- TABLES: orders
+-- TASK
+--   Return order_year (strftime('%Y', order_date)), total_orders (all orders),
+--   valid_orders (order_status IN ('completed','shipped','returned')), cancelled_orders
+--   and pending_orders. Use every row in orders.
+-- REQUIRED COLUMNS: order_year, total_orders, valid_orders, cancelled_orders, pending_orders
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.4
+-- Grade it:              python3 sqlm.py submit 20.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 7 · Exercise 7.5 — Monthly order trend for 2025
+--
+-- BUSINESS QUESTION
+--   How many orders — and how many valid ones — did we get each month of 2025?
+-- TABLES: orders
+-- TASK
+--   For orders with order_date on or after '2025-01-01', return order_month
+--   (substr(order_date, 1, 7), e.g. '2025-03'), total_orders and valid_orders (orders with
+--   order_status IN ('completed', 'shipped', 'returned')), one row per month, sorted by
+--   order_month.
+-- REQUIRED COLUMNS: order_month, total_orders, valid_orders
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 7.5
+-- Grade it:              python3 sqlm.py submit 7.5
+--
+-- Write your query below (from memory!):
+

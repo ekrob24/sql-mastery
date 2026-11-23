@@ -1,0 +1,15 @@
+-- Lesson 1 · Exercise 1.6 — Refund ledger with literal columns
+--
+-- BUSINESS QUESTION
+--   Accounting wants refunds as negative ledger entries tagged with a transaction type.
+-- TABLES: returns
+-- TASK
+--   Return return_id, return_date, a literal column transaction_type with the value
+--   'refund', and signed_amount = the refund_amount as a negative number.
+-- REQUIRED COLUMNS: return_id, return_date, transaction_type, signed_amount
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 1.6
+-- Grade it:              python3 sqlm.py submit 1.6
+--
+-- Write your query below (from memory!):
+

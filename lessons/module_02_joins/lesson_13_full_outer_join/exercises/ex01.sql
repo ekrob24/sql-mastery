@@ -1,0 +1,25 @@
+-- Lesson 13 · Exercise 13.1 — Supplier–product reconciliation
+--
+-- BUSINESS QUESTION
+--   Procurement wants one list containing every supplier AND every product, matched where
+--   possible.
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id (from suppliers), supplier_name, product_id and product_name for
+--   every supplier and every product: matched pairs, suppliers with no products (product
+--   columns NULL) and products with no matching supplier (supplier columns NULL).
+-- REQUIRED COLUMNS: supplier_id, supplier_name, product_id, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.1
+-- Grade it:              python3 sqlm.py submit 13.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

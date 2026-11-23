@@ -1,0 +1,16 @@
+-- Lesson 6 · Exercise 6.5 — Valid-order share (conditional counts)
+--
+-- BUSINESS QUESTION
+--   What share of all orders are valid revenue orders?
+-- TABLES: orders
+-- TASK
+--   Valid orders are those with order_status IN ('completed', 'shipped', 'returned').
+--   Return one row with columns total_orders, valid_orders, cancelled_orders (status =
+--   'cancelled') and valid_pct (100 * valid_orders / total_orders, rounded to 1 decimal).
+-- REQUIRED COLUMNS: total_orders, valid_orders, cancelled_orders, valid_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.5
+-- Grade it:              python3 sqlm.py submit 6.5
+--
+-- Write your query below (from memory!):
+

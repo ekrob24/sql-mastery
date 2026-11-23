@@ -1,0 +1,23 @@
+-- Lesson 48 · Exercise 48.7 — Net revenue that ignores un-returned lines
+--
+-- BUSINESS QUESTION
+--   This 'net revenue by year' is tiny: `SELECT strftime('%Y', o.order_date) AS
+--   order_year, SUM(oi.quantity*oi.unit_price) - SUM(r.refund_amount) AS net_revenue FROM
+--   orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN returns r ON
+--   r.order_item_id = oi.order_item_id WHERE o.order_status IN
+--   ('completed','shipped','returned') GROUP BY 1`.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Fix it: return order_year ('YYYY' of order_date), gross_revenue, refunds (sum of
+--   refund_amount on those lines, 0 if none) and net_revenue (gross − refunds), money
+--   rounded to 2 decimals. Valid orders = order_status IN
+--   ('completed','shipped','returned'); gross revenue = SUM(quantity * unit_price) over
+--   those orders' order_items lines (never products.list_price). Net revenue = gross −
+--   refunds.
+-- REQUIRED COLUMNS: order_year, gross_revenue, refunds, net_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.7
+-- Grade it:              python3 sqlm.py submit 48.7
+--
+-- Write your query below (from memory!):
+

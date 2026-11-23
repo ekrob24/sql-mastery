@@ -1,0 +1,19 @@
+-- Lesson 46 · Exercise 46.5 — Avoid the double fan-out: orders and returns per customer
+--
+-- BUSINESS QUESTION
+--   A customer-health query joins customers → orders → order_items → returns and then uses
+--   COUNT(DISTINCT ...) everywhere to undo the duplication. Make it cheap and obviously
+--   correct.
+-- TABLES: customers, orders, order_items, returns
+-- TASK
+--   For every customer (all 20), return customer_id, valid_orders (number of valid orders,
+--   order_status IN ('completed','shipped','returned')) and returned_lines (number of
+--   returns rows on lines of that customer's orders, any status). Both are 0 when there
+--   are none. Pre-aggregate each metric in its own CTE and LEFT JOIN them to customers.
+-- REQUIRED COLUMNS: customer_id, valid_orders, returned_lines
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 46.5
+-- Grade it:              python3 sqlm.py submit 46.5
+--
+-- Write your query below (from memory!):
+

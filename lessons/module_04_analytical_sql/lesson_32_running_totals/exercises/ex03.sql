@@ -1,0 +1,18 @@
+-- Lesson 32 · Exercise 32.3 — Year-to-date revenue
+--
+-- BUSINESS QUESTION
+--   The finance dashboard shows a YTD line that restarts every January.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For all 24 months, return order_month ('YYYY-MM'), gross_revenue and
+--   ytd_revenue (running total that restarts each calendar year), both rounded to 2
+--   decimals, ordered by order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, ytd_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.3
+-- Grade it:              python3 sqlm.py submit 32.3
+--
+-- Write your query below (from memory!):
+

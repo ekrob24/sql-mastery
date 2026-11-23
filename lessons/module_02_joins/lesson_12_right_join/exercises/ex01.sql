@@ -1,0 +1,25 @@
+-- Lesson 12 · Exercise 12.1 — Every supplier and its products (RIGHT JOIN)
+--
+-- BUSINESS QUESTION
+--   Procurement wants every supplier with each of its products, including suppliers with
+--   none.
+-- TABLES: products, suppliers
+-- TASK
+--   Write FROM products ... RIGHT JOIN suppliers. Return supplier_id (from suppliers),
+--   supplier_name and product_name — one row per supplier–product pair, plus one row with
+--   NULL product_name for any supplier without products.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, product_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.1
+-- Grade it:              python3 sqlm.py submit 12.1
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

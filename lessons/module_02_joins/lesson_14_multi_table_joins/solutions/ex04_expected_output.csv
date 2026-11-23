@@ -1,0 +1,11 @@
+return_id,return_date,customer_name,product_name,supplier_name,refund_amount
+1,2024-02-06,Brian Lee,Wireless Mouse,Northwind Traders,44.98
+2,2024-07-10,Priya Patel,The Pragmatic Warehouse,EuroSupply GmbH,96
+3,2024-07-08,Jon Smith,Phone Stand,,12
+4,2024-07-24,Emma Brown,French Press,EuroSupply GmbH,28.8
+5,2024-09-07,Priya Patel,Desk Lamp,Pacific Goods Co,23.38
+6,2024-12-15,John Smith,Mechanical Keyboard,Northwind Traders,267
+7,2025-03-14,Alice Johnson,Wireless Mouse,Northwind Traders,21.24
+8,2025-04-18,Lucas Martin,Throw Blanket,Pacific Goods Co,96.9
+9,2025-05-15,Lucas Martin,Rain Jacket,EuroSupply GmbH,85.5
+10,2025-05-31,Liam O'Brien,Water Bottle,,15

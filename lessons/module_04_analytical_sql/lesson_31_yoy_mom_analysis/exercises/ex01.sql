@@ -1,0 +1,18 @@
+-- Lesson 31 · Exercise 31.1 — Previous month's revenue
+--
+-- BUSINESS QUESTION
+--   Finance wants each month's revenue shown next to the previous month's.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_month ('YYYY-MM'), gross_revenue and prev_month_revenue (the
+--   gross_revenue of the preceding month row; NULL for the first month), both rounded to 2
+--   decimals, ordered by order_month. (Every month 2024-01..2025-12 has valid orders.)
+-- REQUIRED COLUMNS: order_month, gross_revenue, prev_month_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.1
+-- Grade it:              python3 sqlm.py submit 31.1
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,25 @@
+-- Lesson 12 · Exercise 12.5 — Electronics products per supplier — filter on the left side
+--
+-- BUSINESS QUESTION
+--   Category management wants, for EVERY supplier, how many Electronics products they
+--   supply (0 if none).
+-- TABLES: products, suppliers
+-- TASK
+--   Write FROM products ... RIGHT JOIN suppliers. Return supplier_id, supplier_name and
+--   electronics_count (number of products with category = 'Electronics'; 0 when none) for
+--   all 5 suppliers.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, electronics_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.5
+-- Grade it:              python3 sqlm.py submit 12.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

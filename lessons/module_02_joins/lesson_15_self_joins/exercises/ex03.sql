@@ -1,0 +1,24 @@
+-- Lesson 15 · Exercise 15.3 — Category with its parent
+--
+-- BUSINESS QUESTION
+--   The product team wants the category tree flattened: each category next to its parent.
+-- TABLES: categories
+-- TASK
+--   Return every category with columns category_id, category_name and parent_name (the
+--   category_name of its parent category; NULL for the root). All 14 categories must
+--   appear.
+-- REQUIRED COLUMNS: category_id, category_name, parent_name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 15.3
+-- Grade it:              python3 sqlm.py submit 15.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

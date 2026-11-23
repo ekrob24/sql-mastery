@@ -1,0 +1,21 @@
+-- Lesson 27 · Exercise 27.4 — Region scorecard
+--
+-- BUSINESS QUESTION
+--   Sales leadership wants one scorecard row per region: customers, active customers,
+--   revenue and revenue per active customer.
+-- TABLES: customers, orders, order_items
+-- TASK
+--   Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the
+--   lines of valid orders (valid orders = order_status IN
+--   ('completed','shipped','returned'); cancelled and pending are excluded), return region
+--   (NULL → 'Unknown'), customers (all customers in that region), active_customers
+--   (customers with ≥1 valid order line), revenue (rounded to 2 decimals, 0 if none) and
+--   revenue_per_active (revenue / active_customers rounded to 2 decimals; NULL if no
+--   active customers). The orphan order 31 has no region and is excluded.
+-- REQUIRED COLUMNS: region, customers, active_customers, revenue, revenue_per_active
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.4
+-- Grade it:              python3 sqlm.py submit 27.4
+--
+-- Write your query below (from memory!):
+

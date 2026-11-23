@@ -1,0 +1,16 @@
+-- Lesson 5 · Exercise 5.5 — Duplicate-looking names
+--
+-- BUSINESS QUESTION
+--   How many distinct customer names are there — and how many if we ignore capitalisation?
+-- TABLES: customers
+-- TASK
+--   Return one row with columns customer_rows (all customers), distinct_names (number of
+--   distinct name values, case-sensitive) and distinct_names_ignoring_case (number of
+--   distinct LOWER(name) values).
+-- REQUIRED COLUMNS: customer_rows, distinct_names, distinct_names_ignoring_case
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 5.5
+-- Grade it:              python3 sqlm.py submit 5.5
+--
+-- Write your query below (from memory!):
+

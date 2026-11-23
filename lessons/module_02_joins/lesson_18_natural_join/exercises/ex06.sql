@@ -1,0 +1,27 @@
+-- Lesson 18 · Exercise 18.6 — Generic aliases collide: n and n
+--
+-- BUSINESS QUESTION
+--   Growth compares each customer's valid orders with their tracked purchase events. Both
+--   pre-aggregated tables call their count `n`.
+-- TABLES: orders, web_events
+-- TASK
+--   Pre-aggregate valid orders per customer (order_status IN
+--   ('completed','shipped','returned')) as (customer_id, n) and purchase web events per
+--   customer (event_type = 'purchase') as (customer_id, n). Join them on customer_id only
+--   and return customer_id, valid_orders and purchase_events for customers present in
+--   both.
+-- REQUIRED COLUMNS: customer_id, valid_orders, purchase_events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.6
+-- Grade it:              python3 sqlm.py submit 18.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

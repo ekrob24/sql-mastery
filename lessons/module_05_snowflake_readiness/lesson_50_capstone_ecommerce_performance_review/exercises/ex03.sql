@@ -1,0 +1,23 @@
+-- Lesson 50 · Exercise 50.3 — Customer acquisition by month
+--
+-- BUSINESS QUESTION
+--   Marketing: "How many new paying customers did we win each month, and how is the base
+--   growing?"
+-- TABLES: customers, orders
+-- TASK
+--   Define a customer's acquisition month as the month of their FIRST valid order (valid =
+--   order_status IN ('completed','shipped','returned')), as strftime('%Y-%m',
+--   MIN(order_date)). Signup date is ignored: a sign-up without a purchase is not an
+--   acquired customer. Only count customers that exist in the customers table (the orphan
+--   customer_id 99 is excluded); never-purchasing customers do not appear. Return
+--   acquisition_month, new_customers (number of customers acquired that month) and
+--   cumulative_customers (running total of new_customers up to and including that month).
+--   Only months with at least one new customer appear. Order by acquisition_month
+--   ascending.
+-- REQUIRED COLUMNS: acquisition_month, new_customers, cumulative_customers
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 50.3
+-- Grade it:              python3 sqlm.py submit 50.3
+--
+-- Write your query below (from memory!):
+

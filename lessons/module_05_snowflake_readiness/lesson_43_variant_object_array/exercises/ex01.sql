@@ -1,0 +1,15 @@
+-- Lesson 43 · Exercise 43.1 — How often are the optional keys present?
+--
+-- BUSINESS QUESTION
+--   Platform team: what share of events carry a customer tier and/or tags?
+-- TABLES: raw_order_events
+-- TASK
+--   Return has_tier (1 if $.customer.tier exists, else 0), has_tags (1 if $.tags exists,
+--   else 0) and events (count) for each combination that occurs.
+-- REQUIRED COLUMNS: has_tier, has_tags, events
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 43.1
+-- Grade it:              python3 sqlm.py submit 43.1
+--
+-- Write your query below (from memory!):
+

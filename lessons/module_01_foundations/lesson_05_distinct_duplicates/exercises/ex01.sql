@@ -1,0 +1,15 @@
+-- Lesson 5 · Exercise 5.1 — Category vocabulary
+--
+-- BUSINESS QUESTION
+--   Which product categories exist in the catalog (including 'no category')?
+-- TABLES: products
+-- TASK
+--   Return one column, category, with each distinct category value exactly once. The NULL
+--   category should appear as one row.
+-- REQUIRED COLUMNS: category
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 5.1
+-- Grade it:              python3 sqlm.py submit 5.1
+--
+-- Write your query below (from memory!):
+

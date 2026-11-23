@@ -1,0 +1,329 @@
+{
+  "number": 34,
+  "slug": "ranking_functions",
+  "title": "ROW_NUMBER, RANK, and DENSE_RANK",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Number and rank rows within groups, choose the right function for ties, and use ranking to answer top-N-per-group, latest-record-per-entity and de-duplication questions.",
+  "context": "'Top 2 products in every category', 'each customer's latest order', 'remove duplicate rows from the load' \u2014 the same window pattern answers all three. In Snowflake you'll write it with QUALIFY; here you'll write the portable version with a CTE.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Rank products by units sold",
+      "question": "Merchandising wants a units-sold leaderboard where tied products share a position.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'). For every product sold in a valid order, return product_id, units_sold (SUM(quantity)) and units_rank = RANK() by units_sold descending (ties share a rank; highest = 1).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate units per product first.",
+        "RANK() OVER (ORDER BY units_sold DESC) \u2014 no tie-breaker on purpose, so ties share a rank.",
+        "WITH units AS (SELECT oi.product_id, SUM(oi.quantity) AS units_sold ... GROUP BY oi.product_id) SELECT product_id, units_sold, RANK() OVER (ORDER BY units_sold DESC) AS units_rank FROM units;"
+      ],
+      "why": "Leaderboards must treat ties fairly; RANK is the 'sports table' convention (1, 2, 2, 4).",
+      "recall": {
+        "q": "RANK of values 30, 20, 20, 10 (descending)?",
+        "a": "1, 2, 2, 4."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Identical; you can also rank directly on the aggregate: RANK() OVER (ORDER BY SUM(oi.quantity) DESC) in the GROUP BY query.",
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "units_sold",
+        "units_rank"
+      ],
+      "expected_row_count": 22
+    },
+    {
+      "number": 2,
+      "title": "ROW_NUMBER vs RANK vs DENSE_RANK",
+      "question": "An analyst wants to see how the three ranking functions treat customers with equal order counts.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'). For every customer_id that has valid orders (including the orphan 99), return customer_id, order_count (number of valid orders), row_num (ROW_NUMBER by order_count descending, then customer_id ascending), rnk (RANK by order_count descending) and dense_rnk (DENSE_RANK by order_count descending).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Count valid orders per customer in a CTE.",
+        "Three window functions, same ORDER BY order_count DESC; only ROW_NUMBER needs the customer_id tie-breaker.",
+        "ROW_NUMBER() OVER (ORDER BY order_count DESC, customer_id) AS row_num, RANK() OVER (ORDER BY order_count DESC) AS rnk, DENSE_RANK() OVER (ORDER BY order_count DESC) AS dense_rnk"
+      ],
+      "why": "Choosing the wrong ranking function silently changes 'top 3' results whenever there are ties.",
+      "recall": {
+        "q": "Which function never produces gaps but does produce ties?",
+        "a": "DENSE_RANK."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_count",
+        "row_num",
+        "rnk",
+        "dense_rnk"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 3,
+      "title": "Each customer's most recent order",
+      "question": "Customer success wants each customer's latest order (any status) for their account view.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "For every customer_id in orders (any status, including the orphan 99), return customer_id, order_id, order_date and order_status of that customer's most recent order (latest order_date; if two share a date, the higher order_id). Use ROW_NUMBER.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "PARTITION BY customer_id; ORDER BY order_date DESC so the latest is row 1.",
+        "Add order_id DESC as tie-breaker, then keep rn = 1 in an outer query.",
+        "WITH ranked AS (SELECT ..., ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) AS rn FROM orders) SELECT customer_id, order_id, order_date, order_status FROM ranked WHERE rn = 1;"
+      ],
+      "why": "MAX(order_date) gives the date but not the rest of the row. 'Latest row per entity' is the most common ROW_NUMBER use in data engineering (SCDs, snapshots, CDC).",
+      "recall": {
+        "q": "Why not just SELECT customer_id, MAX(order_date), order_status ... GROUP BY customer_id?",
+        "a": "order_status isn't aggregated, so it's not guaranteed to come from the latest row (and Snowflake rejects it)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT customer_id, order_id, order_date, order_status FROM orders QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) = 1;",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_id",
+        "order_date",
+        "order_status"
+      ],
+      "expected_row_count": 18
+    },
+    {
+      "number": 4,
+      "title": "Top 2 products per category",
+      "question": "Each category manager wants their two best-selling products by revenue.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. For each category (exclude NULL category), return the top 2 products by product_revenue: category, product_id, product_name, product_revenue (rounded to 2 decimals) and rank_in_category (ROW_NUMBER within the category by product_revenue descending, then product_id ascending). Only rows with rank_in_category <= 2.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Step 1: revenue per (category, product). Step 2: rank within category. Step 3: filter.",
+        "ROW_NUMBER() OVER (PARTITION BY category ORDER BY product_revenue DESC, product_id).",
+        "WITH product_rev AS (...GROUP BY p.category, p.product_id, p.product_name), ranked AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY category ORDER BY product_revenue DESC, product_id) AS rank_in_category FROM product_rev) SELECT ... WHERE rank_in_category <= 2;"
+      ],
+      "why": "Top-N per group is impossible with plain GROUP BY + LIMIT (LIMIT applies to the whole result). PARTITION BY + ROW_NUMBER is the standard answer.",
+      "recall": {
+        "q": "Why doesn't ORDER BY revenue DESC LIMIT 2 give top 2 per category?",
+        "a": "LIMIT applies to the whole result, not per group."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "... GROUP BY 1, 2, 3 QUALIFY ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY product_revenue DESC, p.product_id) <= 2;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "product_id",
+        "product_name",
+        "product_revenue",
+        "rank_in_category"
+      ],
+      "expected_row_count": 10
+    },
+    {
+      "number": 5,
+      "title": "Find duplicate order lines",
+      "question": "Data engineering found duplicate-looking order lines. Which rows should be deleted (keep the earliest of each set)?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Treat order lines with the same order_id, product_id, quantity and unit_price as duplicates. Within each duplicate set, keep the row with the lowest order_item_id. Return order_item_id, order_id, product_id, quantity, unit_price and kept_order_item_id (the lowest order_item_id of that set) for every row that would be removed.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "PARTITION BY every column that defines 'the same line'.",
+        "ROW_NUMBER ordered by order_item_id: rn = 1 is the keeper, rn > 1 are duplicates. MIN(order_item_id) over the same partition names the keeper.",
+        "ROW_NUMBER() OVER (PARTITION BY order_id, product_id, quantity, unit_price ORDER BY order_item_id) AS rn, MIN(order_item_id) OVER (PARTITION BY order_id, product_id, quantity, unit_price) AS kept_order_item_id ... WHERE rn > 1"
+      ],
+      "why": "ROW_NUMBER-based dedup is how pipelines clean double-loaded data. Listing the rows to remove (with their keeper) before deleting is the safe workflow.",
+      "recall": {
+        "q": "In ROW_NUMBER dedup, what goes in PARTITION BY and what in ORDER BY?",
+        "a": "PARTITION BY the columns that define a duplicate; ORDER BY the rule that picks the keeper (e.g. lowest id / latest load)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT * FROM order_items QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, product_id, quantity, unit_price ORDER BY order_item_id) > 1; To rebuild a clean table: CREATE OR REPLACE TABLE ... AS SELECT * FROM order_items QUALIFY ROW_NUMBER() OVER (...) = 1;",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "product_id",
+        "quantity",
+        "unit_price",
+        "kept_order_item_id"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 6,
+      "title": "Top 2 customers per region (tie-safe)",
+      "question": "Regional sales leads want their top customers \u2014 if two customers tie, both should be listed.",
+      "tables": [
+        "orders",
+        "order_items",
+        "customers"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. Per customer (customers table, region not NULL), compute gross revenue. Within each region, rank customers with DENSE_RANK by gross revenue descending and keep those with region_rank <= 2. Return region, customer_id, name, gross_revenue (rounded to 2 decimals) and region_rank.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Revenue per customer (with region) in a CTE; inner joins drop customers without valid orders.",
+        "DENSE_RANK() OVER (PARTITION BY region ORDER BY gross_revenue DESC) \u2014 no tie-breaker, so ties share a rank.",
+        "... ranked AS (SELECT *, DENSE_RANK() OVER (PARTITION BY region ORDER BY gross_revenue DESC) AS region_rank FROM cust_rev) SELECT region, customer_id, name, ROUND(gross_revenue, 2) AS gross_revenue, region_rank FROM ranked WHERE region_rank <= 2;"
+      ],
+      "why": "'Top 2' is ambiguous with ties: ROW_NUMBER gives exactly 2 rows, RANK/DENSE_RANK can give more. Decide (and document) which the business wants.",
+      "recall": {
+        "q": "You need 'top 3 including ties'. ROW_NUMBER or RANK?",
+        "a": "RANK (or DENSE_RANK for top 3 distinct values) \u2014 ROW_NUMBER cuts ties arbitrarily."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "... GROUP BY 1, 2, 3 QUALIFY DENSE_RANK() OVER (PARTITION BY c.region ORDER BY gross_revenue DESC) <= 2;",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "customer_id",
+        "name",
+        "gross_revenue",
+        "region_rank"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 7,
+      "title": "Days between first and second order",
+      "question": "Retention team: for customers who came back, how many days passed between their first and second valid order?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'). Number each customer's valid orders with ROW_NUMBER by order_date, then order_id. For customer_ids in orders with at least 2 valid orders, return customer_id, first_order_date, second_order_date and days_between (integer days from first to second order).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date, order_id) gives each order its sequence number.",
+        "Pivot sequence 1 and 2 onto one row with MAX(CASE WHEN order_seq = 1 THEN order_date END) ... GROUP BY customer_id.",
+        "... then CAST(julianday(second_order_date) - julianday(first_order_date) AS INTEGER) AS days_between ... WHERE second_order_date IS NOT NULL"
+      ],
+      "why": "Order sequence numbers unlock repeat-purchase metrics: time to 2nd order, first-order vs repeat revenue, cohort behaviour (Module 4, second half).",
+      "recall": {
+        "q": "How do you get 'the nth event per customer'?",
+        "a": "ROW_NUMBER() OVER (PARTITION BY customer ORDER BY event time, tie-breaker) and filter/pivot on the number."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Same pattern; or NTH_VALUE(order_date, 2) OVER (PARTITION BY customer_id ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) with DATEDIFF(day, first, second).",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "first_order_date",
+        "second_order_date",
+        "days_between"
+      ],
+      "expected_row_count": 14
+    }
+  ],
+  "worked_example": {
+    "question": "Show ROW_NUMBER, RANK and DENSE_RANK side by side for products 15, 19, 17 and 9 by units sold (valid orders).",
+    "sql": "WITH units AS (\n    SELECT oi.product_id, SUM(oi.quantity) AS units_sold\n    FROM orders o JOIN order_items oi ON oi.order_id = o.order_id\n    WHERE o.order_status IN ('completed','shipped','returned')\n      AND oi.product_id IN (9, 15, 17, 19)\n    GROUP BY oi.product_id\n)\nSELECT product_id,\n       units_sold,\n       ROW_NUMBER() OVER (ORDER BY units_sold DESC, product_id) AS row_num,\n       RANK()       OVER (ORDER BY units_sold DESC)             AS rnk,\n       DENSE_RANK() OVER (ORDER BY units_sold DESC)             AS dense_rnk\nFROM units\nORDER BY units_sold DESC, product_id;",
+    "explanation": "Products 15 and 19 both sold 19 units: ROW_NUMBER breaks the tie by product_id (2, 3), RANK gives both 2 and skips 3 (next is 4), DENSE_RANK gives both 2 and continues with 3.",
+    "columns": [
+      "product_id",
+      "units_sold",
+      "row_num",
+      "rnk",
+      "dense_rnk"
+    ],
+    "rows": [
+      [
+        9,
+        28,
+        1,
+        1,
+        1
+      ],
+      [
+        15,
+        19,
+        2,
+        2,
+        2
+      ],
+      [
+        19,
+        19,
+        3,
+        2,
+        2
+      ],
+      [
+        17,
+        16,
+        4,
+        4,
+        3
+      ]
+    ]
+  },
+  "recipe": "**Recipe: rank \u2192 filter in 3 moves**\n\n1. **Rank inside the window**:\n   `ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC, tie_breaker)`\n   - `ROW_NUMBER` \u2192 1,2,3,4 \u2014 always unique (needs a tie-breaker to be deterministic).\n   - `RANK` \u2192 1,2,2,4 \u2014 ties share a rank, then a gap.\n   - `DENSE_RANK` \u2192 1,2,2,3 \u2014 ties share a rank, no gap.\n2. **Wrap it** in a CTE/subquery (window functions can't go in WHERE).\n3. **Filter outside**: `WHERE rn = 1` (latest / dedup), `WHERE rn <= 3` (top 3 exactly),\n   `WHERE rnk <= 3` (top 3 *including ties*).\n\n```sql\nWITH ranked AS (\n    SELECT o.*,\n           ROW_NUMBER() OVER (PARTITION BY customer_id\n                              ORDER BY order_date DESC, order_id DESC) AS rn\n    FROM orders o\n)\nSELECT * FROM ranked WHERE rn = 1;   -- latest order per customer\n```",
+  "snowflake_notes": "Snowflake's **QUALIFY** filters on window functions directly \u2014 no wrapping CTE:\n\n```sql\n-- latest order per customer\nSELECT *\nFROM orders\nQUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) = 1;\n\n-- top 2 products per category by revenue\nSELECT p.category, p.product_id, SUM(oi.quantity * oi.unit_price) AS product_revenue\nFROM orders o\nJOIN order_items oi ON oi.order_id = o.order_id\nJOIN products p     ON p.product_id = oi.product_id\nWHERE o.order_status IN ('completed','shipped','returned')\nGROUP BY 1, 2\nQUALIFY ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY product_revenue DESC, p.product_id) <= 2;\n```\n\nEvaluation order in Snowflake: FROM \u2192 WHERE \u2192 GROUP BY \u2192 HAVING \u2192 **window functions \u2192 QUALIFY** \u2192 ORDER BY \u2192 LIMIT.\nRelated: `MAX_BY(order_id, order_date)` returns the order_id with the latest date (one value per group),\n`NTILE(4)` buckets into quartiles, `PERCENT_RANK()` gives 0\u20131 positions. SQLite supports NTILE and PERCENT_RANK too.",
+  "common_mistakes": [
+    "ROW_NUMBER without a unique tie-breaker \u2014 the 'winner' among ties can change between runs.",
+    "Filtering a window result in WHERE of the same query \u2014 not allowed; wrap it (or use QUALIFY in Snowflake).",
+    "Using ROW_NUMBER when ties should both be kept (or RANK when exactly N rows are required).",
+    "Forgetting PARTITION BY, so 'top 2 per category' becomes 'top 2 overall'.",
+    "Using MAX(date) + GROUP BY to fetch 'the latest row' and then selecting non-aggregated columns.",
+    "Deduplicating on too few columns \u2014 always list every column that defines 'the same record'."
+  ],
+  "recall": [
+    [
+      "Values 50, 40, 40, 30 ordered DESC: ROW_NUMBER, RANK, DENSE_RANK?",
+      "ROW_NUMBER 1,2,3,4; RANK 1,2,2,4; DENSE_RANK 1,2,2,3."
+    ],
+    [
+      "Snowflake one-liner for 'latest order per customer'?",
+      "QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) = 1"
+    ],
+    [
+      "Where does QUALIFY run in the logical order?",
+      "After window functions (after HAVING), before ORDER BY/LIMIT."
+    ],
+    [
+      "Pattern for top-N per group in SQLite?",
+      "CTE with ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC, tie_breaker), outer WHERE rn <= N."
+    ]
+  ],
+  "review_next": "Next up in Module 4: more analytical patterns built on these windows (cohorts, funnels, retention). Re-do 34.3 and 34.4 from memory, then write the Snowflake QUALIFY version of each on paper."
+}

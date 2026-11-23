@@ -1,0 +1,21 @@
+-- Lesson 48 · Exercise 48.4 — Duplicate order lines double-count revenue
+--
+-- BUSINESS QUESTION
+--   Lines 149 and 150 are exact copies (same order, product, quantity, price) of lines 21
+--   and 96 — a loader re-sent them. Finance wants revenue with duplicates removed.
+-- TABLES: order_items, orders
+-- TASK
+--   Return one row with total_lines (all order_items rows), distinct_lines (rows after
+--   removing duplicates — a duplicate has the same order_id, product_id, quantity and
+--   unit_price as a line with a lower order_item_id), and gross_revenue_dedup = gross
+--   revenue of valid orders computed on de-duplicated lines, rounded to 2 decimals. Valid
+--   orders = order_status IN ('completed','shipped','returned'); gross revenue =
+--   SUM(quantity * unit_price) over those orders' order_items lines (never
+--   products.list_price).
+-- REQUIRED COLUMNS: total_lines, distinct_lines, gross_revenue_dedup
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.4
+-- Grade it:              python3 sqlm.py submit 48.4
+--
+-- Write your query below (from memory!):
+

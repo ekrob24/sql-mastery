@@ -1,0 +1,25 @@
+-- Lesson 18 · Exercise 18.3 — No shared columns = cross join
+--
+-- BUSINESS QUESTION
+--   An analyst NATURAL JOINed suppliers to categories 'to see which supplier serves which
+--   category' and got a suspiciously big result. Quantify it.
+-- TABLES: suppliers, categories
+-- TASK
+--   Return a single row with columns supplier_rows (COUNT of suppliers), category_rows
+--   (COUNT of categories) and natural_rows (COUNT(*) of suppliers NATURAL JOIN
+--   categories).
+-- REQUIRED COLUMNS: supplier_rows, category_rows, natural_rows
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 18.3
+-- Grade it:              python3 sqlm.py submit 18.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

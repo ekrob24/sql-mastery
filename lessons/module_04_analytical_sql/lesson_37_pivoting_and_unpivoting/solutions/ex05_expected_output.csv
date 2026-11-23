@@ -1,0 +1,11 @@
+product_id,price_type,amount
+1,list_price,24.99
+1,unit_cost,13.51
+2,list_price,89
+2,unit_cost,61.82
+3,list_price,39.5
+3,unit_cost,27.43
+4,list_price,199
+4,unit_cost,123.41
+5,list_price,279.99
+5,unit_cost,173.66

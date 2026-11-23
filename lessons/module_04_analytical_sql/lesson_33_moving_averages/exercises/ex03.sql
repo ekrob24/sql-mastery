@@ -1,0 +1,19 @@
+-- Lesson 33 · Exercise 33.3 — Average of the last 5 orders
+--
+-- BUSINESS QUESTION
+--   Ops monitors basket size: what's the average value of the last 5 valid orders at each
+--   point in time?
+-- TABLES: orders, order_items
+-- TASK
+--   Valid orders are order_status IN ('completed','shipped','returned'); order_total =
+--   SUM(quantity * unit_price) of the order's items. For every valid order, return
+--   order_id, order_date, order_total and avg_last_5_orders (average order_total of this
+--   order and the 4 preceding valid orders, in order_date then order_id order; fewer at
+--   the start), both rounded to 2 decimals. Ordered by order_date, order_id.
+-- REQUIRED COLUMNS: order_id, order_date, order_total, avg_last_5_orders
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.3
+-- Grade it:              python3 sqlm.py submit 33.3
+--
+-- Write your query below (from memory!):
+

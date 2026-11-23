@@ -1,0 +1,20 @@
+-- Lesson 27 · Exercise 27.3 — New vs returning revenue by year
+--
+-- BUSINESS QUESTION
+--   The growth team asks how much of each year's revenue came from new customers versus
+--   returning ones.
+-- TABLES: orders, order_items
+-- TASK
+--   Use valid orders (valid orders = order_status IN ('completed','shipped','returned');
+--   cancelled and pending are excluded) and orders.customer_id as-is (99 included). A
+--   customer's first_year is the year of their earliest valid order. An order is 'new' if
+--   its year equals the customer's first_year, else 'returning'. Return order_year,
+--   customer_type, customers (distinct customer_ids), orders (distinct orders) and revenue
+--   (SUM(quantity * unit_price), rounded to 2 decimals).
+-- REQUIRED COLUMNS: order_year, customer_type, customers, orders, revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 27.3
+-- Grade it:              python3 sqlm.py submit 27.3
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,28 @@
+-- Lesson 14 · Exercise 14.6 — Supplier scorecard (all suppliers, outer-joined chain)
+--
+-- BUSINESS QUESTION
+--   Procurement wants a scorecard for ALL 5 suppliers: products listed, products actually
+--   sold, and revenue.
+-- TABLES: suppliers, products, order_items, orders
+-- TASK
+--   Return supplier_id, supplier_name, products_listed (distinct products referencing the
+--   supplier), products_sold (distinct products of that supplier with at least one line in
+--   a valid order) and gross_revenue rounded to 2 decimals (0 when none), for all 5
+--   suppliers. Gross revenue = SUM(quantity * unit_price) over the order_items of VALID
+--   orders, i.e. orders with order_status IN ('completed','shipped','returned') (cancelled
+--   and pending are excluded).
+-- REQUIRED COLUMNS: supplier_id, supplier_name, products_listed, products_sold, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 14.6
+-- Grade it:              python3 sqlm.py submit 14.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

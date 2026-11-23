@@ -1,0 +1,21 @@
+-- Lesson 31 · Exercise 31.5 — YoY for 2025 months with LAG(…, 12)
+--
+-- BUSINESS QUESTION
+--   Same comparison, but the analyst wants the YYYY-MM month label and only 2025 rows in
+--   the output.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Every month 2024-01..2025-12 has valid orders, so 12 rows back = same month
+--   last year. Return order_month ('YYYY-MM'), gross_revenue, same_month_last_year (both
+--   rounded to 2 decimals) and yoy_growth_pct (NULLIF-protected, rounded to 1 decimal) for
+--   the 12 months of 2025 only, ordered by order_month. Compute LAG(gross_revenue, 12)
+--   over the full history and filter to 2025 afterwards.
+-- REQUIRED COLUMNS: order_month, gross_revenue, same_month_last_year, yoy_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.5
+-- Grade it:              python3 sqlm.py submit 31.5
+--
+-- Write your query below (from memory!):
+

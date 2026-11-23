@@ -1,0 +1,20 @@
+-- Lesson 38 · Exercise 38.6 — Retention matrix with censoring
+--
+-- BUSINESS QUESTION
+--   The board deck wants the classic triangle: one row per cohort, columns for quarters
+--   1–4 after acquisition.
+-- TABLES: orders, customers
+-- TASK
+--   Same definitions as 38.5 (valid orders of known customers; quarter index = year*4 +
+--   (month-1)/3). Return cohort_quarter, cohort_size, and q1_pct, q2_pct, q3_pct, q4_pct =
+--   percentage (0–100, rounded to 1 decimal) of the cohort active exactly 1, 2, 3, 4
+--   quarters after their first quarter. Use 0 when that quarter is observable but nobody
+--   was active, and NULL when that quarter lies after 2025-Q4 (the as-of date is
+--   2025-12-31). Order by cohort_quarter.
+-- REQUIRED COLUMNS: cohort_quarter, cohort_size, q1_pct, q2_pct, q3_pct, q4_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 38.6
+-- Grade it:              python3 sqlm.py submit 38.6
+--
+-- Write your query below (from memory!):
+

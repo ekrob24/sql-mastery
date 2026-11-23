@@ -1,0 +1,18 @@
+-- Lesson 39 · Exercise 39.7 — Abandoned carts to retarget
+--
+-- BUSINESS QUESTION
+--   CRM wants a list of known customers who added to cart but never purchased in that
+--   session, to send a reminder.
+-- TABLES: web_events, customers
+-- TASK
+--   Find sessions with an add_to_cart event but no purchase event, where the session has a
+--   known customer. Return session_id, customer_id, customer_name (customers.name),
+--   product_id (the product on the add_to_cart event) and cart_time (event_time of the
+--   add_to_cart event). Order by cart_time, session_id.
+-- REQUIRED COLUMNS: session_id, customer_id, customer_name, product_id, cart_time
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 39.7
+-- Grade it:              python3 sqlm.py submit 39.7
+--
+-- Write your query below (from memory!):
+

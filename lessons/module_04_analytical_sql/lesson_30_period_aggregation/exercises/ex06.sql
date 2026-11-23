@@ -1,0 +1,17 @@
+-- Lesson 30 · Exercise 30.6 — Daily site activity in December 2025
+--
+-- BUSINESS QUESTION
+--   The web team wants a day-by-day activity table for December 2025.
+-- TABLES: web_events
+-- TASK
+--   For events in December 2025 (event_time >= '2025-12-01' and < '2026-01-01'), return
+--   event_date ('YYYY-MM-DD'), events (event rows), sessions (distinct session_id) and
+--   known_customers (distinct non-NULL customer_id) for each day that has events, ordered
+--   by event_date.
+-- REQUIRED COLUMNS: event_date, events, sessions, known_customers
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.6
+-- Grade it:              python3 sqlm.py submit 30.6
+--
+-- Write your query below (from memory!):
+

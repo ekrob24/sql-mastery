@@ -1,0 +1,324 @@
+{
+  "number": 32,
+  "slug": "running_totals",
+  "title": "Running totals",
+  "module": 4,
+  "module_title": "Analytical SQL",
+  "objective": "Compute cumulative sums and counts with SUM() OVER (ORDER BY ...), reset them per group or per year with PARTITION BY, make them deterministic with tie-breakers, and turn them into cumulative %.",
+  "context": "'Where are we year-to-date?', 'How many customers have we acquired so far?', 'Which products make up 80% of revenue?' \u2014 all running totals. Finance reads YTD lines every day; merchandising uses cumulative share (Pareto) to decide which products to focus on.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Cumulative revenue through 2025",
+      "question": "Finance wants to watch 2025 revenue accumulate month by month.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. For the months of 2025, return order_month ('YYYY-MM'), gross_revenue and running_revenue (sum of gross_revenue from 2025-01 through the current month), both rounded to 2 decimals, ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate to months first, then apply a window SUM.",
+        "Here filtering to 2025 *before* the window is what we want \u2014 the total should start in January 2025.",
+        "SUM(gross_revenue) OVER (ORDER BY order_month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue ... WHERE order_month >= '2025-01'"
+      ],
+      "why": "Window SUM over an ordered set is the running total \u2014 no self-join or correlated subquery needed.",
+      "recall": {
+        "q": "What frame gives a running total?",
+        "a": "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "running_revenue"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 2,
+      "title": "Customer base over time",
+      "question": "Growth wants the cumulative number of signed-up customers after each signup.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return customer_id, signup_date and customers_to_date (number of customers who signed up on or before this one, counting in order of signup_date then customer_id), ordered by signup_date, customer_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "A running count is COUNT(*) OVER (ORDER BY ...).",
+        "Add customer_id to the window ORDER BY as a tie-breaker in case two customers sign up the same day.",
+        "COUNT(*) OVER (ORDER BY signup_date, customer_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS customers_to_date"
+      ],
+      "why": "Cumulative counts (customers, subscribers, installs) are the 'total base' line on growth dashboards. ROW_NUMBER would give the same numbers here \u2014 COUNT generalises to filtered counts.",
+      "recall": {
+        "q": "Without a tie-breaker and with the default RANGE frame, what happens to two customers who signed up the same day?",
+        "a": "They are peers and both get the same (higher) running count."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "signup_date",
+        "customers_to_date"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 3,
+      "title": "Year-to-date revenue",
+      "question": "The finance dashboard shows a YTD line that restarts every January.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. For all 24 months, return order_month ('YYYY-MM'), gross_revenue and ytd_revenue (running total that restarts each calendar year), both rounded to 2 decimals, ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "A running total that 'restarts' = PARTITION BY the thing that restarts it.",
+        "The year is substr(order_month, 1, 4) (or strftime('%Y', ...) in the CTE).",
+        "SUM(gross_revenue) OVER (PARTITION BY substr(order_month, 1, 4) ORDER BY order_month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ytd_revenue"
+      ],
+      "why": "YTD, QTD and MTD are just running totals partitioned by year, quarter or month.",
+      "recall": {
+        "q": "How do you make a running total reset every year?",
+        "a": "PARTITION BY the year inside the OVER clause."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "PARTITION BY YEAR(order_month) (or DATE_TRUNC('year', order_month)) with a DATE month key.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "ytd_revenue"
+      ],
+      "expected_row_count": 24
+    },
+    {
+      "number": 4,
+      "title": "Customer lifetime spend, order by order",
+      "question": "CRM wants each customer's cumulative spend after every valid order (for loyalty tier triggers).",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'); order_total = SUM(quantity * unit_price) of the order's items. For every valid order, return customer_id, order_id, order_date, order_total and cumulative_spend (running sum of order_total per customer, in order_date then order_id order), both rounded to 2 decimals. Ordered by customer_id, order_date, order_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "First collapse lines to one row per order (CTE with GROUP BY order).",
+        "PARTITION BY customer_id restarts the running sum for each customer.",
+        "SUM(order_total) OVER (PARTITION BY customer_id ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_spend"
+      ],
+      "why": "Per-entity running totals drive thresholds: 'customer crossed $500 lifetime on order X'.",
+      "recall": {
+        "q": "What does PARTITION BY do to a running total?",
+        "a": "Restarts it for each partition (e.g. per customer)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "order_id",
+        "order_date",
+        "order_total",
+        "cumulative_spend"
+      ],
+      "expected_row_count": 53
+    },
+    {
+      "number": 5,
+      "title": "Line-level running revenue (tie-breakers!)",
+      "question": "Audit wants a line-by-line running revenue for Q4 2025 that matches the ledger exactly.",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Valid orders are order_status IN ('completed','shipped','returned'). For each order line of valid orders with order_date from 2025-10-01 to 2025-12-31, return order_item_id, order_id, order_date, line_revenue (quantity * unit_price) and running_revenue (cumulative line_revenue in order of order_date, then order_item_id), both rounded to 2 decimals. Lines of the same order share a date, so each line must still get its own running value. Ordered by order_date, order_item_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Several lines share an order_date. With ORDER BY order_date alone (default RANGE frame), they'd all show the same running value.",
+        "Add order_item_id to the window's ORDER BY and use a ROWS frame.",
+        "SUM(oi.quantity * oi.unit_price) OVER (ORDER BY o.order_date, oi.order_item_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue"
+      ],
+      "why": "Non-deterministic window ordering produces numbers that change between runs or engines \u2014 a classic reconciliation headache. Always make the window ORDER BY unique.",
+      "recall": {
+        "q": "Two rows tie on the window ORDER BY under the default frame. What running value do they get?",
+        "a": "The same value: the total including both peers (RANGE frame treats ties as one step)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "order_date",
+        "line_revenue",
+        "running_revenue"
+      ],
+      "expected_row_count": 14
+    },
+    {
+      "number": 6,
+      "title": "Progress toward the annual total",
+      "question": "What share of 2025's full-year revenue had been booked by the end of each month?",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. For the months of 2025, return order_month ('YYYY-MM'), gross_revenue, running_revenue (both rounded to 2 decimals) and pct_of_year = 100 * running_revenue / (total 2025 gross revenue), rounded to 1 decimal. Ordered by order_month.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "SUM(x) OVER () \u2014 no ORDER BY, no PARTITION \u2014 is the grand total on every row.",
+        "Divide the running total by that grand total; multiply by 100.0.",
+        "ROUND(100.0 * SUM(gross_revenue) OVER (ORDER BY order_month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(gross_revenue) OVER (), 1) AS pct_of_year"
+      ],
+      "why": "Two windows in one expression \u2014 a cumulative one and a total one \u2014 is the standard way to express 'progress toward a whole'. December must read 100.0.",
+      "recall": {
+        "q": "What does SUM(x) OVER () return?",
+        "a": "The total of x over the whole result set, repeated on every row."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "RATIO_TO_REPORT gives x / total; for cumulative share use SUM(...) OVER (ORDER BY ... ROWS UNBOUNDED PRECEDING) / SUM(...) OVER ().",
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_month",
+        "gross_revenue",
+        "running_revenue",
+        "pct_of_year"
+      ],
+      "expected_row_count": 12
+    },
+    {
+      "number": 7,
+      "title": "Pareto: cumulative revenue share by product",
+      "question": "Merchandising asks: how few products make up most of our revenue?",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders (order_status IN ('completed','shipped','returned')); cancelled and pending orders are excluded. For every product sold in a valid order, compute product_revenue. Return product_id, product_revenue, cumulative_revenue (running sum ordering products by product_revenue descending, then product_id ascending) \u2014 both rounded to 2 decimals \u2014 and cumulative_pct = 100 * cumulative_revenue / total revenue of all products, rounded to 1 decimal. Ordered by product_revenue descending, product_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate revenue per product in a CTE.",
+        "The running total is ordered by revenue DESC (biggest first), with product_id as tie-breaker.",
+        "ROUND(100.0 * SUM(product_revenue) OVER (ORDER BY product_revenue DESC, product_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(product_revenue) OVER (), 1) AS cumulative_pct"
+      ],
+      "why": "Pareto / ABC analysis is a running total over a *ranked* list rather than over time \u2014 the same window, a different sort key.",
+      "recall": {
+        "q": "In a Pareto table, what is the window ORDER BY?",
+        "a": "The measure descending (plus a unique tie-breaker), not a date."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Add QUALIFY cumulative_pct <= 80 to keep only the 'A' products without another CTE.",
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_revenue",
+        "cumulative_revenue",
+        "cumulative_pct"
+      ],
+      "expected_row_count": 22
+    }
+  ],
+  "worked_example": {
+    "question": "Show the cumulative number of orders (any status) by order date.",
+    "sql": "SELECT order_id,\n       order_date,\n       COUNT(*) OVER (ORDER BY order_date, order_id\n                      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS orders_to_date\nFROM orders\nORDER BY order_date, order_id\nLIMIT 6;",
+    "explanation": "Each row counts itself plus all earlier rows. `order_id` is the tie-breaker: if two orders shared a date, each would still get its own running count.",
+    "columns": [
+      "order_id",
+      "order_date",
+      "orders_to_date"
+    ],
+    "rows": [
+      [
+        1,
+        "2024-01-05",
+        1
+      ],
+      [
+        2,
+        "2024-01-15",
+        2
+      ],
+      [
+        3,
+        "2024-01-29",
+        3
+      ],
+      [
+        4,
+        "2024-02-11",
+        4
+      ],
+      [
+        5,
+        "2024-02-21",
+        5
+      ],
+      [
+        6,
+        "2024-03-02",
+        6
+      ]
+    ]
+  },
+  "recipe": "**Recipe: running total in 4 moves**\n\n1. **Pick the grain** (one row per month, per order, per line) \u2014 pre-aggregate in a CTE if needed.\n2. `SUM(measure) OVER (ORDER BY sort_key, tie_breaker ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)`.\n3. **Reset** per group or period with `PARTITION BY` (per customer, per year \u2192 YTD).\n4. **Cumulative %** = running total / `SUM(measure) OVER (PARTITION BY ...)` (a window with no ORDER BY = grand total).\n\n```sql\nSELECT order_month, gross_revenue,\n       SUM(gross_revenue) OVER (PARTITION BY substr(order_month, 1, 4)\n                                ORDER BY order_month\n                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ytd_revenue\nFROM monthly;\n```\n\n**ROWS vs RANGE (the tie trap):** with only `ORDER BY` the default frame is\n`RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, which treats rows with the *same* sort value as peers\nand gives them all the same (end-of-tie) total. Add a unique tie-breaker (`ORDER BY order_date, order_item_id`)\nand/or say `ROWS` explicitly so each row gets its own step.",
+  "snowflake_notes": "Window syntax is identical in Snowflake. Useful extras:\n\n```sql\n-- YTD with a DATE month key\nSELECT order_month, gross_revenue,\n       SUM(gross_revenue) OVER (PARTITION BY YEAR(order_month)\n                                ORDER BY order_month\n                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ytd_revenue\nFROM monthly;\n\n-- cumulative share, and keep only the products that make the first 80% (QUALIFY = filter after windows)\nSELECT product_id, product_revenue,\n       SUM(product_revenue) OVER (ORDER BY product_revenue DESC, product_id\n                                  ROWS UNBOUNDED PRECEDING)\n         / SUM(product_revenue) OVER () AS cumulative_share\nFROM product_rev\nQUALIFY cumulative_share <= 0.8;\n```\n\n- `RATIO_TO_REPORT(x) OVER (PARTITION BY ...)` = x / SUM(x) over the partition.\n- `ROWS UNBOUNDED PRECEDING` is shorthand for `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (SQLite accepts it too).\n- `CONDITIONAL_TRUE_EVENT` / `CONDITIONAL_CHANGE_EVENT` are Snowflake-only helpers for running counts of events.",
+  "common_mistakes": [
+    "Relying on the default RANGE frame with a non-unique ORDER BY \u2014 tied rows get identical running values.",
+    "Running-summing raw order lines when the question is per order or per month \u2014 pre-aggregate to the right grain first.",
+    "Forgetting PARTITION BY for YTD/per-customer totals, so the sum never resets.",
+    "Filtering out earlier periods when the running total is supposed to include them (or vice-versa) \u2014 decide where the accumulation starts.",
+    "Putting a window function inside WHERE \u2014 not allowed; use a CTE/subquery (or QUALIFY in Snowflake)."
+  ],
+  "recall": [
+    [
+      "Write the window clause for a per-customer running total.",
+      "SUM(x) OVER (PARTITION BY customer_id ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)."
+    ],
+    [
+      "Default frame when a window has ORDER BY but no frame clause?",
+      "RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW (peers with equal sort values are included together)."
+    ],
+    [
+      "How do you express cumulative % of total?",
+      "running SUM / SUM(x) OVER () * 100."
+    ],
+    [
+      "Snowflake shorthand for x / SUM(x) over a partition?",
+      "RATIO_TO_REPORT(x) OVER (PARTITION BY ...)."
+    ]
+  ],
+  "review_next": "Lesson 33 changes the frame from 'everything so far' to 'the last n rows' \u2014 moving averages. Re-do 32.5 and say out loud why the tie-breaker matters."
+}

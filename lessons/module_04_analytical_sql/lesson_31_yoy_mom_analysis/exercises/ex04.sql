@@ -1,0 +1,20 @@
+-- Lesson 31 · Exercise 31.4 — Same month last year with a self-join
+--
+-- BUSINESS QUESTION
+--   Seasonality check: put each calendar month of 2025 next to the same month of 2024.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Using a self-join of a monthly revenue CTE (match month number, year =
+--   previous year), return month_num (text 'MM', e.g. '03'), revenue_2024, revenue_2025
+--   (rounded to 2 decimals) and yoy_growth_pct (100 * (revenue_2025 − revenue_2024) /
+--   revenue_2024, NULLIF-protected, rounded to 1 decimal). One row per month 01–12,
+--   ordered by month_num.
+-- REQUIRED COLUMNS: month_num, revenue_2024, revenue_2025, yoy_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.4
+-- Grade it:              python3 sqlm.py submit 31.4
+--
+-- Write your query below (from memory!):
+

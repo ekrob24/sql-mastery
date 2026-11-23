@@ -1,0 +1,20 @@
+-- Lesson 32 · Exercise 32.7 — Pareto: cumulative revenue share by product
+--
+-- BUSINESS QUESTION
+--   Merchandising asks: how few products make up most of our revenue?
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For every product sold in a valid order, compute product_revenue. Return
+--   product_id, product_revenue, cumulative_revenue (running sum ordering products by
+--   product_revenue descending, then product_id ascending) — both rounded to 2 decimals —
+--   and cumulative_pct = 100 * cumulative_revenue / total revenue of all products, rounded
+--   to 1 decimal. Ordered by product_revenue descending, product_id.
+-- REQUIRED COLUMNS: product_id, product_revenue, cumulative_revenue, cumulative_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 32.7
+-- Grade it:              python3 sqlm.py submit 32.7
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,17 @@
+-- Lesson 47 · Exercise 47.1 — Drop an unused LEFT JOIN
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT o.order_id, o.order_date, o.order_status FROM orders o LEFT JOIN
+--   customers c ON c.customer_id = o.customer_id WHERE o.order_status IN
+--   ('cancelled','pending')`.
+-- TABLES: orders
+-- TASK
+--   Return the same result without the join: order_id, order_date, order_status for orders
+--   whose status is 'cancelled' or 'pending'.
+-- REQUIRED COLUMNS: order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.1
+-- Grade it:              python3 sqlm.py submit 47.1
+--
+-- Write your query below (from memory!):
+

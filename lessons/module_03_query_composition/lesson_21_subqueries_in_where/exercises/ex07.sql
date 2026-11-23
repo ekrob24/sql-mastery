@@ -1,0 +1,18 @@
+-- Lesson 21 · Exercise 21.7 — Who buys books?
+--
+-- BUSINESS QUESTION
+--   The Books category manager wants to email customers who bought a book in a valid
+--   order.
+-- TABLES: customers, orders, order_items, products
+-- TASK
+--   Return customer_id, name, email of customers who have at least one valid order (valid
+--   orders = order_status IN ('completed','shipped','returned'); cancelled and pending are
+--   excluded) containing a product whose category is 'Books'. Use subqueries in WHERE (no
+--   joins in the outer query). Each customer once.
+-- REQUIRED COLUMNS: customer_id, name, email
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 21.7
+-- Grade it:              python3 sqlm.py submit 21.7
+--
+-- Write your query below (from memory!):
+

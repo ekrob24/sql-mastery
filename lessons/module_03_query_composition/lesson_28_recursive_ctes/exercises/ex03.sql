@@ -1,0 +1,16 @@
+-- Lesson 28 · Exercise 28.3 — Breadcrumb paths
+--
+-- BUSINESS QUESTION
+--   The website needs breadcrumb text like 'All Products > Sports > Fitness'.
+-- TABLES: categories
+-- TASK
+--   Return category_id and path for all 14 categories, where path is the chain of category
+--   names from the root down to that category joined with ' > ' (the root's path is just
+--   'All Products'). Sort by path.
+-- REQUIRED COLUMNS: category_id, path
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 28.3
+-- Grade it:              python3 sqlm.py submit 28.3
+--
+-- Write your query below (from memory!):
+

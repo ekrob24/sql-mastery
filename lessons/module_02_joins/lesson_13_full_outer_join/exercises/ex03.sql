@@ -1,0 +1,25 @@
+-- Lesson 13 · Exercise 13.3 — Customers without orders and orders without customers
+--
+-- BUSINESS QUESTION
+--   Finance and CRM want one exception list: customers who never ordered and orders that
+--   belong to no known customer.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id (= COALESCE(c.customer_id, o.customer_id)), customer_name
+--   (customers.name) and order_id for rows of a FULL OUTER JOIN of customers and orders
+--   where either side is unmatched.
+-- REQUIRED COLUMNS: customer_id, customer_name, order_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 13.3
+-- Grade it:              python3 sqlm.py submit 13.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

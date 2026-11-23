@@ -1,0 +1,320 @@
+{
+  "number": 10,
+  "slug": "inner_join",
+  "title": "INNER JOIN",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Combine two tables with INNER JOIN, keep only matching rows, and know exactly which rows an INNER JOIN throws away.",
+  "context": "Most reporting joins are INNER JOINs: order lines with product names, products with supplier details. They are correct when \u2014 and only when \u2014 an unmatched row is genuinely irrelevant to the question. The merchandising team needs several of these lookups this week.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Product catalogue with supplier",
+      "question": "Merchandising wants each product listed with the supplier who provides it.",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Return product_id, product_name, supplier_name and supplier_country (suppliers.country) for every product that has a matching supplier.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Driving table is products; supplier details are looked up.",
+        "'that has a matching supplier' \u2192 unmatched products can go \u2192 INNER JOIN.",
+        "FROM products p JOIN suppliers s ON s.supplier_id = p.supplier_id, alias s.country AS supplier_country"
+      ],
+      "why": "Enriching a fact/child table with dimension attributes is everyday SQL \u2014 and you must know which rows the INNER JOIN filtered out before you call the list 'complete'.",
+      "recall": {
+        "q": "Which rows does an INNER JOIN drop?",
+        "a": "Rows on either side with no match on the join condition \u2014 including rows whose key is NULL."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "products 25 rows, suppliers 5. Result: 23 rows. Products\u2192supplier is many-to-one, so nothing multiplies. Two products silently disappear: product 21 'Water Bottle' (supplier_id 9 does not exist) and product 22 'Phone Stand' (supplier_id NULL). Supplier 5 'Andes Trading' also never appears \u2014 it has no products, so its NULL country never shows up either. The result contains no NULLs at all \u2014 INNER JOIN output never has join-generated NULLs.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_name",
+        "supplier_country"
+      ],
+      "expected_row_count": 23
+    },
+    {
+      "number": 2,
+      "title": "Order lines with product names",
+      "question": "The warehouse team wants a readable picking list: every order line with the product name and category.",
+      "tables": [
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return order_item_id, order_id, product_name, category, quantity and line_total (quantity * unit_price from order_items) for all order lines.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Driving table = order_items (one row per line). Products is the lookup.",
+        "Use oi.unit_price, not p.list_price, for line_total.",
+        "FROM order_items oi JOIN products p ON p.product_id = oi.product_id"
+      ],
+      "why": "Line-level detail with descriptive attributes is the base layer of almost every sales report.",
+      "recall": {
+        "q": "Which table's grain does this result have?",
+        "a": "order_items \u2014 one row per order line."
+      },
+      "join_plan": {
+        "left_table": "order_items",
+        "right_table": "products",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "order_items 150 rows, products 25. Result: 150 rows \u2014 every line's product_id exists in products, so INNER drops no lines and nothing multiplies (product_id is products' primary key). Seen from the products side the relationship is one-to-many: product 9 appears on 15 lines. Products 23, 24 and 25 were never sold and do not appear. category is NULL on the 13 lines of product 20 \u2014 that NULL comes from the data, not from the join.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "order_id",
+        "product_name",
+        "category",
+        "quantity",
+        "line_total"
+      ],
+      "expected_row_count": 150
+    },
+    {
+      "number": 3,
+      "title": "2025 orders with customer names \u2014 what went missing?",
+      "question": "Account managers want every order placed in 2025 with the customer's name.",
+      "tables": [
+        "orders",
+        "customers"
+      ],
+      "prompt": "Using an INNER JOIN, return order_id, order_date, customer_name (customers.name) and order_status for orders with order_date on or after '2025-01-01'. (Then compare your row count with the number of 2025 orders.)",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Driving table: orders. Lookup: customers.",
+        "Filter on o.order_date >= '2025-01-01' (compare with a full date string).",
+        "FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_date >= '2025-01-01'"
+      ],
+      "why": "This is how revenue goes missing in real dashboards: an INNER JOIN to a dimension with a gap drops facts without any error. Always reconcile the joined count with the base count.",
+      "recall": {
+        "q": "You INNER JOIN orders to customers and get fewer rows than there are orders. What happened?",
+        "a": "Some orders have a customer_id with no match (orphan or NULL key) \u2014 INNER JOIN dropped them."
+      },
+      "join_plan": {
+        "left_table": "orders",
+        "right_table": "customers",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "There are 30 orders dated 2025 (orders 31\u201360), but the result has only 29 rows. Order 31 (2025-01-08, completed) has customer_id 99, which is not in customers, so the INNER JOIN silently removed it \u2014 a completed order worth 363.30 vanishes from the report. Each order matches at most one customer, so there is no multiplication; customers with several 2025 orders (customer 14 has 4) simply repeat.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "order_date",
+        "customer_name",
+        "order_status"
+      ],
+      "expected_row_count": 29
+    },
+    {
+      "number": 4,
+      "title": "Customers and orders by region",
+      "question": "Regional managers want to know, per region, how many distinct customers have ordered and how many orders they placed.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return region, customers_with_orders (count of distinct customers who placed at least one order) and order_count (number of orders, any status), one row per region (NULL region is its own group). Only orders that match an existing customer count.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "After joining, each customer appears once per order \u2014 so counting customers needs DISTINCT.",
+        "GROUP BY c.region; NULL regions form one group automatically.",
+        "SELECT c.region, COUNT(DISTINCT c.customer_id) AS customers_with_orders, COUNT(o.order_id) AS order_count FROM customers c JOIN orders o ON ... GROUP BY c.region"
+      ],
+      "why": "One-to-many joins inflate counts of the 'one' side. COUNT(DISTINCT parent_key) is the standard defence.",
+      "recall": {
+        "q": "After joining customers to orders, why COUNT(DISTINCT c.customer_id)?",
+        "a": "Each customer row is repeated once per order; plain COUNT would count orders, not customers."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "customers 20, orders 60 \u2192 59 joined rows (order 31's customer 99 does not exist). Customers are multiplied by their orders: West has 4 customers but 17 joined rows. Result: 5 groups \u2014 East 4/14, North 3/13, South 4/11, West 4/17 and a NULL-region group 2/4 (customers 9 and 16). That NULL comes from the customers data, not from the join. Total customers_with_orders = 17; customers 18, 19, 20 have no orders and are dropped by the INNER JOIN.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "customers_with_orders",
+        "order_count"
+      ],
+      "expected_row_count": 5
+    },
+    {
+      "number": 5,
+      "title": "Deeply discounted order lines",
+      "question": "Pricing wants every order line sold at least 15% below the catalogue list price.",
+      "tables": [
+        "order_items",
+        "products"
+      ],
+      "prompt": "Return order_item_id, product_name, list_price, unit_price and discount_pct = 100.0 * (list_price - unit_price) / list_price rounded to 1 decimal, for lines whose ROUNDED discount_pct is at least 15 (round before comparing \u2014 floating-point division gives values like 14.9999\u2026).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "list_price lives in products; unit_price in order_items.",
+        "You can't use the alias discount_pct in WHERE \u2014 repeat the rounded expression there.",
+        "... WHERE ROUND(100.0 * (p.list_price - oi.unit_price) / p.list_price, 1) >= 15"
+      ],
+      "why": "Comparing what was charged (fact) to a reference value (dimension) is impossible without a join \u2014 and NULL reference values silently fall out of the comparison.",
+      "recall": {
+        "q": "Product 19 has a NULL list_price. Do its lines appear in this result?",
+        "a": "No \u2014 the discount expression is NULL, and NULL >= 15 is not true, so WHERE drops them."
+      },
+      "join_plan": {
+        "left_table": "order_items",
+        "right_table": "products",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "no",
+        "join_type": "INNER JOIN"
+      },
+      "join_notes": "The join itself keeps all 150 lines (each line has exactly one product). Of those, 78 were sold at list price, 26 at a 10% discount, 36 at a 15% discount, and 10 (product 19 'Adjustable Dumbbells') have a NULL list_price, so their discount is NULL and they cannot pass the filter. Result: 36 rows (without ROUND in WHERE, float noise like 14.99999 would wrongly drop 11 of them). Here the rows disappear because of WHERE + NULL, not because of the join \u2014 learn to tell the two apart.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "order_item_id",
+        "product_name",
+        "list_price",
+        "unit_price",
+        "discount_pct"
+      ],
+      "expected_row_count": 36
+    },
+    {
+      "number": 6,
+      "title": "Self-join: possible duplicate customers",
+      "question": "The CRM team suspects duplicate customer records whose names differ only by upper/lower case.",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Join customers to itself and return customer_id_1, name_1, customer_id_2, name_2 for every pair of different customers whose names are equal ignoring case (LOWER), listing each pair once with customer_id_1 < customer_id_2.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "A self-join uses the same table twice with two different aliases.",
+        "Put a.customer_id < b.customer_id in the ON clause to avoid self-pairs and mirror duplicates.",
+        "FROM customers a JOIN customers b ON LOWER(a.name) = LOWER(b.name) AND a.customer_id < b.customer_id"
+      ],
+      "why": "Self-joins compare rows within one table: duplicates, hierarchies (manager \u2192 employee), consecutive events.",
+      "recall": {
+        "q": "Why a.customer_id < b.customer_id instead of a.customer_id <> b.customer_id?",
+        "a": "<> returns each pair twice (1,19) and (19,1); < returns each pair once."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "customers",
+        "shared_key": "name",
+        "unmatched_rows_matter": "no",
+        "join_type": [
+          "INNER JOIN",
+          "SELF JOIN"
+        ]
+      },
+      "join_notes": "customers (20 rows) joined to itself. Without the id condition every customer matches at least itself (20 self-pairs) and the duplicates match each other in both directions. With a.customer_id < b.customer_id we keep 2 rows: (1 'Alice Johnson', 19 'alice johnson') and (3 'John Smith', 4 'John Smith'). Customer 5 'Jon Smith' is not matched \u2014 LOWER() fixes case, not spelling. Every other customer has no partner and is dropped by the INNER JOIN.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "customer_id_1",
+        "name_1",
+        "customer_id_2",
+        "name_2"
+      ],
+      "expected_row_count": 2
+    }
+  ],
+  "worked_example": {
+    "question": "Show order lines of order 2 with the product name.",
+    "sql": "SELECT oi.order_item_id,\n       oi.order_id,\n       p.product_name,\n       oi.quantity,\n       oi.unit_price\nFROM order_items AS oi\nJOIN products AS p ON p.product_id = oi.product_id\nWHERE oi.order_id = 2;",
+    "explanation": "Driving table: order_items (one row per line). Each line has exactly one product, so the row count equals the number of lines of order 2. INNER is safe here: every product_id in order_items exists in products.",
+    "columns": [
+      "order_item_id",
+      "order_id",
+      "product_name",
+      "quantity",
+      "unit_price"
+    ],
+    "rows": [
+      [
+        2,
+        2,
+        "The Pragmatic Warehouse",
+        2,
+        48
+      ],
+      [
+        3,
+        2,
+        "Noise-Cancelling Headphones",
+        2,
+        169.15
+      ],
+      [
+        4,
+        2,
+        "Chef Knife",
+        2,
+        59
+      ]
+    ]
+  },
+  "recipe": "**The join recipe \u2014 do it in this order, every time, before typing SQL**\n\n1. **Pick the driving table.** Which table's rows is the answer *about*? (\"every customer\u2026\", \"each order line\u2026\")\n   That table goes first, after `FROM` \u2014 it is the **left table**.\n2. **Name the right table(s) and the shared key.** What column links them? Is it PK \u2192 FK (one-to-many) or\n   one-to-one? Which side is the \"many\" side?\n3. **Ask: \"must every row of the left table survive, even with no match?\"**\n   - no \u2192 `INNER JOIN` (unmatched rows silently disappear)\n   - yes \u2192 `LEFT JOIN` (unmatched rows stay, right-side columns become NULL)\n   - rows from *both* sides must survive \u2192 `FULL OUTER JOIN`\n4. **Predict the row count before you run it.** Count the inputs (`SELECT COUNT(*) \u2026`), think about\n   matches per row (0, 1 or many), write your guess down \u2014 then run and compare. A surprise means\n   you misunderstood the grain, the key or the data.\n\n**INNER JOIN = intersection on the key.** A row appears only if the ON condition is true for some row on the\nother side. Unmatched rows on *either* side vanish \u2014 **silently**, with no warning.\n\n```sql\nSELECT p.product_name, s.supplier_name\nFROM   products  AS p                          -- 1. driving table\nINNER JOIN suppliers AS s                      -- 2. right table\n        ON s.supplier_id = p.supplier_id;      -- 2. shared key\n-- 3. must every product survive? no \u2192 INNER\n-- 4. predict: 25 products, 2 have no valid supplier \u2192 23 rows\n```\n\n- `JOIN` alone means `INNER JOIN`.\n- Always qualify columns (`p.`, `s.`) \u2014 both tables may have a column with the same name.\n- Row count rule: each left row appears once **per matching right row** (0, 1 or many times).\n- The ON clause can be any condition \u2014 not only equality (self-join with `<`, ranges, `lower(a)=lower(b)`).",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Assuming an INNER JOIN result is 'all the orders' \u2014 it silently drops any row whose key has no match (order 31!).",
+    "Forgetting that NULL keys never match, so rows with a NULL FK disappear from an INNER JOIN.",
+    "Counting the 'one' side after a one-to-many join without DISTINCT, inflating customer counts.",
+    "Writing ambiguous column names (e.g. supplier_id) without a table alias when both tables have the column.",
+    "Using products.list_price as revenue instead of order_items.unit_price."
+  ],
+  "recall": [
+    [
+      "What does JOIN without a keyword mean?",
+      "INNER JOIN."
+    ],
+    [
+      "How many times does a left row appear in an INNER JOIN?",
+      "Once per matching right row \u2014 0, 1 or many."
+    ],
+    [
+      "How can you detect that an INNER JOIN dropped rows?",
+      "Compare COUNT(*) of the driving table (with the same filters) to the joined count, or run the anti-join."
+    ]
+  ],
+  "review_next": "Lesson 11: LEFT JOIN \u2014 keep every row of the driving table, even when it has no match. You'll bring back order 31, customers 18\u201320 and products 21\u201322 that INNER JOIN dropped here."
+}

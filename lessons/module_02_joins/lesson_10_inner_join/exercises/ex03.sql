@@ -1,0 +1,24 @@
+-- Lesson 10 · Exercise 10.3 — 2025 orders with customer names — what went missing?
+--
+-- BUSINESS QUESTION
+--   Account managers want every order placed in 2025 with the customer's name.
+-- TABLES: orders, customers
+-- TASK
+--   Using an INNER JOIN, return order_id, order_date, customer_name (customers.name) and
+--   order_status for orders with order_date on or after '2025-01-01'. (Then compare your
+--   row count with the number of 2025 orders.)
+-- REQUIRED COLUMNS: order_id, order_date, customer_name, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.3
+-- Grade it:              python3 sqlm.py submit 10.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

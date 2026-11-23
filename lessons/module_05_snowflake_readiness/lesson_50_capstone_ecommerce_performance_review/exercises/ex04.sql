@@ -1,0 +1,20 @@
+-- Lesson 50 · Exercise 50.4 — Repeat-purchase rate
+--
+-- BUSINESS QUESTION
+--   CEO: "Do customers come back? What share of our buyers have bought more than once?"
+-- TABLES: customers, orders
+-- TASK
+--   Valid orders = order_status IN ('completed','shipped','returned'). Consider only
+--   customers that exist in the customers table (orphan customer_id 99 excluded).
+--   purchasing_customers = customers with at least 1 valid order; repeat_customers =
+--   customers with at least 2 distinct valid orders; repeat_purchase_rate_pct = 100 *
+--   repeat_customers / purchasing_customers, rounded to 1 decimal (0–100 scale). Return a
+--   single row with columns purchasing_customers, repeat_customers,
+--   repeat_purchase_rate_pct.
+-- REQUIRED COLUMNS: purchasing_customers, repeat_customers, repeat_purchase_rate_pct
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 50.4
+-- Grade it:              python3 sqlm.py submit 50.4
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,24 @@
+-- Lesson 19 · Exercise 19.7 — Count orders per tag
+--
+-- BUSINESS QUESTION
+--   Marketing tags some orders ('promo', 'gift', 'first_order') in the feed. How many
+--   orders carry each tag?
+-- TABLES: raw_order_events
+-- TASK
+--   Explode payload's '$.tags' array with json_each and return tag and order_count (number
+--   of events carrying that tag), ordered by order_count descending, then tag.
+-- REQUIRED COLUMNS: tag, order_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 19.7
+-- Grade it:              python3 sqlm.py submit 19.7
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

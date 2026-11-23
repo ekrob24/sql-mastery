@@ -1,0 +1,16 @@
+-- Lesson 20 · Exercise 20.1 — Price tiers that don't lose NULLs
+--
+-- BUSINESS QUESTION
+--   Merchandising wants every product tagged with a price tier for the catalog review.
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, list_price and price_tier for all 25 products.
+--   price_tier is 'Unpriced' when list_price is NULL, 'Budget' when list_price < 30, 'Mid'
+--   when list_price is 30 up to (but not including) 100, otherwise 'Premium'.
+-- REQUIRED COLUMNS: product_id, product_name, list_price, price_tier
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 20.1
+-- Grade it:              python3 sqlm.py submit 20.1
+--
+-- Write your query below (from memory!):
+

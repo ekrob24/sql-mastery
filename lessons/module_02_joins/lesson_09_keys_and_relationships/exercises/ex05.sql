@@ -1,0 +1,25 @@
+-- Lesson 9 · Exercise 9.5 — Broken vs. missing supplier keys
+--
+-- BUSINESS QUESTION
+--   Procurement asks: which products reference a supplier_id that does not exist in the
+--   supplier table?
+-- TABLES: products, suppliers
+-- TASK
+--   Return product_id, product_name and supplier_id for products whose supplier_id is NOT
+--   NULL but has no matching supplier. (Products with a NULL supplier_id are a different
+--   problem — exclude them.)
+-- REQUIRED COLUMNS: product_id, product_name, supplier_id
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.5
+-- Grade it:              python3 sqlm.py submit 9.5
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

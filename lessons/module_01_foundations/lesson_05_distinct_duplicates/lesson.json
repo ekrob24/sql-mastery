@@ -1,0 +1,254 @@
+{
+  "number": 5,
+  "slug": "distinct_duplicates",
+  "title": "DISTINCT and removing duplicates",
+  "module": 1,
+  "module_title": "SQL foundations",
+  "objective": "Return unique values or unique combinations with DISTINCT, count distinct values, and recognise when rows only *look* duplicated (case, spelling) or truly are duplicated.",
+  "context": "'How many customers ordered?' and 'how many orders?' are different questions on the same table. Duplicates also creep in from data loads \u2014 this warehouse has two order lines that were loaded twice and customer names that differ only by capitalisation. Knowing what DISTINCT does (and doesn't) do protects every count you report.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Category vocabulary",
+      "question": "Which product categories exist in the catalog (including 'no category')?",
+      "tables": [
+        "products"
+      ],
+      "prompt": "Return one column, category, with each distinct category value exactly once. The NULL category should appear as one row.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "DISTINCT goes right after SELECT.",
+        "DISTINCT treats all NULLs as one value.",
+        "SELECT DISTINCT category FROM products;"
+      ],
+      "why": "Before filtering on a column, look at its distinct values \u2014 that's how you discover the NULL category before it breaks a report.",
+      "recall": {
+        "q": "Does SELECT DISTINCT return NULL as a value?",
+        "a": "Yes, once \u2014 all NULLs are grouped together."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "category"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 2,
+      "title": "Which customer IDs have ordered?",
+      "question": "Which customer IDs appear on at least one order (any status)?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return one column, customer_id, listing each customer_id that appears in orders exactly once, sorted ascending.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Customer 1 has nine orders but should appear once.",
+        "SELECT DISTINCT ... ORDER BY ...",
+        "SELECT DISTINCT customer_id FROM orders ORDER BY customer_id;"
+      ],
+      "why": "Notice customer_id 99 \u2014 an order whose customer doesn't exist in the customers table. Distinct key lists are how you start hunting orphans (Module 2 finishes the job).",
+      "recall": {
+        "q": "Why does customer 1 appear only once?",
+        "a": "DISTINCT collapses identical rows (here identical customer_id values)."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id"
+      ],
+      "expected_row_count": 18
+    },
+    {
+      "number": 3,
+      "title": "Status by year combinations",
+      "question": "Which order statuses occurred in each year?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Return the distinct combinations of order_year (the first 4 characters of order_date, i.e. substr(order_date, 1, 4)) and order_status, sorted by order_year then order_status.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "DISTINCT applies to the whole selected row \u2014 here a (year, status) pair.",
+        "substr(order_date, 1, 4) AS order_year extracts the year from an ISO date.",
+        "SELECT DISTINCT substr(order_date, 1, 4) AS order_year, order_status FROM orders ORDER BY order_year, order_status;"
+      ],
+      "why": "DISTINCT over several columns shows which combinations exist \u2014 e.g. 'pending' only in 2025 \u2014 a quick sanity check before building a year-by-status report.",
+      "recall": {
+        "q": "Does `SELECT DISTINCT a, b` deduplicate a alone?",
+        "a": "No \u2014 it deduplicates the (a, b) combination."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "Snowflake: YEAR(order_date) or DATE_PART('year', order_date) instead of substr on text.",
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "order_status"
+      ],
+      "expected_row_count": 8
+    },
+    {
+      "number": 4,
+      "title": "Lines, products and orders in order_items",
+      "question": "How many order lines do we have, and how many different products and orders do they cover?",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "Return one row with columns line_count (all rows in order_items), distinct_products (number of different product_id values) and distinct_orders (number of different order_id values).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "COUNT(DISTINCT col) counts different values.",
+        "Three counts in one SELECT.",
+        "COUNT(*) AS line_count, COUNT(DISTINCT product_id) AS distinct_products, COUNT(DISTINCT order_id) AS distinct_orders"
+      ],
+      "why": "22 of 25 products ever sold; 59 of 60 orders have lines (order 60 has none). Counting the right grain is the first defence against wrong KPIs.",
+      "recall": {
+        "q": "COUNT(*) vs COUNT(DISTINCT order_id) on order_items?",
+        "a": "COUNT(*) counts lines; COUNT(DISTINCT order_id) counts orders that have lines."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "line_count",
+        "distinct_products",
+        "distinct_orders"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Duplicate-looking names",
+      "question": "How many distinct customer names are there \u2014 and how many if we ignore capitalisation?",
+      "tables": [
+        "customers"
+      ],
+      "prompt": "Return one row with columns customer_rows (all customers), distinct_names (number of distinct name values, case-sensitive) and distinct_names_ignoring_case (number of distinct LOWER(name) values).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "DISTINCT compares text exactly, so 'Alice Johnson' and 'alice johnson' are different.",
+        "Normalise inside the count: COUNT(DISTINCT LOWER(name)).",
+        "COUNT(*) AS customer_rows, COUNT(DISTINCT name) AS distinct_names, COUNT(DISTINCT LOWER(name)) AS distinct_names_ignoring_case"
+      ],
+      "why": "20 rows, 19 names, 18 case-insensitive names. Each drop is a potential duplicate person \u2014 but the two John Smiths have different emails, so they may be two real people. Distinct counts raise questions; they don't answer them.",
+      "recall": {
+        "q": "How do you count distinct names ignoring case?",
+        "a": "COUNT(DISTINCT LOWER(name))"
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_rows",
+        "distinct_names",
+        "distinct_names_ignoring_case"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 6,
+      "title": "De-duplicated lines for two orders",
+      "question": "Orders 9 and 38 were loaded with a duplicated line each. Show their distinct line contents.",
+      "tables": [
+        "order_items"
+      ],
+      "prompt": "For order_id 9 and 38 only, return the distinct combinations of order_id, product_id, quantity and unit_price (do NOT include order_item_id), sorted by order_id then product_id.",
+      "ordered": true,
+      "strict_column_order": false,
+      "hints": [
+        "Including order_item_id would make every row unique \u2014 leave it out.",
+        "Filter with WHERE order_id IN (9, 38), then DISTINCT the four content columns.",
+        "SELECT DISTINCT order_id, product_id, quantity, unit_price FROM order_items WHERE order_id IN (9, 38) ORDER BY order_id, product_id;"
+      ],
+      "why": "A surrogate key (order_item_id) can hide true duplicates: the rows differ only by ID. Choosing which columns define 'the same' is the real decision in any dedup.",
+      "recall": {
+        "q": "Why must order_item_id be left out of the DISTINCT list here?",
+        "a": "It's unique per row, so every row would be distinct and nothing would be removed."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "order_id",
+        "product_id",
+        "quantity",
+        "unit_price"
+      ],
+      "expected_row_count": 7
+    }
+  ],
+  "worked_example": {
+    "question": "Which order statuses exist?",
+    "sql": "SELECT DISTINCT order_status\nFROM orders\nORDER BY order_status;",
+    "explanation": "Sixty order rows collapse to five distinct statuses. This is the quickest way to learn a column's vocabulary before writing a filter on it.",
+    "columns": [
+      "order_status"
+    ],
+    "rows": [
+      [
+        "cancelled"
+      ],
+      [
+        "completed"
+      ],
+      [
+        "pending"
+      ],
+      [
+        "returned"
+      ],
+      [
+        "shipped"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: deduplicate deliberately in 4 moves**\n\n1. `SELECT DISTINCT col` \u2014 one row per distinct value. NULL counts as one value here.\n2. `SELECT DISTINCT a, b` \u2014 one row per distinct **combination** of a and b (DISTINCT applies to the whole row,\n   not just the first column).\n3. `COUNT(DISTINCT col)` \u2014 how many different non-NULL values. Compare with `COUNT(*)` to see repetition.\n4. Normalise before deduplicating when 'the same' should ignore case or spacing:\n   `COUNT(DISTINCT LOWER(TRIM(name)))`.\n\n```sql\nSELECT COUNT(*)                    AS order_rows,\n       COUNT(DISTINCT customer_id) AS ordering_customers\nFROM   orders;\n```\n\n**DISTINCT is not a fix for bad data.** If identical rows exist (the duplicate order lines 149 and 150),\nDISTINCT can hide them in one query \u2014 but the right move is to understand and report them.",
+  "snowflake_notes": "Same syntax in Snowflake. For very large tables, `APPROX_COUNT_DISTINCT(col)` (HyperLogLog) is much cheaper than `COUNT(DISTINCT col)`. Snowflake compares strings case-sensitively by default, like SQLite's `=`.",
+  "common_mistakes": [
+    "Thinking `DISTINCT a, b` deduplicates only a \u2014 it applies to the whole row.",
+    "Using DISTINCT to 'fix' a query whose duplicates come from a bad join (Module 2) instead of fixing the join.",
+    "Forgetting COUNT(DISTINCT col) ignores NULLs while SELECT DISTINCT shows NULL as a row.",
+    "Treating case/spelling variants as distinct people (or blindly merging people who share a name).",
+    "Including a surrogate key in the DISTINCT list, which makes every row unique."
+  ],
+  "recall": [
+    [
+      "What does SELECT DISTINCT operate on?",
+      "The entire selected row (all listed columns together)."
+    ],
+    [
+      "How do you count distinct values ignoring case?",
+      "COUNT(DISTINCT LOWER(col))."
+    ],
+    [
+      "Does COUNT(DISTINCT region) count NULL as a region?",
+      "No \u2014 COUNT(DISTINCT ...) ignores NULLs."
+    ]
+  ],
+  "review_next": "Next, Lesson 6 introduces SUM, AVG, MIN and MAX. Keep the duplicate lines 149/150 in mind \u2014 they inflate any total computed over order_items."
+}

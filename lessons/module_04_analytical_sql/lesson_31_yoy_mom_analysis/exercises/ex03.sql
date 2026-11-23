@@ -1,0 +1,19 @@
+-- Lesson 31 · Exercise 31.3 — Year-over-year revenue
+--
+-- BUSINESS QUESTION
+--   How did 2025 revenue compare with 2024?
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_year ('YYYY'), gross_revenue and prev_year_revenue (rounded to
+--   2 decimals) and yoy_growth_pct = 100 * (gross_revenue − prev_year_revenue) /
+--   prev_year_revenue rounded to 1 decimal (NULLIF-protected; NULL for the first year).
+--   Ordered by order_year.
+-- REQUIRED COLUMNS: order_year, gross_revenue, prev_year_revenue, yoy_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.3
+-- Grade it:              python3 sqlm.py submit 31.3
+--
+-- Write your query below (from memory!):
+

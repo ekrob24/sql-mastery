@@ -1,0 +1,11 @@
+order_id,order_date,order_status
+3,2024-01-29,returned
+14,2024-06-13,completed
+15,2024-06-20,completed
+17,2024-07-16,completed
+20,2024-08-28,completed
+28,2024-12-02,completed
+36,2025-03-04,returned
+38,2025-04-03,completed
+40,2025-04-25,completed
+41,2025-05-12,returned

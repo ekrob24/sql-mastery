@@ -1,0 +1,26 @@
+product_id,product_name,category,cheaper_in_category
+1,Wireless Mouse,Electronics,1
+2,Mechanical Keyboard,Electronics,3
+3,USB-C Hub,Electronics,2
+4,Noise-Cancelling Headphones,Electronics,4
+5,27in Monitor,Electronics,6
+6,Chef Knife,Home,5
+7,Cast Iron Skillet,Home,3
+8,French Press,Home,1
+9,Throw Blanket,Home,2
+10,Desk Lamp,Home,0
+11,Running Shoes,Apparel,3
+12,Rain Jacket,Apparel,2
+13,Wool Socks (3-pack),Apparel,0
+14,Baseball Cap,Apparel,1
+15,SQL for Analysts,Books,1
+16,Data Storytelling,Books,0
+17,The Pragmatic Warehouse,Books,2
+18,Yoga Mat,Sports,1
+19,Adjustable Dumbbells,Sports,0
+20,Mystery Gift Box,,0
+21,Water Bottle,Sports,0
+22,Phone Stand,Electronics,0
+23,Smart Watch,Electronics,5
+24,Linen Tablecloth,Home,4
+25,Tennis Racket,Sports,2

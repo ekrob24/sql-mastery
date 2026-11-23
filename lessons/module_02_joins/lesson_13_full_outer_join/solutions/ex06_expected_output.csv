@@ -1,0 +1,16 @@
+category_id,category_name,product_count
+1,All Products,0
+2,Electronics,7
+3,Home,6
+4,Apparel,4
+5,Books,3
+6,Sports,4
+7,Audio,0
+8,Computer Accessories,0
+9,Kitchen,0
+10,Decor,0
+11,Footwear,0
+12,Outerwear,0
+13,Fitness,0
+14,Strength Training,0
+,,1

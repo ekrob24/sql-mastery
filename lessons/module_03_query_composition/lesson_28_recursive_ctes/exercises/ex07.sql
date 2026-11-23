@@ -1,0 +1,16 @@
+-- Lesson 28 · Exercise 28.7 — Daily orders in December 2025
+--
+-- BUSINESS QUESTION
+--   Ops wants a day-by-day order count for December 2025, including the quiet days.
+-- TABLES: orders
+-- TASK
+--   Generate every day from 2025-12-01 to 2025-12-31 and return order_day ('YYYY-MM-DD')
+--   and orders_placed (number of orders of any status with that order_date, 0 if none).
+--   Sort by order_day.
+-- REQUIRED COLUMNS: order_day, orders_placed
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 28.7
+-- Grade it:              python3 sqlm.py submit 28.7
+--
+-- Write your query below (from memory!):
+

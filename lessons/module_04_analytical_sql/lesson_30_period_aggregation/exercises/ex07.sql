@@ -1,0 +1,21 @@
+-- Lesson 30 · Exercise 30.7 — Monthly net revenue
+--
+-- BUSINESS QUESTION
+--   Finance wants gross, refunds and net revenue per month, with refunds booked against
+--   the month the original order was placed.
+-- TABLES: orders, order_items, returns
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Refunds = SUM(returns.refund_amount) for returned lines of valid orders,
+--   assigned to the month of the original order_date. Net revenue = gross revenue −
+--   refunds (refunds = 0 when a month has none). Return order_month ('YYYY-MM'),
+--   gross_revenue, refunds and net_revenue (all rounded to 2 decimals), one row per month
+--   with valid orders, ordered by order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, refunds, net_revenue
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 30.7
+-- Grade it:              python3 sqlm.py submit 30.7
+--
+-- Write your query below (from memory!):
+

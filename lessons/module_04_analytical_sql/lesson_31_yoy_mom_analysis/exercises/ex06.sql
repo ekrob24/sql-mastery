@@ -1,0 +1,20 @@
+-- Lesson 31 · Exercise 31.6 — YoY by category
+--
+-- BUSINESS QUESTION
+--   Category managers want to know which categories grew from 2024 to 2025.
+-- TABLES: orders, order_items, products
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. For each product category (exclude products with a NULL category), return
+--   category, revenue_2024, revenue_2025, yoy_change (revenue_2025 − revenue_2024), all
+--   rounded to 2 decimals (0 if no revenue that year), and yoy_growth_pct (100 *
+--   yoy_change / revenue_2024, NULLIF-protected, rounded to 1 decimal). Ordered by
+--   category.
+-- REQUIRED COLUMNS: category, revenue_2024, revenue_2025, yoy_change, yoy_growth_pct
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 31.6
+-- Grade it:              python3 sqlm.py submit 31.6
+--
+-- Write your query below (from memory!):
+

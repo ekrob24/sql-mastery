@@ -1,0 +1,15 @@
+-- Lesson 2 · Exercise 2.2 — Mid-range price band
+--
+-- BUSINESS QUESTION
+--   Marketing is planning a '$30–$50 gift ideas' email. Which products fit?
+-- TABLES: products
+-- TASK
+--   Return product_id, product_name, category and list_price for products whose list_price
+--   is between 30 and 50, inclusive of both 30 and 50.
+-- REQUIRED COLUMNS: product_id, product_name, category, list_price
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 2.2
+-- Grade it:              python3 sqlm.py submit 2.2
+--
+-- Write your query below (from memory!):
+

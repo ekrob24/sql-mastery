@@ -1,0 +1,22 @@
+-- Lesson 48 · Exercise 48.5 — Orphan order 31 breaks the regional tie-out
+--
+-- BUSINESS QUESTION
+--   Revenue by region doesn't add up to total revenue: `SELECT c.region, COUNT(DISTINCT
+--   o.order_id) AS valid_orders, ROUND(SUM(oi.quantity*oi.unit_price),2) AS gross_revenue
+--   FROM orders o JOIN customers c ON c.customer_id = o.customer_id JOIN order_items oi ON
+--   oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')
+--   GROUP BY c.region`.
+-- TABLES: orders, customers, order_items
+-- TASK
+--   Fix it so the regions sum to the full total: return region (customers.region; use
+--   'Unknown' when the region is NULL OR the customer does not exist), valid_orders
+--   (distinct orders) and gross_revenue (rounded to 2 decimals). Valid orders =
+--   order_status IN ('completed','shipped','returned'); gross revenue = SUM(quantity *
+--   unit_price) over those orders' order_items lines (never products.list_price).
+-- REQUIRED COLUMNS: region, valid_orders, gross_revenue
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.5
+-- Grade it:              python3 sqlm.py submit 48.5
+--
+-- Write your query below (from memory!):
+

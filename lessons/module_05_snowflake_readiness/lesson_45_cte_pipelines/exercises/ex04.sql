@@ -1,0 +1,22 @@
+-- Lesson 45 · Exercise 45.4 — Cohorts and repeat customers
+--
+-- BUSINESS QUESTION
+--   Refactor: SELECT f, COUNT(*), SUM(CASE WHEN n > 1 THEN 1 ELSE 0 END) FROM (SELECT
+--   customer_id, (SELECT strftime('%Y-%m', MIN(order_date)) FROM orders o2 WHERE
+--   o2.customer_id=o.customer_id AND o2.order_status IN
+--   ('completed','shipped','returned')) f, COUNT(*) n FROM orders o WHERE order_status IN
+--   ('completed','shipped','returned') AND customer_id IN (SELECT customer_id FROM
+--   customers) GROUP BY customer_id) GROUP BY f
+-- TABLES: orders, customers
+-- TASK
+--   Return cohort_month (the 'YYYY-MM' of each customer's first valid order), customers
+--   (number of customers in the cohort) and repeat_customers (how many of them have 2 or
+--   more valid orders). Only existing customers (present in customers); valid =
+--   order_status IN ('completed','shipped','returned').
+-- REQUIRED COLUMNS: cohort_month, customers, repeat_customers
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 45.4
+-- Grade it:              python3 sqlm.py submit 45.4
+--
+-- Write your query below (from memory!):
+

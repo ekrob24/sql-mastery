@@ -1,0 +1,15 @@
+-- Lesson 6 · Exercise 6.2 — 2025 order window
+--
+-- BUSINESS QUESTION
+--   How many orders were placed in 2025, and what were the first and last order dates?
+-- TABLES: orders
+-- TASK
+--   For orders with order_date from '2025-01-01' to '2025-12-31' inclusive (any status),
+--   return one row with columns order_count, first_order_date and last_order_date.
+-- REQUIRED COLUMNS: order_count, first_order_date, last_order_date
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 6.2
+-- Grade it:              python3 sqlm.py submit 6.2
+--
+-- Write your query below (from memory!):
+

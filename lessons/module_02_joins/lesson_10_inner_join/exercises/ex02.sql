@@ -1,0 +1,24 @@
+-- Lesson 10 · Exercise 10.2 — Order lines with product names
+--
+-- BUSINESS QUESTION
+--   The warehouse team wants a readable picking list: every order line with the product
+--   name and category.
+-- TABLES: order_items, products
+-- TASK
+--   Return order_item_id, order_id, product_name, category, quantity and line_total
+--   (quantity * unit_price from order_items) for all order lines.
+-- REQUIRED COLUMNS: order_item_id, order_id, product_name, category, quantity, line_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 10.2
+-- Grade it:              python3 sqlm.py submit 10.2
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

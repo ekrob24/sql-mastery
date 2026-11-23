@@ -1,0 +1,265 @@
+{
+  "number": 26,
+  "slug": "ctes",
+  "title": "CTEs",
+  "module": 3,
+  "module_title": "Query composition",
+  "objective": "Name intermediate results with WITH ... AS (...) so queries read top to bottom, can reuse a step several times, and are easy to debug one step at a time.",
+  "context": "As questions get bigger, nested subqueries become unreadable. Analytics teams (and dbt models) write almost every non-trivial query as a chain of CTEs: each step has a name, a grain and one job.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Valid orders per customer",
+      "question": "Rewrite the classic: how many valid orders has each customer_id placed?",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Define a CTE valid_orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), then return customer_id and valid_order_count for every customer_id that appears in it (orders.customer_id, so 99 is included).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "WITH valid_orders AS (SELECT ... FROM orders WHERE ...) then SELECT ... FROM valid_orders.",
+        "No comma after the last CTE, and no semicolon inside the WITH.",
+        "WITH valid_orders AS (SELECT order_id, customer_id FROM orders WHERE <valid>) SELECT customer_id, COUNT(*) AS valid_order_count FROM valid_orders GROUP BY customer_id;"
+      ],
+      "why": "A 'valid_orders' CTE defines the business rule once, and every later step inherits it. That single definition stops revenue numbers drifting between reports.",
+      "recall": {
+        "q": "What keyword introduces a CTE?",
+        "a": "WITH name AS ( query )."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "valid_order_count"
+      ],
+      "expected_row_count": 17
+    },
+    {
+      "number": 2,
+      "title": "Customer spend for every customer",
+      "question": "CRM wants every customer (buyers or not) with lifetime gross spend.",
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE customer_spend (one row per customer_id), then return customer_id, name, total_spend (rounded to 2 decimals, 0 when no valid orders) for all 20 customers.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate in the CTE; join customers to it in the final SELECT.",
+        "LEFT JOIN from customers so non-buyers stay, then COALESCE(\u2026, 0).",
+        "... FROM customers c LEFT JOIN customer_spend s ON s.customer_id = c.customer_id"
+      ],
+      "why": "Aggregate-then-join (via a CTE) avoids fan-out and keeps the customer grain exact: 20 rows in, 20 rows out.",
+      "recall": {
+        "q": "Why aggregate in a CTE before joining to customers instead of joining first?",
+        "a": "It keeps one row per customer and avoids multiplying rows; the join then can't inflate totals."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "total_spend"
+      ],
+      "expected_row_count": 20
+    },
+    {
+      "number": 3,
+      "title": "Products earning above-average revenue",
+      "question": "Which products earn more than the average product revenue?",
+      "tables": [
+        "orders",
+        "order_items",
+        "products"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE product_revenue (product_id, revenue) over sold products, and return product_id, product_name, revenue (rounded to 2 decimals) for products whose revenue is greater than the average revenue across rows of product_revenue. Reference the CTE twice.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The CTE is a table you can query twice: once for rows, once for the average.",
+        "WHERE pr.revenue > (SELECT AVG(revenue) FROM product_revenue)",
+        "WITH product_revenue AS (SELECT i.product_id, SUM(...) AS revenue ... GROUP BY i.product_id) SELECT ... FROM product_revenue pr JOIN products p ... WHERE pr.revenue > (SELECT AVG(revenue) FROM product_revenue);"
+      ],
+      "why": "Reuse is the big win over derived tables. Without a CTE you would paste the revenue query twice and hope they stay in sync.",
+      "recall": {
+        "q": "Can a CTE be referenced more than once in the same query?",
+        "a": "Yes. That's one of its main advantages over a derived table."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "revenue"
+      ],
+      "expected_row_count": 7
+    },
+    {
+      "number": 4,
+      "title": "Best month of each year",
+      "question": "For the annual review: which month had the highest revenue in each year?",
+      "tables": [
+        "orders",
+        "order_items"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded), build a CTE monthly_revenue (order_year, order_month as 'YYYY-MM', revenue). Return order_year, best_month and revenue (rounded to 2 decimals) for the month with the highest revenue in each year.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Step 1 (CTE): revenue per month, keeping the year as its own column.",
+        "Step 2: keep the month whose revenue equals the max for its year (a correlated subquery on the CTE).",
+        "... FROM monthly_revenue m WHERE m.revenue = (SELECT MAX(m2.revenue) FROM monthly_revenue m2 WHERE m2.order_year = m.order_year)"
+      ],
+      "why": "Combining a CTE with a correlated subquery is the portable 'top-1 per group'. In Snowflake you'd write QUALIFY RANK() OVER (PARTITION BY order_year ORDER BY revenue DESC) = 1.",
+      "recall": {
+        "q": "Can a correlated subquery reference a CTE?",
+        "a": "Yes. Inside the WITH query, a CTE behaves like any table."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": "SELECT order_year, order_month AS best_month, revenue FROM monthly_revenue QUALIFY RANK() OVER (PARTITION BY order_year ORDER BY revenue DESC) = 1;",
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "order_year",
+        "best_month",
+        "revenue"
+      ],
+      "expected_row_count": 2
+    },
+    {
+      "number": 5,
+      "title": "Return rate by category",
+      "question": "Quality wants to know which categories have the highest share of order lines returned.",
+      "tables": [
+        "orders",
+        "order_items",
+        "products",
+        "returns"
+      ],
+      "prompt": "Consider lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded). Build a CTE of those lines with their category (NULL \u2192 'Uncategorized') and a flag for whether the order_item_id appears in returns. Return category, lines_sold (number of lines), lines_returned (lines that appear in returns) and return_rate_pct = 100 * lines_returned / lines_sold rounded to 1 decimal.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "CTE 1: valid lines with their category. CTE 2: add an is_returned 0/1 flag.",
+        "CASE WHEN EXISTS (SELECT 1 FROM returns r WHERE r.order_item_id = v.order_item_id) THEN 1 ELSE 0 END",
+        "Final: SELECT category, COUNT(*) AS lines_sold, SUM(is_returned) AS lines_returned, ROUND(100.0 * SUM(is_returned) / COUNT(*), 1) AS return_rate_pct FROM flagged GROUP BY category;"
+      ],
+      "why": "Flag-then-aggregate (a 0/1 column, then SUM and AVG) is the cleanest way to compute rates, and each CTE can be checked on its own.",
+      "recall": {
+        "q": "How do you compute a rate from a 0/1 flag?",
+        "a": "SUM(flag) / COUNT(*) (or AVG(flag)), times 100.0 for a percentage."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "category",
+        "lines_sold",
+        "lines_returned",
+        "return_rate_pct"
+      ],
+      "expected_row_count": 6
+    },
+    {
+      "number": 6,
+      "title": "Region revenue vs the company average",
+      "question": "Sales leadership wants each region's revenue and how far it is from the average region.",
+      "tables": [
+        "orders",
+        "order_items",
+        "customers"
+      ],
+      "prompt": "Using gross revenue = SUM(order_items.quantity * order_items.unit_price) over the lines of valid orders (valid orders = order_status IN ('completed','shipped','returned'); cancelled and pending are excluded) and only orders whose customer exists in customers, return region (NULL \u2192 'Unknown'), revenue (rounded to 2 decimals) and diff_from_avg = region revenue minus the average of the region revenues (rounded to 2 decimals). Use one CTE for region revenue and another for the average.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "CTE 1: revenue per region. CTE 2 reads CTE 1 and produces one row: the average.",
+        "Attach the one-row CTE to every region row with CROSS JOIN.",
+        "WITH region_revenue AS (...), avg_region AS (SELECT AVG(revenue) AS avg_revenue FROM region_revenue) SELECT r.region, ROUND(r.revenue,2) AS revenue, ROUND(r.revenue - a.avg_revenue,2) AS diff_from_avg FROM region_revenue r CROSS JOIN avg_region a;"
+      ],
+      "why": "A later CTE built on an earlier one is the core move of pipeline SQL, which Lesson 27 builds on. Notice orphan order 31 is excluded by the inner join to customers, as the prompt asks.",
+      "recall": {
+        "q": "Can a CTE reference a CTE defined before it?",
+        "a": "Yes. Later CTEs can read any earlier CTE in the same WITH."
+      },
+      "join_plan": null,
+      "join_notes": null,
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "region",
+        "revenue",
+        "diff_from_avg"
+      ],
+      "expected_row_count": 5
+    }
+  ],
+  "worked_example": {
+    "question": "What is the average valid order value per year?",
+    "sql": "WITH valid_orders AS (\n    SELECT order_id, order_date\n    FROM orders\n    WHERE order_status IN ('completed', 'shipped', 'returned')\n),\norder_totals AS (\n    SELECT v.order_id,\n           strftime('%Y', v.order_date)   AS order_year,\n           SUM(i.quantity * i.unit_price) AS order_total\n    FROM valid_orders AS v\n    JOIN order_items AS i ON i.order_id = v.order_id\n    GROUP BY v.order_id, order_year\n)\nSELECT order_year,\n       COUNT(*)                   AS orders,\n       ROUND(AVG(order_total), 2) AS avg_order_value\nFROM order_totals\nGROUP BY order_year;",
+    "explanation": "Same logic as a derived table, but it reads in execution order: filter \u2192 per-order totals \u2192 per-year average. Each CTE can be run on its own while debugging.",
+    "columns": [
+      "order_year",
+      "orders",
+      "avg_order_value"
+    ],
+    "rows": [
+      [
+        "2024",
+        28,
+        233.28
+      ],
+      [
+        "2025",
+        25,
+        260.15
+      ]
+    ]
+  },
+  "recipe": "**Recipe: name each step**\n\n1. Start with `WITH step_name AS ( query )`. Separate more steps with commas. Later steps can reference earlier ones.\n2. Finish with one main `SELECT` that uses the steps like tables.\n   ```sql\n   WITH valid_orders AS (\n       SELECT order_id, customer_id, order_date\n       FROM orders\n       WHERE order_status IN ('completed', 'shipped', 'returned')\n   ),\n   order_totals AS (\n       SELECT v.order_id, v.customer_id, SUM(i.quantity * i.unit_price) AS order_total\n       FROM valid_orders v JOIN order_items i ON i.order_id = v.order_id\n       GROUP BY v.order_id, v.customer_id\n   )\n   SELECT customer_id, ROUND(AVG(order_total), 2) AS avg_order_value\n   FROM order_totals\n   GROUP BY customer_id;\n   ```\n3. A CTE can be referenced **more than once** (e.g. compare each row with an average of the same CTE).\n4. **Debug by swapping the final SELECT** for `SELECT * FROM step_name` to inspect any step.\n5. Name CTEs after what one row represents (`order_totals`, `customer_spend`) and keep one grain per CTE.",
+  "snowflake_notes": "- CTE syntax is identical in Snowflake. Snowflake also lets the final SELECT use `QUALIFY` on a CTE,\n  which often removes one CTE layer (filtering on ROW_NUMBER directly).\n- dbt models are essentially CTE chains: `import` CTEs (`with orders as (select * from {{ ref('orders') }})`),\n  logic CTEs, then `select * from final`.",
+  "common_mistakes": [
+    "A comma after the last CTE, or a missing comma between CTEs.",
+    "Putting a semicolon after a CTE body: the WITH and the final SELECT are one statement.",
+    "Referencing a CTE defined *later* in the list (order matters, except in recursive CTEs).",
+    "Mixing grains in one CTE (lines and orders), then aggregating the wrong one.",
+    "Assuming a CTE is computed once and cached: some engines inline it each time it's referenced (fine for correctness, but matters for cost)."
+  ],
+  "recall": [
+    [
+      "Name two advantages of CTEs over nested derived tables.",
+      "Readability (top-to-bottom steps) and reuse (reference the same step multiple times); also easy debugging."
+    ],
+    [
+      "How do you debug a long CTE chain?",
+      "Replace the final SELECT with SELECT * FROM <some_cte> to inspect that step."
+    ],
+    [
+      "Does a CTE exist after the query finishes?",
+      "No. It's scoped to that single statement (unlike a view or temp table)."
+    ]
+  ],
+  "review_next": "Lesson 27 chains 3\u20135 CTEs into full analytical pipelines (base \u2192 enrich \u2192 aggregate \u2192 final). Re-write exercise 22.6 with a CTE before moving on."
+}

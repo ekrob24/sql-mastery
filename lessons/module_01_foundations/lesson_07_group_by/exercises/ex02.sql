@@ -1,0 +1,15 @@
+-- Lesson 7 · Exercise 7.2 — Customers per region, unknowns labelled
+--
+-- BUSINESS QUESTION
+--   How are customers distributed across regions?
+-- TABLES: customers
+-- TASK
+--   Return region_label (region, or 'Unknown' when NULL) and customer_count, one row per
+--   region_label, sorted by customer_count descending, then region_label ascending.
+-- REQUIRED COLUMNS: region_label, customer_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 7.2
+-- Grade it:              python3 sqlm.py submit 7.2
+--
+-- Write your query below (from memory!):
+

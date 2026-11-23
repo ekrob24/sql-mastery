@@ -1,0 +1,369 @@
+{
+  "number": 17,
+  "slug": "anti_joins",
+  "title": "Anti-joins: LEFT JOIN ... IS NULL and NOT EXISTS",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Find rows that have NO match in another table using LEFT JOIN \u2026 IS NULL and NOT EXISTS, and avoid the NOT IN + NULL trap.",
+  "context": "Some of the most valuable questions are about absence: customers who never ordered, products that never sold, suppliers we pay for but don't stock, references to records that don't exist. These are anti-joins: keep the left rows that have no partner on the right.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Customers who never ordered",
+      "question": "Marketing wants a win-back list: customers who have never placed any order.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id, name and signup_date for customers with no row in orders (any status). Use LEFT JOIN \u2026 IS NULL.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "LEFT JOIN keeps every customer; customers without orders get NULL order columns.",
+        "Test a right-side column that can never be NULL for a real match \u2014 the key.",
+        "FROM customers c LEFT JOIN orders o ON o.customer_id = c.customer_id WHERE o.order_id IS NULL"
+      ],
+      "why": "Activation and win-back campaigns start from 'who did nothing'. The anti-join is the only way to see rows that by definition left no trace in the activity table.",
+      "recall": {
+        "q": "Why test o.order_id IS NULL rather than any orders column?",
+        "a": "order_id is the key, never NULL in a real match \u2014 a nullable column could be NULL in matched rows too."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "NOT EXISTS",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "The LEFT JOIN returns 62 rows: 59 order rows for 17 customers (customer 1 alone repeats 9 times) plus 3 NULL-extended rows for customers 18 (Mia Lewis), 19 (alice johnson) and 20 (Zoe Turner). WHERE o.order_id IS NULL keeps exactly those 3. Orphan order 31 (customer 99) is irrelevant here \u2014 it's unmatched on the RIGHT side, which a LEFT JOIN discards.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name",
+        "signup_date"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 2,
+      "title": "Products never sold",
+      "question": "Merchandising wants to delist dead stock: which products have never appeared on any order line?",
+      "tables": [
+        "products",
+        "order_items"
+      ],
+      "prompt": "Return product_id, product_name and category for products with no row in order_items. Use NOT EXISTS.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "NOT EXISTS (SELECT 1 FROM ... WHERE <correlation>) keeps rows with no match.",
+        "Correlate the subquery to the outer product: i.product_id = p.product_id.",
+        "SELECT ... FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items i WHERE i.product_id = p.product_id);"
+      ],
+      "why": "NOT EXISTS reads like the business question ('there is no sale for this product'), never multiplies rows, and is immune to the NULL trap.",
+      "recall": {
+        "q": "Does it matter what NOT EXISTS's subquery SELECTs?",
+        "a": "No \u2014 only whether any row exists. SELECT 1 is the convention."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "order_items",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "NOT EXISTS",
+          "LEFT JOIN",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "NOT EXISTS never multiplies: each of the 25 products is tested once, however many of the 150 lines mention it. 22 products have at least one line; 23 (Smart Watch), 24 (Linen Tablecloth) and 25 (Tennis Racket) have none \u2192 3 rows. The LEFT JOIN version would first build 153 rows (150 lines + 3 NULL rows) before filtering.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "category"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 3,
+      "title": "Suppliers with no products",
+      "question": "Procurement wants to close supplier accounts that supply nothing in our catalog.",
+      "tables": [
+        "suppliers",
+        "products"
+      ],
+      "prompt": "Return supplier_id, supplier_name and country for suppliers that no product references via products.supplier_id.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Left table = suppliers, evidence table = products.",
+        "Tempted by NOT IN (SELECT supplier_id FROM products)? Run it and count the rows first.",
+        "WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.supplier_id = s.supplier_id)"
+      ],
+      "why": "This is the textbook case where NOT IN silently fails: one NULL foreign key in the subquery and the 'unused suppliers' report comes back empty \u2014 looking like good news.",
+      "recall": {
+        "q": "What does `5 NOT IN (1, 2, NULL)` evaluate to?",
+        "a": "NULL (unknown), not TRUE \u2014 so the row is filtered out. One NULL poisons NOT IN."
+      },
+      "join_plan": {
+        "left_table": "suppliers",
+        "right_table": "products",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "NOT EXISTS",
+          "LEFT JOIN",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "Suppliers 1-4 are referenced by 23 products; supplier 5 (Andes Trading, NULL country) by none \u2192 1 row, with country NULL (a NULL attribute, not a failed match). `WHERE supplier_id NOT IN (SELECT supplier_id FROM products)` returns 0 rows because product 22's supplier_id is NULL; product 21's supplier_id 9 points to no supplier, which doesn't affect this direction at all.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name",
+        "country"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 4,
+      "title": "Broken supplier references",
+      "question": "Data quality wants products whose supplier_id is filled in but points at a supplier that doesn't exist.",
+      "tables": [
+        "products",
+        "suppliers"
+      ],
+      "prompt": "Return product_id, product_name and supplier_id for products whose supplier_id is NOT NULL and has no matching row in suppliers. Products with a NULL supplier_id are a different issue and must be excluded.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Anti-join products \u2192 suppliers.",
+        "A NULL supplier_id also finds no supplier \u2014 exclude it explicitly.",
+        "LEFT JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE s.supplier_id IS NULL AND p.supplier_id IS NOT NULL"
+      ],
+      "why": "Orphaned foreign keys ('points to nothing') and missing foreign keys ('points nowhere') have different root causes and owners; a good data-quality check separates them.",
+      "recall": {
+        "q": "Why does a product with a NULL supplier_id show up in a LEFT JOIN \u2026 IS NULL anti-join?",
+        "a": "NULL never equals anything, so it finds no supplier and gets NULL right-side columns like a true orphan."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "suppliers",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "NOT EXISTS",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "supplier_id is unique in suppliers, so the LEFT JOIN keeps exactly 25 rows. 23 products match; 2 get NULL supplier columns: product 21 (Water Bottle, supplier_id 9 \u2014 no such supplier) and product 22 (Phone Stand, supplier_id NULL). The extra p.supplier_id IS NOT NULL removes 22, leaving 1 true orphan reference.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name",
+        "supplier_id"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "Customers with no valid order",
+      "question": "Finance asks: which customers have never generated revenue \u2014 no completed, shipped or returned order (cancelled/pending ones don't count)?",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id and name for customers with no valid order (valid = order_status IN ('completed','shipped','returned')). Customers with only cancelled/pending orders, or no orders at all, qualify.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The status filter describes which orders count as a match \u2014 so it belongs with the match condition, not in the final WHERE.",
+        "LEFT JOIN orders ON customer_id AND status IN (...), then WHERE o.order_id IS NULL. (Or NOT EXISTS with the status in the subquery.)",
+        "LEFT JOIN orders o ON o.customer_id = c.customer_id AND o.order_status IN ('completed','shipped','returned') WHERE o.order_id IS NULL"
+      ],
+      "why": "Filtered anti-joins ('no purchase in the last 90 days', 'no valid order') are everyday churn logic, and putting the filter in WHERE is the most common way they break.",
+      "recall": {
+        "q": "In a LEFT JOIN anti-join, where must conditions on the right table go?",
+        "a": "In the ON clause (or inside NOT EXISTS). In WHERE they reject the NULL rows you're looking for."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "LEFT JOIN",
+          "NOT EXISTS",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "With the status filter in ON, only valid orders can match: 16 customers match one or more valid orders, 4 get NULLs \u2014 16 (Ava Thompson, whose only order 48 is cancelled), 18, 19 and 20 (no orders). Result 4 rows. If you move the status test to WHERE, the NULL rows fail `o.order_status IN (...)` and the result is 0 rows; if you drop it, customer 16 disappears because her cancelled order counts as a match.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "name"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 6,
+      "title": "The NOT IN trap: unused category names",
+      "question": "The catalog team wants category names from the category tree that no product is tagged with. Their NOT IN query says 'none' \u2014 is that true?",
+      "tables": [
+        "categories",
+        "products"
+      ],
+      "prompt": "Return category_id and category_name for categories whose category_name does not equal any products.category. (products.category contains a NULL for product 20 \u2014 your query must still return the right answer.)",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Try `WHERE category_name NOT IN (SELECT category FROM products)` and count the rows. Why?",
+        "Use NOT EXISTS, or add WHERE category IS NOT NULL inside the NOT IN subquery.",
+        "WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.category = c.category_name)"
+      ],
+      "why": "NOT IN against a nullable column is a silent-failure bug: no error, just an empty result that looks like 'all good'. Default to NOT EXISTS.",
+      "recall": {
+        "q": "Name two ways to make a NOT IN anti-join NULL-safe.",
+        "a": "Use NOT EXISTS instead, or filter the subquery with WHERE col IS NOT NULL."
+      },
+      "join_plan": {
+        "left_table": "categories",
+        "right_table": "products",
+        "shared_key": [
+          "category_name category",
+          "category"
+        ],
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "NOT EXISTS",
+          "LEFT JOIN",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "The join key here is a text label (category_name = category), not an id. Only 5 of 14 category names (Electronics, Home, Apparel, Books, Sports) are used by products; the other 9 \u2014 All Products, Audio, Computer Accessories, Kitchen, Decor, Footwear, Outerwear, Fitness, Strength Training \u2014 are returned. The NOT IN version returns 0 rows because product 20's NULL category makes every `name <> NULL` test unknown.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name"
+      ],
+      "expected_row_count": 9
+    },
+    {
+      "number": 7,
+      "title": "Products never sold to the North region",
+      "question": "The North regional manager wants to know which catalog products have never been bought by a North customer in a valid order.",
+      "tables": [
+        "products",
+        "order_items",
+        "orders",
+        "customers"
+      ],
+      "prompt": "Return product_id and product_name for products with no order line in a valid order (order_status IN ('completed','shipped','returned')) placed by a customer whose region is 'North'. Products never sold at all also qualify.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "The 'evidence' is itself a join: order_items \u2192 orders \u2192 customers.",
+        "Put that whole join, plus the region and status filters, inside NOT EXISTS and correlate on product_id.",
+        "WHERE NOT EXISTS (SELECT 1 FROM order_items i JOIN orders o ON ... JOIN customers c ON ... WHERE i.product_id = p.product_id AND c.region = 'North' AND o.order_status IN (...))"
+      ],
+      "why": "Real 'never' questions are scoped (never in this region / channel / period). NOT EXISTS with an inner join inside scales to any amount of scoping without fan-out.",
+      "recall": {
+        "q": "Why is NOT EXISTS convenient when the 'evidence' needs several joined tables?",
+        "a": "The subquery can contain any joins and filters; the outer query stays one row per product, so nothing multiplies."
+      },
+      "join_plan": {
+        "left_table": "products",
+        "right_table": "order_items, orders, customers",
+        "shared_key": "product_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": [
+          "NOT EXISTS",
+          "LEFT JOIN",
+          "LEFT ANTI JOIN",
+          "ANTI JOIN"
+        ]
+      },
+      "join_notes": "Inside the subquery the lines are joined to orders and customers and filtered to North + valid; 14 products have at least one such line, 11 don't: 8, 11, 12, 13, 14, 16, 19, 20 plus never-sold 23, 24, 25. Order 31 (customer 99) can never count as North \u2014 its customer doesn't exist, so the inner join inside drops it. With a LEFT JOIN approach the region/status filters must all live in the ON clauses, which is far easier to get wrong.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex07.sql",
+      "solution_file": "solutions/ex07_solution.sql",
+      "expected_file": "solutions/ex07_expected_output.csv",
+      "expected_columns": [
+        "product_id",
+        "product_name"
+      ],
+      "expected_row_count": 11
+    }
+  ],
+  "worked_example": {
+    "question": "Which orders reference a customer that doesn't exist (orphan orders)?",
+    "sql": "SELECT o.order_id, o.customer_id, o.order_status\nFROM orders AS o\nLEFT JOIN customers AS c ON c.customer_id = o.customer_id\nWHERE c.customer_id IS NULL;",
+    "explanation": "All 60 orders survive the LEFT JOIN; 59 find their customer and only order 31 (customer_id 99) gets NULLs on the customer side. Testing the right table's key for NULL keeps exactly the unmatched row.",
+    "columns": [
+      "order_id",
+      "customer_id",
+      "order_status"
+    ],
+    "rows": [
+      [
+        31,
+        99,
+        "completed"
+      ]
+    ]
+  },
+  "recipe": "**Recipe: anti-join in 4 moves**\n\n1. Left table = the things you want to list (customers). Right table = the evidence of activity (orders).\n2. **Pattern A \u2014 LEFT JOIN \u2026 IS NULL:** left join, then keep rows where a *never-NULL* right column\n   (its key) is NULL.\n3. **Pattern B \u2014 NOT EXISTS:** keep left rows for which a correlated subquery finds nothing.\n4. Put **conditions about the right side** (status, region, date) *inside* the ON clause or the\n   subquery \u2014 never in the outer WHERE, or you turn the anti-join back into an inner join.\n\n```sql\n-- A: LEFT JOIN anti-join\nSELECT c.customer_id\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.customer_id\nWHERE o.order_id IS NULL;\n\n-- B: NOT EXISTS (usually the clearest and safest)\nSELECT c.customer_id\nFROM customers c\nWHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);\n```\n\n**The NOT IN trap:** `x NOT IN (SELECT col ...)` returns **no rows at all** if `col` contains a single\nNULL, because `x <> NULL` is unknown. Products has a NULL `supplier_id` (product 22) and a NULL\n`category` (product 20), so `NOT IN (SELECT supplier_id FROM products)` silently returns nothing.\nUse NOT EXISTS, or add `WHERE col IS NOT NULL` inside the subquery.\n\n**Snowflake:** same SQL. Snowflake's optimizer turns NOT EXISTS into an anti-join internally; you\nmay see \"ANTI JOIN\" in the query profile.",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Testing a nullable right-side column for IS NULL instead of the right table's key.",
+    "Putting right-table filters (status, region, date) in WHERE after a LEFT JOIN \u2014 the anti-join returns nothing.",
+    "Using NOT IN against a column that can be NULL \u2014 the whole result silently becomes empty.",
+    "Forgetting that a NULL foreign key also looks 'unmatched' in a LEFT JOIN anti-join.",
+    "Confusing directions: orphan orders (unmatched on the orders side) vs customers without orders (unmatched on the customers side)."
+  ],
+  "recall": [
+    [
+      "Write the two standard anti-join patterns.",
+      "LEFT JOIN r ON \u2026 WHERE r.key IS NULL; and WHERE NOT EXISTS (SELECT 1 FROM r WHERE r.key = l.key)."
+    ],
+    [
+      "Why can NOT IN return zero rows unexpectedly?",
+      "If the subquery returns any NULL, x NOT IN (...) is never TRUE."
+    ],
+    [
+      "Can an anti-join multiply rows?",
+      "NOT EXISTS never does; LEFT JOIN \u2026 IS NULL can't in its output either, because only unmatched (single NULL-extended) rows survive."
+    ]
+  ],
+  "review_next": "Next, Lesson 18 looks at NATURAL JOIN \u2014 a join that chooses its own key, which is exactly what this lesson taught you to be careful about. Re-run 17.5 with the status filter moved into WHERE and watch it return 0 rows."
+}

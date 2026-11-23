@@ -1,0 +1,11 @@
+category,product_id,product_name,product_revenue,rank_in_category
+Apparel,11,Running Shoes,360.0,1
+Apparel,12,Rain Jacket,275.5,2
+Books,15,SQL for Analysts,760.2,1
+Books,17,The Pragmatic Warehouse,727.2,2
+Electronics,4,Noise-Cancelling Headphones,2577.05,1
+Electronics,5,27in Monitor,1007.96,2
+Home,9,Throw Blanket,989.9,1
+Home,7,Cast Iron Skillet,443.25,2
+Sports,19,Adjustable Dumbbells,2451.0,1
+Sports,18,Yoga Mat,231.0,2

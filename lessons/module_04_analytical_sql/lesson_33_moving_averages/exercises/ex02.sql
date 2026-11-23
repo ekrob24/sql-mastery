@@ -1,0 +1,20 @@
+-- Lesson 33 · Exercise 33.2 — Only report full windows
+--
+-- BUSINESS QUESTION
+--   Finance objects that the first two months' 'averages' aren't really 3-month averages.
+--   Show NULL there.
+-- TABLES: orders, order_items
+-- TASK
+--   Gross revenue = SUM(quantity * unit_price) over the order_items of valid orders
+--   (order_status IN ('completed','shipped','returned')); cancelled and pending orders are
+--   excluded. Return order_month ('YYYY-MM'), gross_revenue (rounded to 2 decimals),
+--   months_in_window (number of rows in the 2-preceding-to-current frame) and
+--   moving_avg_3m (rounded to 2 decimals; NULL unless months_in_window = 3). Ordered by
+--   order_month.
+-- REQUIRED COLUMNS: order_month, gross_revenue, months_in_window, moving_avg_3m
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 33.2
+-- Grade it:              python3 sqlm.py submit 33.2
+--
+-- Write your query below (from memory!):
+

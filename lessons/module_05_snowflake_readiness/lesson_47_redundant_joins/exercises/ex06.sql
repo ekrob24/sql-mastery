@@ -1,0 +1,19 @@
+-- Lesson 47 · Exercise 47.6 — Anti-join instead of LEFT JOIN + GROUP BY + HAVING
+--
+-- BUSINESS QUESTION
+--   Review this: `SELECT c.customer_id, c.name FROM customers c LEFT JOIN orders o ON
+--   o.customer_id = c.customer_id AND o.order_status IN ('completed','shipped','returned')
+--   LEFT JOIN order_items oi ON oi.order_id = o.order_id GROUP BY c.customer_id, c.name
+--   HAVING COUNT(oi.order_item_id) = 0`.
+-- TABLES: customers, orders
+-- TASK
+--   Return customer_id and name of customers who have no valid order (order_status IN
+--   ('completed','shipped','returned')), written with NOT EXISTS and without joining
+--   order_items. (Every valid order has lines, so this is the same set.)
+-- REQUIRED COLUMNS: customer_id, name
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 47.6
+-- Grade it:              python3 sqlm.py submit 47.6
+--
+-- Write your query below (from memory!):
+

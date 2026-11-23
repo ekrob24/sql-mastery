@@ -1,0 +1,24 @@
+-- Lesson 12 · Exercise 12.3 — Units sold per product, zero included
+--
+-- BUSINESS QUESTION
+--   Inventory wants units sold for EVERY product in the catalogue (all statuses), 0 for
+--   never-sold items.
+-- TABLES: order_items, products
+-- TASK
+--   Write FROM order_items ... RIGHT JOIN products. Return product_id (from products),
+--   product_name and units_sold (SUM of quantity; 0 when never sold) for all 25 products.
+-- REQUIRED COLUMNS: product_id, product_name, units_sold
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 12.3
+-- Grade it:              python3 sqlm.py submit 12.3
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,20 @@
+-- Lesson 48 · Exercise 48.6 — Average order value computed per line
+--
+-- BUSINESS QUESTION
+--   The KPI tile says average order value is ~110, finance says it's much higher. The tile
+--   uses: `SELECT AVG(oi.quantity*oi.unit_price) FROM orders o JOIN order_items oi ON
+--   oi.order_id = o.order_id WHERE o.order_status IN ('completed','shipped','returned')`.
+-- TABLES: orders, order_items
+-- TASK
+--   Return one row with valid_orders (number of valid orders with lines), gross_revenue
+--   and avg_order_value (gross_revenue / valid_orders), money rounded to 2 decimals. Valid
+--   orders = order_status IN ('completed','shipped','returned'); gross revenue =
+--   SUM(quantity * unit_price) over those orders' order_items lines (never
+--   products.list_price).
+-- REQUIRED COLUMNS: valid_orders, gross_revenue, avg_order_value
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 48.6
+-- Grade it:              python3 sqlm.py submit 48.6
+--
+-- Write your query below (from memory!):
+

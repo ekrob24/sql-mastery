@@ -1,0 +1,310 @@
+{
+  "number": 13,
+  "slug": "full_outer_join",
+  "title": "FULL OUTER JOIN",
+  "module": 2,
+  "module_title": "Joins",
+  "objective": "Use FULL OUTER JOIN to keep unmatched rows from both tables, classify each row as matched / left-only / right-only, and COALESCE keys from both sides.",
+  "context": "The data-quality lead is running reconciliations: does the supplier master agree with the product catalogue? do customers and orders line up? Mismatches on EITHER side matter, so neither table may be the 'driving' one.",
+  "exercises": [
+    {
+      "number": 1,
+      "title": "Supplier\u2013product reconciliation",
+      "question": "Procurement wants one list containing every supplier AND every product, matched where possible.",
+      "tables": [
+        "suppliers",
+        "products"
+      ],
+      "prompt": "Return supplier_id (from suppliers), supplier_name, product_id and product_name for every supplier and every product: matched pairs, suppliers with no products (product columns NULL) and products with no matching supplier (supplier columns NULL).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Unmatched rows from BOTH sides must survive.",
+        "FULL OUTER JOIN (or FULL JOIN) on supplier_id.",
+        "SELECT s.supplier_id, s.supplier_name, p.product_id, p.product_name FROM suppliers s FULL OUTER JOIN products p ON p.supplier_id = s.supplier_id;"
+      ],
+      "why": "Reconciliation reports need both kinds of gap at once \u2014 master data without activity and activity without master data.",
+      "recall": {
+        "q": "How do you compute the row count of a FULL OUTER JOIN?",
+        "a": "Matched rows + unmatched left rows + unmatched right rows."
+      },
+      "join_plan": {
+        "left_table": "suppliers",
+        "right_table": "products",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "suppliers 5, products 25. Result: 26 rows = 23 matched pairs (suppliers 1\u20133 repeat 6 times, supplier 4 five times) + 1 supplier-only row (5 'Andes Trading', product columns NULL) + 2 product-only rows (21 'Water Bottle' whose supplier 9 doesn't exist, 22 'Phone Stand' with NULL supplier_id \u2014 both with supplier_id and supplier_name NULL). INNER would give 23, suppliers LEFT JOIN products 24, products LEFT JOIN suppliers 25.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex01.sql",
+      "solution_file": "solutions/ex01_solution.sql",
+      "expected_file": "solutions/ex01_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "supplier_name",
+        "product_id",
+        "product_name"
+      ],
+      "expected_row_count": 26
+    },
+    {
+      "number": 2,
+      "title": "Only the mismatches, classified",
+      "question": "Data quality wants just the problem rows from the supplier\u2013product reconciliation, with a label.",
+      "tables": [
+        "suppliers",
+        "products"
+      ],
+      "prompt": "Return supplier_id (= COALESCE(s.supplier_id, p.supplier_id)), product_id and issue, only for unmatched rows. issue is 'supplier has no products' when the product side is missing, 'product has no supplier_id' when the product's supplier_id is NULL, and 'unknown supplier' when the product's supplier_id points to no supplier.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Unmatched = one side's primary key is NULL. Filter with WHERE s.supplier_id IS NULL OR p.product_id IS NULL.",
+        "Order the CASE branches: product side missing \u2192 p.supplier_id NULL \u2192 otherwise unknown supplier.",
+        "SELECT COALESCE(s.supplier_id, p.supplier_id) AS supplier_id, p.product_id, CASE WHEN p.product_id IS NULL THEN ... END AS issue FROM suppliers s FULL OUTER JOIN products p ON ... WHERE s.supplier_id IS NULL OR p.product_id IS NULL"
+      ],
+      "why": "An exception report \u2014 only the rows that need action \u2014 is what data stewards actually work from.",
+      "recall": {
+        "q": "Why COALESCE(s.supplier_id, p.supplier_id)?",
+        "a": "In a FULL JOIN either side can be NULL; COALESCE shows whichever key exists (5 from suppliers, 9 from products)."
+      },
+      "join_plan": {
+        "left_table": "suppliers",
+        "right_table": "products",
+        "shared_key": "supplier_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "The FULL JOIN yields 26 rows (23 matched + 1 + 2); the WHERE keeps the 3 unmatched ones: supplier 5 (no products), product 21 with supplier_id 9 (unknown supplier \u2014 COALESCE shows the 9 from the product side) and product 22 (supplier_id NULL even after COALESCE, because it is NULL on both sides). Here a WHERE on NULLs is deliberate: we WANT only the NULL-padded rows.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex02.sql",
+      "solution_file": "solutions/ex02_solution.sql",
+      "expected_file": "solutions/ex02_expected_output.csv",
+      "expected_columns": [
+        "supplier_id",
+        "product_id",
+        "issue"
+      ],
+      "expected_row_count": 3
+    },
+    {
+      "number": 3,
+      "title": "Customers without orders and orders without customers",
+      "question": "Finance and CRM want one exception list: customers who never ordered and orders that belong to no known customer.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return customer_id (= COALESCE(c.customer_id, o.customer_id)), customer_name (customers.name) and order_id for rows of a FULL OUTER JOIN of customers and orders where either side is unmatched.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Both directions matter \u2192 FULL OUTER JOIN.",
+        "Unmatched rows: c.customer_id IS NULL (order-only) OR o.order_id IS NULL (customer-only).",
+        "SELECT COALESCE(c.customer_id, o.customer_id) AS customer_id, c.name AS customer_name, o.order_id FROM customers c FULL OUTER JOIN orders o ON ... WHERE c.customer_id IS NULL OR o.order_id IS NULL"
+      ],
+      "why": "One query, both failure modes. This is the backbone of source-to-target reconciliation in data engineering.",
+      "recall": {
+        "q": "In this result, why is customer_name NULL for customer 99?",
+        "a": "Customer 99 exists only as a value in orders; there is no customers row, so all customers columns are NULL-padded."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "customers 20, orders 60. The FULL JOIN returns 63 rows = 59 matched (customer rows repeated once per order) + 3 customer-only rows (18, 19, 20; order_id NULL) + 1 order-only row (order 31, customer 99; customer_name NULL). The WHERE keeps those 4 exceptions. Neither a LEFT nor a RIGHT JOIN alone can show both kinds.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex03.sql",
+      "solution_file": "solutions/ex03_solution.sql",
+      "expected_file": "solutions/ex03_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "customer_name",
+        "order_id"
+      ],
+      "expected_row_count": 4
+    },
+    {
+      "number": 4,
+      "title": "Reconciliation scorecard",
+      "question": "The data-quality dashboard wants three numbers summarising how customers and orders line up.",
+      "tables": [
+        "customers",
+        "orders"
+      ],
+      "prompt": "Return a single row with matched_rows (rows of the FULL OUTER JOIN of customers and orders where both sides exist), customers_without_orders and orders_without_customer.",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Classify each FULL JOIN row with CASE, then SUM the 1s.",
+        "Test the primary keys: o.order_id IS NULL \u2192 customer-only; c.customer_id IS NULL \u2192 order-only.",
+        "SUM(CASE WHEN o.order_id IS NULL THEN 1 ELSE 0 END) AS customers_without_orders, ..."
+      ],
+      "why": "Monitoring jobs run exactly this query nightly and alert when the unmatched counts move.",
+      "recall": {
+        "q": "Why test o.order_id and not o.customer_id for 'customer without orders'?",
+        "a": "o.order_id is the PK of orders and is NULL only on NULL-padded rows; o.customer_id could be NULL in real data too."
+      },
+      "join_plan": {
+        "left_table": "customers",
+        "right_table": "orders",
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "The FULL JOIN has 63 rows: matched_rows = 59 (orders that found their customer; customers with many orders count many times \u2014 that's the one-to-many multiplication), customers_without_orders = 3 (18, 19, 20) and orders_without_customer = 1 (order 31 \u2192 customer 99). 59 + 3 + 1 = 63, and 59 + 1 = 60 orders, 17 + 3 = 20 customers \u2014 the reconciliation balances.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex04.sql",
+      "solution_file": "solutions/ex04_solution.sql",
+      "expected_file": "solutions/ex04_expected_output.csv",
+      "expected_columns": [
+        "matched_rows",
+        "customers_without_orders",
+        "orders_without_customer"
+      ],
+      "expected_row_count": 1
+    },
+    {
+      "number": 5,
+      "title": "2024 vs. 2025 orders per customer (FULL JOIN of aggregates)",
+      "question": "Growth wants to compare each customer's order count in 2024 with 2025 \u2014 including customers active in only one of the years.",
+      "tables": [
+        "orders"
+      ],
+      "prompt": "Build two per-customer aggregates from orders (any status): orders in 2024 and orders in 2025 (use strftime('%Y', order_date)). FULL OUTER JOIN them on customer_id and return customer_id, orders_2024 and orders_2025 (0 when the customer had no orders that year), one row per customer_id that ordered in either year (include customer_id 99 \u2014 it is in orders).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate first (one row per customer per year), THEN join \u2014 joining one-row-per-customer sets can't multiply.",
+        "Customers active in only one year must survive from either side \u2192 FULL OUTER JOIN; COALESCE the key and the counts.",
+        "WITH y2024 AS (SELECT customer_id, COUNT(*) AS n FROM orders WHERE strftime('%Y', order_date) = '2024' GROUP BY customer_id), y2025 AS (...) SELECT COALESCE(a.customer_id, b.customer_id) AS customer_id, COALESCE(a.n,0) AS orders_2024, COALESCE(b.n,0) AS orders_2025 FROM y2024 a FULL OUTER JOIN y2025 b ON ..."
+      ],
+      "why": "Period-over-period comparisons (retained / churned / new) are a FULL JOIN of two aggregates \u2014 the classic cohort building block.",
+      "recall": {
+        "q": "Which customers would an INNER JOIN of the two yearly aggregates lose?",
+        "a": "Everyone active in only one year \u2014 churned (2024 only) and new (2025 only) customers."
+      },
+      "join_plan": {
+        "left_table": [
+          "y2024",
+          "orders"
+        ],
+        "right_table": [
+          "y2025",
+          "orders"
+        ],
+        "shared_key": "customer_id",
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "The 2024 aggregate has 12 customer rows (1\u201312), the 2025 aggregate 16 (15 real customers + 99). Both are one row per customer, so the join cannot multiply rows. Result: 18 rows = 10 customers in both years + 2 only in 2024 (customers 5 and 8 \u2014 churned; orders_2025 NULL \u2192 0) + 6 only in 2025 (13, 14, 15, 16, 17 and the orphan 99 \u2014 orders_2024 NULL \u2192 0). Without COALESCE on the key, the 2025-only rows would show customer_id NULL.",
+      "snowflake": "Identical in Snowflake; YEAR(order_date) = 2024 is the idiomatic filter there.",
+      "exercise_file": "exercises/ex05.sql",
+      "solution_file": "solutions/ex05_solution.sql",
+      "expected_file": "solutions/ex05_expected_output.csv",
+      "expected_columns": [
+        "customer_id",
+        "orders_2024",
+        "orders_2025"
+      ],
+      "expected_row_count": 18
+    },
+    {
+      "number": 6,
+      "title": "Category tree vs. product categories",
+      "question": "The catalogue team maintains a category tree; merchandising tags products with a category text. Do they agree?",
+      "tables": [
+        "categories",
+        "products"
+      ],
+      "prompt": "Aggregate products by category (product count per category value, NULL category included as its own group). FULL OUTER JOIN that to categories on category_name = category and return category_id (from categories; NULL if not in the tree), category_name (COALESCE of the tree name and the product category) and product_count (0 when no product uses that category).",
+      "ordered": false,
+      "strict_column_order": false,
+      "hints": [
+        "Aggregate products to one row per category first (a CTE), so the join stays one-to-one.",
+        "Neither side drives \u2014 tree nodes without products and product categories missing from the tree both matter.",
+        "FROM categories c FULL OUTER JOIN product_cats pc ON pc.category = c.category_name, COALESCE the name and the count"
+      ],
+      "why": "Taxonomy drift between a master hierarchy and tagged data is a constant source of 'Other / Unknown' buckets in dashboards.",
+      "recall": {
+        "q": "Product 20 has a NULL category. Why does it show up as an unmatched row?",
+        "a": "NULL = 'anything' (even NULL) is never true, so the NULL group can't match any tree node."
+      },
+      "join_plan": {
+        "left_table": "categories",
+        "right_table": [
+          "product_cats",
+          "products"
+        ],
+        "shared_key": [
+          "category_name",
+          "category"
+        ],
+        "unmatched_rows_matter": "yes",
+        "join_type": "FULL OUTER JOIN"
+      },
+      "join_notes": "categories has 14 rows; the product aggregate has 6 (Electronics 7, Home 6, Apparel 4, Books 3, Sports 4, NULL 1). Result: 15 rows = 5 matched top-level categories + 9 tree-only nodes (All Products, Audio, Computer Accessories, Kitchen, Decor, Footwear, Outerwear, Fitness, Strength Training; product_count 0) + 1 product-only row: the NULL category of product 20, with category_id NULL and category_name NULL. NULL never equals NULL, so it cannot match. No multiplication: both sides are one row per category.",
+      "snowflake": null,
+      "exercise_file": "exercises/ex06.sql",
+      "solution_file": "solutions/ex06_solution.sql",
+      "expected_file": "solutions/ex06_expected_output.csv",
+      "expected_columns": [
+        "category_id",
+        "category_name",
+        "product_count"
+      ],
+      "expected_row_count": 15
+    }
+  ],
+  "worked_example": {
+    "question": "Classify every supplier/product row as matched, supplier-only or product-only and count them.",
+    "sql": "SELECT CASE WHEN s.supplier_id IS NULL THEN 'product without supplier'\n            WHEN p.product_id  IS NULL THEN 'supplier without products'\n            ELSE 'matched' END AS match_status,\n       COUNT(*) AS row_count\nFROM suppliers AS s\nFULL OUTER JOIN products AS p ON p.supplier_id = s.supplier_id\nGROUP BY match_status\nORDER BY match_status;",
+    "explanation": "23 matched pairs, 2 products without a valid supplier (21 and 22) and 1 supplier without products (5) = 26 rows. An INNER JOIN would show only the 23; LEFT from suppliers 24; LEFT from products 25.",
+    "columns": [
+      "match_status",
+      "row_count"
+    ],
+    "rows": [
+      [
+        "matched",
+        23
+      ],
+      [
+        "product without supplier",
+        2
+      ],
+      [
+        "supplier without products",
+        1
+      ]
+    ]
+  },
+  "recipe": "**The join recipe \u2014 do it in this order, every time, before typing SQL**\n\n1. **Pick the driving table.** Which table's rows is the answer *about*? (\"every customer\u2026\", \"each order line\u2026\")\n   That table goes first, after `FROM` \u2014 it is the **left table**.\n2. **Name the right table(s) and the shared key.** What column links them? Is it PK \u2192 FK (one-to-many) or\n   one-to-one? Which side is the \"many\" side?\n3. **Ask: \"must every row of the left table survive, even with no match?\"**\n   - no \u2192 `INNER JOIN` (unmatched rows silently disappear)\n   - yes \u2192 `LEFT JOIN` (unmatched rows stay, right-side columns become NULL)\n   - rows from *both* sides must survive \u2192 `FULL OUTER JOIN`\n4. **Predict the row count before you run it.** Count the inputs (`SELECT COUNT(*) \u2026`), think about\n   matches per row (0, 1 or many), write your guess down \u2014 then run and compare. A surprise means\n   you misunderstood the grain, the key or the data.\n\n**FULL OUTER JOIN = LEFT JOIN \u222a RIGHT JOIN.** Every row of both tables survives: matched pairs once,\nleft-only rows with NULL right columns, right-only rows with NULL left columns.\n\n```sql\nSELECT COALESCE(s.supplier_id, p.supplier_id) AS supplier_id,   -- key from whichever side exists\n       s.supplier_name, p.product_id,\n       CASE WHEN s.supplier_id IS NULL THEN 'product only'\n            WHEN p.product_id  IS NULL THEN 'supplier only'\n            ELSE 'matched' END AS match_status\nFROM   suppliers AS s\nFULL OUTER JOIN products AS p ON p.supplier_id = s.supplier_id;\n-- predict: matched pairs + left-only + right-only = 23 + 1 + 2 = 26\n```\n\n- **Row count = matched rows + unmatched left rows + unmatched right rows.** Predict each piece.\n- Classify rows by testing each side's **primary key** for NULL.\n- Use `COALESCE(left.key, right.key)` for a single key column \u2014 either side may be NULL.\n- Filters on either table in WHERE remove NULL-padded rows \u2192 put them in ON or pre-filter in a subquery/CTE.\n- Great pattern: FULL JOIN two *aggregated* sets (2024 vs 2025 per customer) and COALESCE the measures to 0.\n- (Older MySQL lacks FULL JOIN: emulate with LEFT JOIN UNION RIGHT anti-join. SQLite \u2265 3.39 and Snowflake support it.)",
+  "snowflake_notes": "",
+  "common_mistakes": [
+    "Selecting the key from only one side (s.supplier_id) \u2014 it is NULL on the other side's unmatched rows; use COALESCE.",
+    "Adding a WHERE on one table's column, which removes the other side's NULL-padded rows (FULL becomes LEFT/RIGHT/INNER).",
+    "FULL JOINing two detail tables when you meant to compare aggregates \u2014 aggregate first, then join one-row-per-key sets.",
+    "Forgetting COALESCE(measure, 0) \u2014 unmatched sides give NULL, which breaks arithmetic like orders_2025 - orders_2024.",
+    "Expecting NULL keys to match each other \u2014 they never do."
+  ],
+  "recall": [
+    [
+      "FULL OUTER JOIN row count?",
+      "matched + left-only + right-only."
+    ],
+    [
+      "How do you tell a left-only row from a right-only row?",
+      "Check which side's primary key is NULL."
+    ],
+    [
+      "Why COALESCE the join key in the SELECT list of a FULL JOIN?",
+      "Because either side's key can be NULL; COALESCE returns the one that exists."
+    ]
+  ],
+  "review_next": "Lesson 14 chains three or more tables. The rule doesn't change: one join at a time, one row-count prediction at a time."
+}

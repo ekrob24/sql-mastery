@@ -1,0 +1,24 @@
+-- Lesson 9 · Exercise 9.6 — Products per supplier, including zero
+--
+-- BUSINESS QUESTION
+--   Procurement wants the size of each supplier's catalogue — including suppliers we list
+--   but buy nothing from.
+-- TABLES: suppliers, products
+-- TASK
+--   Return supplier_id, supplier_name and product_count (number of products referencing
+--   that supplier; 0 when none) for all 5 suppliers.
+-- REQUIRED COLUMNS: supplier_id, supplier_name, product_count
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 9.6
+-- Grade it:              python3 sqlm.py submit 9.6
+--
+-- ===== JOIN PLAN (fill in BEFORE writing SQL; it is graded) =====
+-- left_table: 
+-- right_table: 
+-- shared_key: 
+-- unmatched_rows_matter: 
+-- join_type: 
+-- ===================================================================
+--
+-- Write your query below (from memory!):
+

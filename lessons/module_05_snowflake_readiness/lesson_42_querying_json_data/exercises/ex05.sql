@@ -1,0 +1,17 @@
+-- Lesson 42 · Exercise 42.5 — Join JSON to the clean tables
+--
+-- BUSINESS QUESTION
+--   Operations wants valid orders by shipping method — the method only exists in the raw
+--   feed, the status only in orders.
+-- TABLES: raw_order_events, orders
+-- TASK
+--   Join raw_order_events to orders on the payload's $.order_id = orders.order_id and
+--   return shipping_method ($.shipping.method) and valid_orders = number of valid orders
+--   (order_status IN ('completed','shipped','returned')) per method.
+-- REQUIRED COLUMNS: shipping_method, valid_orders
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.5
+-- Grade it:              python3 sqlm.py submit 42.5
+--
+-- Write your query below (from memory!):
+

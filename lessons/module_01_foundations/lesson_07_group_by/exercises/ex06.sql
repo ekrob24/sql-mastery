@@ -1,0 +1,16 @@
+-- Lesson 7 · Exercise 7.6 — Valid orders per customer per year
+--
+-- BUSINESS QUESTION
+--   How many valid orders did each customer place in each year?
+-- TABLES: orders
+-- TASK
+--   Using only valid orders (order_status IN ('completed', 'shipped', 'returned')), return
+--   customer_id, order_year (substr(order_date, 1, 4)) and order_count, one row per
+--   customer and year, sorted by customer_id then order_year.
+-- REQUIRED COLUMNS: customer_id, order_year, order_count
+-- ROW ORDER: matters — use ORDER BY
+-- Schema + sample data:  python3 sqlm.py show 7.6
+-- Grade it:              python3 sqlm.py submit 7.6
+--
+-- Write your query below (from memory!):
+

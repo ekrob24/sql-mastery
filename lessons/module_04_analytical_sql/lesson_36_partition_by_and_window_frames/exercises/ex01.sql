@@ -1,0 +1,18 @@
+-- Lesson 36 · Exercise 36.1 — Category share of total revenue
+--
+-- BUSINESS QUESTION
+--   The CEO asks: what share of our revenue does each category bring in?
+-- TABLES: orders, order_items, products
+-- TASK
+--   Revenue = SUM(quantity * unit_price) from order_items, counting only valid orders
+--   (order_status IN ('completed','shipped','returned')). Return category (use
+--   'Uncategorized' when products.category is NULL), revenue (rounded to 2) and
+--   pct_of_total (the category's revenue as a percentage of all revenue, 0–100 scale,
+--   rounded to 1 decimal).
+-- REQUIRED COLUMNS: category, revenue, pct_of_total
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 36.1
+-- Grade it:              python3 sqlm.py submit 36.1
+--
+-- Write your query below (from memory!):
+

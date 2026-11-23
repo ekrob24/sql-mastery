@@ -1,0 +1,15 @@
+-- Lesson 42 · Exercise 42.2 — Filter on a deeply nested field
+--
+-- BUSINESS QUESTION
+--   Logistics: which orders were shipped to Canada, and how?
+-- TABLES: raw_order_events
+-- TASK
+--   Return event_id, order_id, shipping_method ($.shipping.method) and city
+--   ($.shipping.address.city) for events whose $.shipping.address.country is 'Canada'.
+-- REQUIRED COLUMNS: event_id, order_id, shipping_method, city
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 42.2
+-- Grade it:              python3 sqlm.py submit 42.2
+--
+-- Write your query below (from memory!):
+

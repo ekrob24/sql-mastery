@@ -1,0 +1,17 @@
+-- Lesson 29 · Exercise 29.1 — Orders placed in Q1 2025
+--
+-- BUSINESS QUESTION
+--   Finance is closing Q1 2025 and wants every order placed in that quarter, whatever its
+--   status.
+-- TABLES: orders
+-- TASK
+--   Return order_id, order_date and order_status for all orders (any status) with an
+--   order_date from 2025-01-01 up to and including 2025-03-31. Use a half-open range (>=
+--   start AND < first day of the next quarter).
+-- REQUIRED COLUMNS: order_id, order_date, order_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 29.1
+-- Grade it:              python3 sqlm.py submit 29.1
+--
+-- Write your query below (from memory!):
+

@@ -1,0 +1,24 @@
+-- Lesson 41 · Exercise 41.6 — Recency status: QUALIFY + DATEDIFF + IFF together
+--
+-- BUSINESS QUESTION
+--   The retention team's Snowflake query: `SELECT customer_id, order_date AS
+--   last_order_date, DATEDIFF(day, order_date, '2025-12-31'::DATE) AS
+--   days_since_last_order, IFF(DATEDIFF(day, order_date, '2025-12-31'::DATE) > 180,
+--   'lapsed', 'active') AS recency_status FROM orders o WHERE order_status IN
+--   ('completed','shipped','returned') AND EXISTS (SELECT 1 FROM customers c WHERE
+--   c.customer_id = o.customer_id) QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id
+--   ORDER BY order_date DESC) = 1`.
+-- TABLES: orders, customers
+-- TASK
+--   For every existing customer (customer_id present in customers) with at least one valid
+--   order (order_status IN ('completed','shipped','returned')), return customer_id,
+--   last_order_date (date of their most recent valid order), days_since_last_order
+--   (integer days from that date to '2025-12-31') and recency_status = 'lapsed' if
+--   days_since_last_order > 180, else 'active'.
+-- REQUIRED COLUMNS: customer_id, last_order_date, days_since_last_order, recency_status
+-- ROW ORDER: does not matter
+-- Schema + sample data:  python3 sqlm.py show 41.6
+-- Grade it:              python3 sqlm.py submit 41.6
+--
+-- Write your query below (from memory!):
+
