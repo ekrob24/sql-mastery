@@ -20,7 +20,8 @@ with a diff, reveal hints one at a time, and answer a recall question.
    The last result should show customers 20 · products 25 · suppliers 5 · orders 60 · order_items 150 · returns 10.
 2. Open **Projects » Streamlit » SQL_MASTERY_APP** and start Lesson 1.
 3. (Once) to back up progress to GitHub: run [`snowflake/github_sync_user.sql`](snowflake/github_sync_user.sql),
-   put the token it prints into this repo's **Settings » Secrets and variables » Actions** as `SNOWFLAKE_TOKEN`,
+   add two repo secrets under **Settings » Secrets and variables » Actions**: `SNOWFLAKE_TOKEN` (the token it prints) and
+   `SNOWFLAKE_HOST` (`<orgname>-<accountname>.snowflakecomputing.com`, from your Snowsight URL),
    then **Actions » Snapshot progress » Run workflow**. It runs daily after that and commits
    `progress.json`, [`progress/REPORT.md`](progress/REPORT.md) and your solved SQL in `progress/solved/`.
 

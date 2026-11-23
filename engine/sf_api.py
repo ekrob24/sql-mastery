@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 
-ACCOUNT_HOST = os.environ.get("SNOWFLAKE_HOST", "xapylmk-ak61734.snowflakecomputing.com")
+ACCOUNT_HOST = os.environ.get("SNOWFLAKE_HOST", "")  # e.g. myorg-myaccount.snowflakecomputing.com
 DEFAULT_CTX = {"role": os.environ.get("SNOWFLAKE_ROLE", "SQL_MASTERY_DEV"), "warehouse": "SQL_MASTERY_WH",
                "database": "SQL_MASTERY", "schema": "SHOP"}
 
@@ -21,6 +21,8 @@ class SnowflakeError(Exception):
 
 
 def _request(method, path, body=None):
+    if not ACCOUNT_HOST:
+        raise SnowflakeError("Set SNOWFLAKE_HOST to <orgname>-<accountname>.snowflakecomputing.com")
     url = f"https://{ACCOUNT_HOST}{path}"
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)

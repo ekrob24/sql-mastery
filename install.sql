@@ -6,13 +6,12 @@
 -- ============================================================================
 USE ROLE ACCOUNTADMIN;
 
--- 1. The course role (owns everything the course creates) — granted to you.
+-- 1. The course role (owns everything the course creates). Granted to SYSADMIN, so ACCOUNTADMIN
+--    and SYSADMIN users (you) inherit it.
 CREATE ROLE IF NOT EXISTS SQL_MASTERY_DEV;
 GRANT CREATE DATABASE  ON ACCOUNT TO ROLE SQL_MASTERY_DEV;
 GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE SQL_MASTERY_DEV;
 GRANT ROLE SQL_MASTERY_DEV TO ROLE SYSADMIN;
-SET ME = CURRENT_USER();
-GRANT ROLE SQL_MASTERY_DEV TO USER IDENTIFIER($ME);
 
 -- 2. Let Snowflake read the course from GitHub.
 CREATE DATABASE IF NOT EXISTS SQL_MASTERY_ADMIN COMMENT = 'SQL Mastery installer + build-user policy';

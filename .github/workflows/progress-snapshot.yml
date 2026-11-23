@@ -1,8 +1,9 @@
 name: Snapshot progress
 
 # Copies your SQL Mastery progress from Snowflake into this repo, so it survives the trial.
-# Needs repo secret SNOWFLAKE_TOKEN (see snowflake/github_sync_user.sql) and, if your account
-# differs, repo variable SNOWFLAKE_HOST (e.g. myorg-myaccount.snowflakecomputing.com).
+# Needs two repo secrets (Settings » Secrets and variables » Actions):
+#   SNOWFLAKE_TOKEN  — from snowflake/github_sync_user.sql
+#   SNOWFLAKE_HOST   — <orgname>-<accountname>.snowflakecomputing.com (a secret, so it isn't public)
 on:
   schedule:
     - cron: "17 23 * * *"     # daily
@@ -22,10 +23,10 @@ jobs:
       - name: Pull progress from Snowflake
         env:
           SNOWFLAKE_TOKEN: ${{ secrets.SNOWFLAKE_TOKEN }}
-          SNOWFLAKE_HOST: ${{ vars.SNOWFLAKE_HOST || 'xapylmk-ak61734.snowflakecomputing.com' }}
+          SNOWFLAKE_HOST: ${{ secrets.SNOWFLAKE_HOST }}
           SNOWFLAKE_ROLE: SQL_MASTERY_SYNC
         run: |
-          if [ -z "$SNOWFLAKE_TOKEN" ]; then echo "::warning::SNOWFLAKE_TOKEN secret not set; skipping"; exit 0; fi
+          if [ -z "$SNOWFLAKE_TOKEN" ] || [ -z "$SNOWFLAKE_HOST" ]; then echo "::warning::SNOWFLAKE_TOKEN / SNOWFLAKE_HOST secrets not set; skipping"; exit 0; fi
           python tools/snapshot_progress.py
       - name: Commit if changed
         run: |
